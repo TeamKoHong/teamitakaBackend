@@ -1,10 +1,14 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// 📌 이메일 인증 API 라우트 추가
+const univCertRoutes = require("./src/routes/univCertRoutes"); // 🚨 추가된 부분!
+app.use("/api/univcert", univCertRoutes);
 
 app.get("/", (req, res) => {
   res.send("Teamitaka Backend Running!");
