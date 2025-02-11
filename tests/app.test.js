@@ -1,5 +1,14 @@
 const request = require("supertest");
-const app = require("../index"); // Express 서버 불러오기
+const { app, server } = require("../index"); // ✅ 수정된 부분
+
+beforeAll(() => {
+  console.log("✅ 테스트 시작");
+});
+
+afterAll(() => {
+  server.close(); // ✅ 테스트 후 서버 닫기
+  console.log("✅ 테스트 완료 후 서버 종료");
+});
 
 describe("GET /", () => {
   it("✅ 서버 실행 확인", async () => {
