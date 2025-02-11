@@ -32,6 +32,7 @@ exports.getCertifiedUsers = async (req, res) => {
 
     res.json(response.data);
   } catch (error) {
-    res.status(500).json({ error: "서버 오류: 인증된 유저 목록 조회 실패" });
-  }
+    console.error("🚨 UnivCert API 응답 오류:", error); // ✅ 에러 로그 출력 추가
+    res.status(500).json({ error: error.message || "서버 오류: 인증된 유저 목록 조회 실패" });
+  }  
 };

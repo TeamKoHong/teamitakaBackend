@@ -15,6 +15,7 @@ exports.verifyAdmin = (req, res, next) => {
     req.admin = decoded; // 요청 객체에 관리자 정보 저장
     next();
   } catch (error) {
-    return res.status(403).json({ error: "유효하지 않은 토큰입니다." });
-  }
+    console.error("🚨 Token Verification Error:", error); // ✅ 에러 로그 출력 추가
+    return res.status(403).json({ error: error.message || "유효하지 않은 토큰입니다." });
+  }  
 };

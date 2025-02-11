@@ -17,6 +17,7 @@ module.exports = (req, res, next) => {
     req.admin = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ error: "잘못된 토큰입니다." });
-  }
+    console.error("🚨 Auth Middleware Error:", error); // ✅ 에러 로그 출력 추가
+    return res.status(401).json({ error: error.message || "잘못된 토큰입니다." });
+  }  
 };
