@@ -17,3 +17,8 @@ describe("GET /", () => {
     expect(res.text).toBe("Teamitaka Backend Running!");
   });
 });
+
+// ✅ 테스트 종료 후 서버 닫기
+afterAll((done) => {
+    server.close(done);
+});

@@ -18,13 +18,11 @@ app.get("/", (req, res) => {
   res.send("Teamitaka Backend Running!");
 });
 
-// ✅ 테스트 환경에서는 서버 실행 안 함
+// ✅ 서버를 `server` 변수에 저장
 const PORT = process.env.PORT || 5001;
-let server;
-if (process.env.NODE_ENV !== "test") {
-  server = app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
-}
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
 
-module.exports = { app, server }; // ✅ Jest에서 서버 종료 가능하도록 변경
+// ✅ Jest 테스트를 위해 server 내보내기
+module.exports = { app, server };
