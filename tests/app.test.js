@@ -1,5 +1,5 @@
 const request = require("supertest");
-const { app, server } = require("../index"); // ✅ 수정된 부분
+const app = require("../index"); // ✅ 수정된 부분
 
 beforeAll(() => {
   console.log("✅ 테스트 시작");

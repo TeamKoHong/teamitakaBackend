@@ -24,5 +24,4 @@ const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
 
-// ✅ Jest 테스트를 위해 server 내보내기
-module.exports = { app, server };
+module.exports = app;
