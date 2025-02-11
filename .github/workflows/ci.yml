@@ -33,4 +33,4 @@ jobs:
         run: npm run lint -- --cache --max-warnings=0
 
       - name: Run Tests
-        run: npm test -- --ci --maxWorkers=2
+        run: npm test -- --ci --maxWorkers=2 --detectOpenHandles
