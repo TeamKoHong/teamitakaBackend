@@ -5,7 +5,7 @@ const UNIVCERT_API_KEY = process.env.UNIVCERT_API_KEY;
 // 📌 이메일 도메인 기반으로 학교 자동 분류
 const universityMap = {
     "korea.ac.kr": "고려대학교",
-    "hongik.ac.kr": "홍익대학교"
+    "g.hongik.ac.kr": "홍익대학교"
 };
 
 // ✅ 이메일 인증 코드 발송
