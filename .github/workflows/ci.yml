@@ -15,8 +15,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Set up Node.js
         uses: actions/checkout@v3
+        with:
+          node-version: 18
+          cache: "npm"
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -24,10 +27,10 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run ESLint
-        run: npm run lint
+        run: npm run lint -- --cache --max-warnings=0
 
       - name: Run Tests
-        run: npm test
+        run: npm test -- --ci --maxWorkers=2
