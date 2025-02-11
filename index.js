@@ -18,10 +18,12 @@ app.get("/", (req, res) => {
   res.send("Teamitaka Backend Running!");
 });
 
-// ✅ 서버를 `server` 변수에 저장
-const PORT = process.env.PORT || 5001;
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+// ✅ 테스트 환경에서는 서버 실행 안 함
+if (process.env.NODE_ENV !== "test") {
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
