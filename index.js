@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 
 // ✅ 테스트 환경에서는 서버 실행 안 함
 if (process.env.NODE_ENV !== "test") {
-  const PORT = process.env.PORT || 5001;
+  const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
   });
