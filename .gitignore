@@ -2,3 +2,10 @@
 /scripts/hashPassword.js
 
 .env.docker
+
+# Prisma 관련 불필요한 파일들
+prisma/migrations/
+prisma/migration_lock.toml
+node_modules/
+
+.DS_Store
