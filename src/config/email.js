@@ -1,17 +1,17 @@
 const nodemailer = require("nodemailer");
-const { EMAIL_USER, EMAIL_PASS } = require("./dotenv");
+require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
 const sendVerificationEmail = async (email, otp) => {
   const mailOptions = {
-    from: EMAIL_USER,
+    from: process.env.EMAIL_USER,
     to: email,
     subject: "고려대학교 이메일 인증 코드",
     text: `당신의 인증 코드는 ${otp}입니다. 5분 내에 입력해주세요.`,
