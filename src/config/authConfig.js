@@ -7,7 +7,7 @@ if (!process.env.ADMIN_PASSWORD) {
   process.exit(1); // ❗ 프로세스를 종료하여 CI 실패 유도
 }
 
-// ✅ .env에서 원래 비밀번호 가져와 해싱 수행
+// ✅ .env에서 가져온 원본 비밀번호를 해싱
 const hashedAdminPassword = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 10);
 
 module.exports = {
