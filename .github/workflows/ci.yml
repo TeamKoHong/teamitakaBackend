@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - develop
-      - feature/email-verification
+      - feature/univcert-verification
   pull_request:
     branches:
       - develop
@@ -24,7 +24,9 @@ jobs:
           cache: npm
 
       - name: Set environment variables from GitHub Secrets
-        run: echo "ADMIN_PASSWORD=${{secrets.ADMIN_PASSWORD}}" >> .env
+        run: |
+          echo "ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}" >> .env
+          echo "NODE_ENV=test" >> .env
 
       - name: Install dependencies
         run: npm ci
