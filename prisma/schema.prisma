@@ -4,11 +4,11 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL") // 환경변수를 통해 DB 연결
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id              String   @id @default(uuid())
+  id              String   @id @default(uuid())  
   username        String   @unique
   email           String   @unique
   password        String
@@ -16,14 +16,14 @@ model User {
   userType        UserType @default(MEMBER)
   role            UserRole @default(MEMBER)
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime @default(now())
 
   // Relations
-  projects        Project[] // ✅ 한 사용자는 여러 프로젝트를 가질 수 있음
+  projects        Project[]
   reviewsGiven    Review[]       @relation(name: "ReviewerRelation")
   reviewsReceived Review[]       @relation(name: "RevieweeRelation")
-  notifications   Notification[] // ✅ 사용자가 받은 알림들
-  searches        Search[] // ✅ 사용자의 검색 기록
+  notifications   Notification[]
+  searches        Search[]
 }
 
 model Project {
@@ -35,13 +35,13 @@ model Project {
   projectImageUrl String?
   status          ProjectStatus @default(PLANNED)
   createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  updatedAt       DateTime      @default(now())
 
   // Relations
   owner        User          @relation(fields: [ownerId], references: [id])
   ownerId      String
-  reviews      Review[] // ✅ 프로젝트에 대한 리뷰 목록
-  recruitments Recruitment[] // ✅ 프로젝트와 모집 연동
+  reviews      Review[]
+  recruitments Recruitment[]
 }
 
 model Review {
@@ -49,7 +49,7 @@ model Review {
   rating    Int      @default(0)
   feedback  String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 
   // Relations
   reviewer   User    @relation(name: "ReviewerRelation", fields: [reviewerId], references: [id])
