@@ -1,6 +1,6 @@
 const express = require("express");
-const { loginAdmin, getCertifiedUsers } = require("../controllers/adminController");
-const { verifyAdmin } = require("../middlewares/adminMiddleware");
+const { loginAdmin, getCertifiedUsers } = require("../controllers/adminController"); // ✅ 올바른 경로 확인
+const adminMiddleware = require("../middlewares/adminMiddleware");
 
 const router = express.Router();
 
@@ -8,6 +8,6 @@ const router = express.Router();
 router.post("/login", loginAdmin);
 
 // 🔍 인증된 유저 목록 조회 (관리자 전용)
-router.get("/certified-users", verifyAdmin, getCertifiedUsers);
+router.get("/certified-users", adminMiddleware, getCertifiedUsers);
 
 module.exports = router;
