@@ -23,7 +23,7 @@ jobs:
           node-version: 18
           cache: npm
 
-      - name: Set environment variables
+      - name: Set environment variables from GitHub Secrets
         run: echo "ADMIN_PASSWORD=${{secrets.ADMIN_PASSWORD}}" >> .env
 
       - name: Install dependencies
