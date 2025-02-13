@@ -17,7 +17,7 @@ const adminMiddleware = (req, res, next) => {
 
     req.user = decoded;
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({ message: "❌ 유효하지 않은 토큰입니다." });
   }
 };
