@@ -1,5 +1,5 @@
 require("dotenv").config();
-const app = require("./app"); // 기존 Express 설정을 app.js에서 가져옴
+const app = require("./src/app"); // src 폴더에 존재하는 경우 경로 수정
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
