@@ -4,14 +4,14 @@ module.exports = {
   development: {
     username: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || null,
-    database: process.env.DB_NAME || "teamitaka_backend",
+    database: process.env.DB_NAME || "teamitaka_database",
     host: process.env.DB_HOST || "127.0.0.1",
     dialect: "mysql"
   },
   test: {
     username: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || null,
-    database: process.env.DB_NAME || "teamitaka_backend_test",
+    database: process.env.DB_NAME || "teamitaka_database_test",
     host: process.env.DB_HOST || "127.0.0.1",
     dialect: "mysql"
   },
