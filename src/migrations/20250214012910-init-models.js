@@ -41,11 +41,13 @@ module.exports = {
       },
       createdAt: {
         type: Sequelize.DATE,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
       },
       updatedAt: {
         type: Sequelize.DATE,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
       },
     });
 
@@ -92,11 +94,13 @@ module.exports = {
       },
       createdAt: {
         type: Sequelize.DATE,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
       },
       updatedAt: {
         type: Sequelize.DATE,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
       },
     });
 
@@ -139,7 +143,8 @@ module.exports = {
       },
       createdAt: {
         type: Sequelize.DATE,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
       },
     });
 
@@ -174,7 +179,8 @@ module.exports = {
       },
       createdAt: {
         type: Sequelize.DATE,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
       },
     });
 
@@ -205,7 +211,8 @@ module.exports = {
       },
       createdAt: {
         type: Sequelize.DATE,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
       },
     });
 
@@ -230,7 +237,8 @@ module.exports = {
       },
       updatedAt: {
         type: Sequelize.DATE,
-        allowNull: true,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
       },
     });
 
@@ -257,12 +265,13 @@ module.exports = {
       },
       searchTime: {
         type: Sequelize.DATE,
+        allowNull: false,
         defaultValue: Sequelize.NOW,
       },
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.dropTable("Searches");
     await queryInterface.dropTable("Keywords");
     await queryInterface.dropTable("Notifications");
