@@ -1,16 +1,39 @@
-const { Sequelize } = require("sequelize");
+// src/config/db.js
 require("dotenv").config();
+const { Sequelize } = require("sequelize");
 
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-  host: process.env.DB_HOST,
-  dialect: "mysql",
-  logging: false, // SQL 쿼리 로그 비활성화 (개발 시 true로 변경 가능)
-  timezone: "+09:00", // 한국 시간대 설정
-});
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    dialect: "mysql",
+    logging: false,
+    timezone: "+09:00",
+    dialectOptions: {
+      charset: "utf8mb4",
+      // 필요시 collate: "utf8mb4_unicode_ci",
+    },
+    define: {
+      collate: "utf8mb4_unicode_ci",
+    },
+  }
+);
 
-sequelize
-  .authenticate()
-  .then(() => console.log("✅ Database connection established."))
-  .catch((err) => console.error("❌ Unable to connect to the database:", err));
+const connectDB = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log("✅ Database connection established.");
+  } catch (err) {
+    console.error("❌ Unable to connect to the database:", err);
+    process.exit(1); // 서버 구동 시 DB 연결 실패 → 프로세스 종료
+  }
+};
 
-module.exports = sequelize;
+// ✅ 테스트 환경에서는 DB 연결을 우회
+if (process.env.NODE_ENV !== "test") {
+  connectDB();
+}
+
+module.exports = { sequelize, connectDB };
