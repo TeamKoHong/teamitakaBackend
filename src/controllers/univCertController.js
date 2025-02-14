@@ -1,6 +1,5 @@
 require("dotenv").config();
 const axios = require("axios");
-const univCertService = require("../services/univCertService");
 
 // ✅ 이메일 도메인 기반으로 대학명 자동 설정
 const universityDomains = {
