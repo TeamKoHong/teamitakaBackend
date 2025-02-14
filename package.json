@@ -10,7 +10,9 @@
     "lint": "eslint ."
   },
   "jest": {
-    "testEnvironment": "node"
+    "roots": ["<rootDir>/src"],
+    "testEnvironment": "node",
+    "moduleDirectories": ["node_modules", "src"]
   },
   "keywords": [],
   "author": "",
