@@ -13,32 +13,41 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
+      # 1) Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2) Set up Node.js environment
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: npm
 
+      # 3) Load GitHub Secrets into environment variables
       - name: Set environment variables from GitHub Secrets
         run: |
           echo "ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}" >> .env
-          echo "DATABASE_URL={{ secrets.DATABASE_URL }}" >> .env
-          echo "NODE_ENV=test" >> .env
+          echo "ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }}" >> $GITHUB_ENV
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "NODE_ENV=test" >> $GITHUB_ENV
 
+      # 4) Install dependencies
       - name: Install dependencies
         run: npm ci
 
+      # 5) Linting
       - name: Run ESLint
         run: npm run lint -- --cache --max-warnings=0
 
+      # 6) Run tests
       - name: Run Tests
         run: |
-          export NODE_ENV=test  # ✅ CI 환경에서 NODE_ENV 설정
+          export NODE_ENV=test  # ✅ Make sure test environment is set
           npm test -- --ci --maxWorkers=2 --detectOpenHandles
 
+      # 7) Debug step (optional) - lists all files in the repo
       - name: Debug - List files in the repository
         run: ls -la
