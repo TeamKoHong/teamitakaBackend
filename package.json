@@ -6,13 +6,16 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "jest --coverage",
+    "test": "NODE_ENV=test jest --coverage",
     "lint": "eslint ."
   },
   "jest": {
-    "roots": ["<rootDir>/src"],
+    "roots": ["<rootDir>/tests"],
     "testEnvironment": "node",
-    "moduleDirectories": ["node_modules", "src"]
+    "moduleDirectories": ["node_modules", "<rootDir>/src"],
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/src/$1"
+    }
   },
   "keywords": [],
   "author": "",
