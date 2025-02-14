@@ -15,6 +15,7 @@ const Recruitment = require("./Recruitment")(sequelize);
 const Notification = require("./Notification")(sequelize);
 const Search = require("./Search")(sequelize);
 const Keyword = require("./Keyword")(sequelize);
+const VerifiedEmail = require("./VerifiedEmail")(sequelize);
 
 // 관계 설정
 User.hasMany(Project, { foreignKey: "ownerId" });
@@ -46,4 +47,5 @@ module.exports = {
   Notification,
   Search,
   Keyword,
+  VerifiedEmail,
 };
