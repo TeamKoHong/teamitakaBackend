@@ -1,8 +1,9 @@
 const axios = require("axios");
+const { VerifiedEmail } = require("../models");
 
 const UNIVCERT_API_KEY = process.env.UNIVCERT_API_KEY;
 
-// 📌 이메일 도메인 기반으로 학교 자동 분류
+// 📌 인증 가능한 학교 이메일 도메인
 const universityMap = {
     "korea.ac.kr": "고려대학교",
     "g.hongik.ac.kr": "홍익대학교"
@@ -10,10 +11,10 @@ const universityMap = {
 
 // ✅ 이메일 인증 코드 발송
 exports.sendVerificationCode = async (email) => {
-    const emailDomain = email.split("@")[1]; // 이메일 도메인 추출
-    const university = universityMap[emailDomain]; // 매핑된 학교 이름 가져오기
+    const emailDomain = email.split("@")[1];
 
-    if (!university) {
+    // ✅ 허용된 이메일 도메인인지 확인
+    if (!universityMap[emailDomain]) {
         throw new Error("지원되지 않는 학교 이메일입니다.");
     }
 
@@ -21,7 +22,7 @@ exports.sendVerificationCode = async (email) => {
         const response = await axios.post("https://univcert.com/api/v1/certify", {
             key: UNIVCERT_API_KEY,
             email: email,
-            univName: university, // ✅ 이메일 도메인에 따라 자동 설정
+            univName: universityMap[emailDomain], // ✅ 자동 설정
             univ_check: true, // 대학 재학 여부 확인
         });
 
@@ -39,9 +40,9 @@ exports.sendVerificationCode = async (email) => {
 // ✅ 이메일 인증 코드 검증
 exports.verifyCode = async (email, code) => {
     const emailDomain = email.split("@")[1];
-    const university = universityMap[emailDomain];
 
-    if (!university) {
+    // ✅ 허용된 이메일 도메인인지 확인
+    if (!universityMap[emailDomain]) {
         throw new Error("지원되지 않는 학교 이메일입니다.");
     }
 
@@ -49,13 +50,19 @@ exports.verifyCode = async (email, code) => {
         const response = await axios.post("https://univcert.com/api/v1/certifycode", {
             key: UNIVCERT_API_KEY,
             email: email,
-            univName: university, // ✅ 자동 설정된 학교 이름 사용
+            univName: universityMap[emailDomain],
             code: parseInt(code),
         });
 
         if (!response.data.success) {
             throw new Error(response.data.message);
         }
+
+        // ✅ 인증된 이메일을 저장 또는 갱신
+        await VerifiedEmail.upsert({
+            email: response.data.certified_email,
+            certified_date: response.data.certified_date,
+        });
 
         return {
             message: "이메일 인증 완료",
