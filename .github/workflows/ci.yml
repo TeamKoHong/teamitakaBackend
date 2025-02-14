@@ -26,6 +26,7 @@ jobs:
       - name: Set environment variables from GitHub Secrets
         run: |
           echo "ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}" >> .env
+          echo "DATABASE_URL={{ secrets.DATABASE_URL }}" >> .env
           echo "NODE_ENV=test" >> .env
 
       - name: Install dependencies
@@ -37,4 +38,10 @@ jobs:
       - name: Run Tests
         run: |
           export NODE_ENV=test  # ✅ CI 환경에서 NODE_ENV 설정
-          npm test -- --ci --maxWorkers=2 --detectOpenHandles
+          npm test -- --config=jest.config.js --ci --maxWorkers=2 --detectOpenHandles
+
+      - name: Debug - List files in the repository
+        run: ls -la
+
+      - name: Check Jest Config
+        run: ls -la | grep "jest.config.js"
