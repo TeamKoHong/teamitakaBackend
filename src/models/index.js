@@ -1,22 +1,24 @@
 // src/models/index.js
 "use strict";
 
-const { sequelize } = require("../config/db"); 
+const { sequelize } = require("../config/db");
 const Sequelize = require("sequelize");
 
 const db = {};
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-// 여기서 모델들을 로드/정의
-// 예) db.User = require("./User")(sequelize);
-db.Keyword = require("./User")(sequelize);
-db.Notification = require("./Notification")(sequelize);
-db.Project = require("./Project")(sequelize);
-db.Recruitment = require("./Recruitment")(sequelize);
-db.Review = require("./Review")(sequelize);
-db.Search = require("./Search")(sequelize);
-db.User = require("./User")(sequelize);
-db.VerifiedEmail = require("./VerifiedEmail")(sequelize);
+// 기존 모델 로드
+db.Keyword = require("./Keyword")(sequelize, Sequelize.DataTypes);
+db.Notification = require("./Notification")(sequelize, Sequelize.DataTypes);
+db.Project = require("./Project")(sequelize, Sequelize.DataTypes);
+db.Recruitment = require("./Recruitment")(sequelize, Sequelize.DataTypes);
+db.Review = require("./Review")(sequelize, Sequelize.DataTypes);
+db.Search = require("./Search")(sequelize, Sequelize.DataTypes);
+db.User = require("./User")(sequelize, Sequelize.DataTypes);
+db.VerifiedEmail = require("./VerifiedEmail")(sequelize, Sequelize.DataTypes);
+
+// ✅ Admin 모델 추가
+db.Admin = require("./Admin")(sequelize, Sequelize.DataTypes);
 
 module.exports = db;
