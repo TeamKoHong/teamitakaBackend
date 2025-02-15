@@ -1,5 +1,5 @@
 .env
-/scripts/hashPassword.js
+/src/scripts/hashPassword.js
 
 .env.docker
 
