@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { adminEmail, adminPassword, jwtSecret } = require("../config/authConfig");
 const axios = require("axios");
+const { VerifiedEmail } = require("../models");
 
 // 🔐 관리자 로그인
 const loginAdmin = async (req, res) => {
@@ -37,8 +38,20 @@ const getCertifiedUsers = async (req, res) => {
   }  
 };
 
+// ✅ 인증된 이메일 전체 삭제 (관리자 전용)
+const clearVerifiedEmails = async (req, res) => {
+  try {
+      await VerifiedEmail.destroy({ where: {} });
+      res.status(200).json({ message: "✅ 모든 인증된 이메일이 삭제되었습니다." });
+  } catch (error) {
+      console.error("🚨 인증된 이메일 삭제 오류:", error.message);
+      res.status(500).json({ error: "서버 오류: 인증된 이메일을 삭제하지 못했습니다." });
+  }
+};
+
 // ✅ exports 수정
 module.exports = {
   loginAdmin,
-  getCertifiedUsers
+  getCertifiedUsers,
+  clearVerifiedEmails,
 };
