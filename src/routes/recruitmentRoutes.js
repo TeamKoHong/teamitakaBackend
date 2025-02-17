@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const cookieParser = require("cookie-parser");
+const { Recruitment, Project } = require("../models");
 
 const { Recruitment, Comment, Like } = require("../models");
 const { Op } = require("sequelize");
@@ -38,14 +39,13 @@ router.get("/recruitment/:recruitment_id", async (req, res) => {
 
 //모집공고 작성
 router.post("/recruitment", authMiddleWare, async (req, res) => {
-    const { title, content, description, status } = req.body;
+    const { title, description, status } = req.body;
     const user_id = res.locals.user.user_id;
     const created_at = new Date(); // 현재 시간 설정
     //const project_id = res.locals.project.project_id
     try {
       const recruitment = await Recruitment.create({
         title,
-        content,
         description,
         status,
         user_id,
@@ -60,21 +60,42 @@ router.post("/recruitment", authMiddleWare, async (req, res) => {
     }
   });
 
-//모집공고 수정
+
+//수정정
   router.put("/recruitment/:recruitment_id", authMiddleWare, async (req, res) => {
     try {
       const { recruitment_id } = req.params;
-      const { title, content, description, status } = req.body;
+      const { title, description, status } = req.body;
   
-      // 모집공고 존재 여부 확인
+      // 모집공고 찾기
       const recruitment = await Recruitment.findByPk(recruitment_id);
       if (!recruitment) {
         return res.status(400).send({ message: "모집공고가 존재하지 않습니다." });
       }
   
-      // 모집공고 업데이트
+      // 모집 상태가 'closed'로 변경될 때 프로젝트 생성
+      if (status === "closed" && recruitment.status !== "closed") {
+        // 이미 프로젝트가 생성된 경우 중복 생성 방지
+        const existingProject = await Project.findOne({ where: { recruitment_id } });
+        if (existingProject) {
+          return res.status(400).send({ message: "이미 프로젝트가 생성된 모집공고입니다." });
+        }
+  
+        // 프로젝트 생성
+        const newProject = await Project.create({
+          title: recruitment.title,
+          description: recruitment.description,
+          user_id: recruitment.user_id, // 모집공고 작성자가 프로젝트 생성자로 설정
+          recruitment_id: recruitment.recruitment_id, // 모집공고 ID 연결
+          created_at: new Date(),
+        });
+  
+        console.log(`모집공고가 프로젝트로 전환됨: ${newProject.project_id}`);
+      }
+  
+      // 모집공고 상태 업데이트
       await Recruitment.update(
-        { title, content, description, status },
+        { title, description, status },
         { where: { recruitment_id } }
       );
   

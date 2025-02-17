@@ -30,15 +30,6 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE",
       },
-      reference_id: {
-        type: DataTypes.UUID,
-        allowNull: true, // 새 프로젝트로 연결할 경우 사용
-        references: {
-          model: "Projects",
-          key: "project_id",
-        },
-        onDelete: "SET NULL",
-      },
     },
     {
       timestamps: true, // createdAt, updatedAt 자동 추가
@@ -51,9 +42,10 @@ module.exports = (sequelize) => {
       onDelete: "CASCADE",
     });
 
+    // ✅ 모집공고가 프로젝트와 1:1 관계를 가지도록 수정
     Recruitment.hasOne(models.Project, {
-      foreignKey: "reference_id",
-      onDelete: "SET NULL",
+      foreignKey: "recruitment_id", // ✅ 수정: Projects 테이블에서 recruitment_id를 참조
+      onDelete: "CASCADE", // 모집공고가 삭제되면 프로젝트도 삭제
     });
   };
 
