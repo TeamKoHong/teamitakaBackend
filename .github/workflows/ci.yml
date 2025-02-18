@@ -47,28 +47,35 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # 5) 환경 변수 디버깅
+      # 5) 환경 변수 디버깅 (정상 설정 확인)
       - name: Debug environment variables
         run: env | grep NODE_ENV
 
-      # 6) MySQL 실행 대기
+      # 6) MySQL 실행 대기 (더 안정적인 방식으로 변경)
       - name: Wait for MySQL
         run: |
           echo "Waiting for MySQL to be ready..."
-          until mysqladmin ping -h mysql --silent; do
+          until nc -z mysql 3306; do
             echo "Waiting for database connection..."
             sleep 2
           done
           echo "MySQL is ready!"
 
-      # 7) MySQL 컨테이너 로그 출력
+      # 7) MySQL 컨테이너 상태 확인 (디버깅용)
       - name: Debug MySQL container
         run: docker logs $(docker ps -q --filter ancestor=mysql:8.0)
 
-      # 8) DB 마이그레이션 실행
+      # 8) MySQL 접속 테스트 (디버깅용)
+      - name: Debug MySQL Connection
+        run: |
+          echo "Checking MySQL connection..."
+          docker exec $(docker ps -q --filter ancestor=mysql:8.0) \
+          mysql -uroot -proot -e "SHOW DATABASES;"
+
+      # 9) DB 마이그레이션 실행
       - name: Run Sequelize migrations
         run: npx sequelize-cli db:migrate --env=test
 
-      # 9) CSV 데이터 삽입
+      # 10) CSV 데이터 삽입
       - name: Insert data from CSV
         run: node src/scripts/insertCSV.js
