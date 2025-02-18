@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { Recruitment, Comment, Like } = require("../models");
-const { Op } = require("sequelize");
+const { Recruitment, Comment } = require("../models");
 const authMiddleWare = require("../middlewares/authMiddleware");
 
 // 특정 모집공고의 댓글 조회

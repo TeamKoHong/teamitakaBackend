@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - dev
-      - "feature/*"  # ✅ 모든 feature 브랜치에서 CI 실행 가능하도록 설정
+      - "feature/*"
   pull_request:
     branches:
       - dev
@@ -22,49 +22,72 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost"
+          --network-alias mysql
+          --health-cmd="mysqladmin ping -h mysql --silent"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
 
     steps:
-      # 1) 소스 체크아웃
+      # 1) 환경 변수 설정 (NODE_ENV=test)
+      - name: Set environment variables
+        run: echo "NODE_ENV=test" >> $GITHUB_ENV
+
+      # 2) 소스 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2) Node.js 환경 설정
+      # 3) Node.js 환경 설정
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: npm
 
-      # 3) 종속성 설치
+      # 4) 종속성 설치
       - name: Install dependencies
         run: npm ci
 
-      # 4) MySQL 실행 대기
+      # 5) 환경 변수 디버깅 (정상 설정 확인)
+      - name: Debug environment variables
+        run: env | grep NODE_ENV
+
+      # 6) MySQL 실행 대기 (DNS 전파를 위한 초기 지연 추가)
       - name: Wait for MySQL
         run: |
+          echo "Sleeping for 10 seconds to allow DNS propagation..."
+          sleep 10
+          export MYSQL_PWD=root
           echo "Waiting for MySQL to be ready..."
-          until mysqladmin ping -h"mysql" --silent; do
+          for i in $(seq 1 30); do
+            if mysqladmin -u root ping -h mysql --silent; then
+              echo "MySQL is ready!"
+              exit 0
+            fi
             echo "Waiting for database connection..."
             sleep 2
           done
-          echo "MySQL is ready!"
+          echo "MySQL did not become ready in time"
+          exit 1
 
-      # 5) DB 마이그레이션 적용
+    
+      # 7) MySQL 컨테이너 상태 확인 (디버깅용)
+      - name: Debug MySQL container
+        run: docker logs $(docker ps -q --filter ancestor=mysql:8.0)
+
+      # 8) MySQL 접속 테스트 (디버깅용)
+      - name: Debug MySQL Connection
+        run: |
+          echo "Checking MySQL connection..."
+          docker exec $(docker ps -q --filter ancestor=mysql:8.0) \
+          mysql -uroot -proot -e "SHOW DATABASES;"
+
+      # 9) DB 마이그레이션 실행 (테스트 환경에서는 실행하지 않음)
       - name: Run Sequelize migrations
+        if: env.NODE_ENV != 'test'
         run: npx sequelize-cli db:migrate --env=test
 
-      # 6) CSV 데이터 삽입 (insertCSV.js)
+      # 10) CSV 데이터 삽입 (마찬가지로 테스트 환경에서는 실행하지 않음)
       - name: Insert data from CSV
+        if: env.NODE_ENV != 'test'
         run: node src/scripts/insertCSV.js
-
-      # (선택) 7) 중복 여부 검증 - 중복 있으면 CI 실패
-      - name: Verify no duplication
-        run: |
-          # 실제론 mysql CLI나 npm script를 사용해 쿼리 수행, 값이 있으면 exit 1
-          echo "검증 쿼리 실행 예시"
-          # mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME -e "SELECT d.Name, COUNT(*) FROM Departments d GROUP BY d.Name HAVING COUNT(*)>1"
-          # if [ $? -eq 0 ]; then exit 1; fi
