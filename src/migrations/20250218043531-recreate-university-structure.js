@@ -111,7 +111,7 @@ module.exports = {
     });
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (queryInterface) => {
     /**
      * down 시에는 up 과정에서 만든 새 테이블을 모두 삭제한 뒤,
      * 원래 구조(또는 필요하다면 Campus 테이블까지) 복원할 수 있도록 작성한다.

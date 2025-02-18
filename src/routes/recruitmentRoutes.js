@@ -1,15 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const cookieParser = require("cookie-parser");
-const { Recruitment, Project, Comment, Like } = require("../models");
-const { Op } = require("sequelize");
+const { Recruitment, Project } = require("../models");
 const authMiddleWare = require("../middlewares/authMiddleware");
 
 const app = express();
 app.use(cookieParser());
 
 // 전체 모집공고 조회
-router.get("/recruitment", async (req, res) => {
+router.get("/recruitment", async (res) => {
   try {
     const recruitment = await Recruitment.findAll({ order: [["createdAt", "desc"]] });
     
