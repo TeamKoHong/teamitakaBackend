@@ -1,10 +1,10 @@
 //like를 scrap으로 수정필요요
 const express = require("express");
 const router = express.Router();
-const { Recruitment, Like, User } = require("../models");
+const { Recruitment, Like } = require("../models");
 const authMiddleWare = require("../middlewares/authMiddleware");
 
-router.get("/likes/recruitments", authMiddleWare, async (req, res) => {
+router.get("/likes/recruitments", authMiddleWare, async (res) => {
   const user_id = res.locals.user.userId;
   console.log(res.locals.user);
 
@@ -48,10 +48,10 @@ router.put("/recruitment/:recruitment_id/like", authMiddleWare, async (req, res)
         where: { recruitment_id: recruitment_id },
       });
 
-      await Recruitment.decrement({ like_cnt: 1 }, { where: { recruitmentId } });
+      await Recruitment.decrement({ like_cnt: 1 }, { where: { recruitment_id } });
       return res.status(200).send("안 좋아요");
     }
-  } catch (error) {
+  } catch {
     res.status(400).send({ errorMessage: "모집공고 좋아요에 실패하였습니다." });
   }
 });
