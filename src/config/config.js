@@ -13,7 +13,7 @@ module.exports = {
     username: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "",
     database: process.env.DB_NAME || "teamitaka_database",
-    host: process.env.DB_HOST || "127.0.0.1",
+    host: process.env.DB_HOST || "mysql",  // ✅ 변경: 컨테이너명 사용
     dialect: "mysql",
     logging: false,
   },
