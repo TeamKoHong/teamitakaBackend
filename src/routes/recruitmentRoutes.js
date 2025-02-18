@@ -1,11 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const cookieParser = require("cookie-parser");
-const { Recruitment, Project } = require("../models");
-
-const { Recruitment, Comment, Like } = require("../models");
+const { Recruitment, Project, Comment, Like } = require("../models");
 const { Op } = require("sequelize");
-const authMiddleWare = require("../middlewares/auth-middleware");
+const authMiddleWare = require("../middlewares/authMiddleware");
 
 const app = express();
 app.use(cookieParser());
