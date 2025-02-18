@@ -21,6 +21,11 @@ module.exports = (sequelize) => {
         type: DataTypes.ENUM("OPEN", "CLOSED"),
         defaultValue: "OPEN",
       },
+      views: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        allowNull: false,
+      },
       user_id: {
         type: DataTypes.UUID,
         allowNull: false,

@@ -2,6 +2,7 @@
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser"); // ✅ 추가
 
 const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -16,6 +17,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(cookieParser()); // ✅ 추가 (쿠키 기반 조회수 기능 위해 필요)
+
 
 // 이미 등록된 라우트
 app.use("/api/admin", adminRoutes);
@@ -25,13 +28,7 @@ app.use("/api/univcert", univCertRoutes);
 
 // ✅ 새로 추가: /user
 app.use("/api/user", userRoutes);
-
-//recruitment, comment, scrap
-app.use("/api", [
-  recruitmentRoutes,
-  commentRoutes,
-  scrapRoutes,
-]);
+app.use("/api", [recruitmentRoutes, commentRoutes, scrapRoutes]);
 
 // 기본 라우트
 app.get("/", (req, res) => {

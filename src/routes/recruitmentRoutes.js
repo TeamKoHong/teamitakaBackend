@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const cookieParser = require("cookie-parser");
 const { Recruitment, Project, Comment, Scrap, Hashtag } = require("../models");
+
 const { Op } = require("sequelize");
 const authMiddleWare = require("../middlewares/auth-middleware");
 
@@ -23,6 +24,24 @@ router.get("/recruitment", async (req, res) => {
 router.get("/recruitment/:recruitment_id", async (req, res) => {
   try {
     const { recruitment_id } = req.params;
+
+// 쿠키에서 조회 여부 확인
+    let viewedRecruitments = req.cookies.viewedRecruitments
+      ? JSON.parse(req.cookies.viewedRecruitments)
+      : [];
+
+    if (!viewedRecruitments.includes(recruitment_id)) {
+      // 조회수 증가
+      await Recruitment.increment("views", { where: { recruitment_id } });
+
+      // 쿠키에 저장 (1시간 동안 유지)
+      viewedRecruitments.push(recruitment_id);
+      res.cookie("viewedRecruitments", JSON.stringify(viewedRecruitments), {
+        maxAge: 60 * 60 * 1000, // 1시간
+        httpOnly: true,
+      });
+    }
+
     const recruitment = await Recruitment.findByPk(recruitment_id, {
       include: [{ model: Hashtag, attributes: ["content"] }],
     });
