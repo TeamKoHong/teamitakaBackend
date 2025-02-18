@@ -42,10 +42,18 @@ module.exports = (sequelize) => {
       onDelete: "CASCADE",
     });
 
-    // ✅ 모집공고가 프로젝트와 1:1 관계를 가지도록 수정
+    // ✅ 모집공고가 프로젝트와 1:1 관계를 가지도록 설정
     Recruitment.hasOne(models.Project, {
-      foreignKey: "recruitment_id", // ✅ 수정: Projects 테이블에서 recruitment_id를 참조
-      onDelete: "CASCADE", // 모집공고가 삭제되면 프로젝트도 삭제
+      foreignKey: "recruitment_id",
+      onDelete: "CASCADE",
+    });
+
+    // ✅ 모집공고와 해시태그를 다대다 관계로 설정
+    Recruitment.belongsToMany(models.Hashtag, {
+      through: models.RecruitmentHashtag || "recruitment_hashtags",
+      foreignKey: "recruitment_id",
+      otherKey: "hashtag_id",
+      onDelete: "CASCADE",
     });
   };
 
