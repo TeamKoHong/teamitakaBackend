@@ -3,7 +3,8 @@ const request = require("supertest");
 const app = require("../src/app");
 
 beforeAll(() => {
-  console.log("✅ 테스트 시작");
+  process.env.NODE_ENV = "test";
+  console.log("✅ 테스트 시작 (DB 연결 우회)");
 });
 
 afterAll(() => {

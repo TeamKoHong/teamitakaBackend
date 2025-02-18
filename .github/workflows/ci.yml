@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - dev
-      - "feature/*"  # ✅ 모든 feature 브랜치에서 CI 실행 가능하도록 설정
+      - "feature/*"
   pull_request:
     branches:
       - dev
@@ -22,49 +22,50 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost"
+          --health-cmd="mysqladmin ping -h mysql --silent"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
 
     steps:
-      # 1) 소스 체크아웃
+      # 1) 환경 변수 설정 (NODE_ENV=test)
+      - name: Set environment variables
+        run: echo "NODE_ENV=test" >> $GITHUB_ENV
+
+      # 2) 소스 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2) Node.js 환경 설정
+      # 3) Node.js 환경 설정
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: npm
 
-      # 3) 종속성 설치
+      # 4) 종속성 설치
       - name: Install dependencies
         run: npm ci
 
-      # 4) MySQL 실행 대기
+      # 5) MySQL 실행 대기
       - name: Wait for MySQL
         run: |
           echo "Waiting for MySQL to be ready..."
-          until mysqladmin ping -h"mysql" --silent; do
+          until mysqladmin ping -h mysql --silent; do
             echo "Waiting for database connection..."
             sleep 2
           done
           echo "MySQL is ready!"
 
-      # 5) DB 마이그레이션 적용
+      # 6) DB 마이그레이션 적용
       - name: Run Sequelize migrations
         run: npx sequelize-cli db:migrate --env=test
 
-      # 6) CSV 데이터 삽입 (insertCSV.js)
+      # 7) CSV 데이터 삽입 (insertCSV.js)
       - name: Insert data from CSV
         run: node src/scripts/insertCSV.js
 
-      # (선택) 7) 중복 여부 검증 - 중복 있으면 CI 실패
+      # 8) 중복 여부 검증 (선택)
       - name: Verify no duplication
         run: |
-          # 실제론 mysql CLI나 npm script를 사용해 쿼리 수행, 값이 있으면 exit 1
           echo "검증 쿼리 실행 예시"
-          # mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME -e "SELECT d.Name, COUNT(*) FROM Departments d GROUP BY d.Name HAVING COUNT(*)>1"
-          # if [ $? -eq 0 ]; then exit 1; fi

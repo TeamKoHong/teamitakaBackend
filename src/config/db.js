@@ -13,7 +13,6 @@ const sequelize = new Sequelize(
     timezone: "+09:00",
     dialectOptions: {
       charset: "utf8mb4",
-      // 필요시 collate: "utf8mb4_unicode_ci",
     },
     define: {
       collate: "utf8mb4_unicode_ci",
@@ -31,9 +30,11 @@ const connectDB = async () => {
   }
 };
 
-// ✅ 테스트 환경에서는 DB 연결을 우회
+// ✅ 테스트 환경에서는 DB 연결을 완전히 제거
 if (process.env.NODE_ENV !== "test") {
   connectDB();
+} else {
+  console.log("🚀 Running in test mode - Skipping DB connection");
 }
 
 module.exports = { sequelize, connectDB };

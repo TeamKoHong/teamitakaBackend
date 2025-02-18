@@ -1,6 +1,7 @@
-// tests/setup.js (예시)
 jest.mock("../src/config/db", () => ({
-    connectDB: jest.fn(),
-    sequelize: { authenticate: jest.fn() }
-  }));
-  
+  connectDB: jest.fn(() => console.log("🚀 Mocking DB Connection")),
+  sequelize: {
+    authenticate: jest.fn(() => console.log("🚀 Mocking DB Authentication")),
+    close: jest.fn(() => console.log("🛑 Closing Mock DB")),
+  },
+}));
