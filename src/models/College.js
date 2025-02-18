@@ -5,11 +5,11 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      CampusID: {
+      UniversityID: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "Campuses",
+          model: "Universities",
           key: "ID",
         },
       },
@@ -20,8 +20,8 @@ module.exports = (sequelize, DataTypes) => {
     });
   
     College.associate = (models) => {
-      College.belongsTo(models.Campus, {
-        foreignKey: "CampusID",
+      College.belongsTo(models.University, {
+        foreignKey: "UniversityID",
         onDelete: "CASCADE",
       });
   

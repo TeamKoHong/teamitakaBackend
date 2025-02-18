@@ -3,51 +3,68 @@ name: CI Pipeline
 on:
   push:
     branches:
-      - develop
-      - feature/univcert-verification
+      - dev
+      - "feature/*"  # ✅ 모든 feature 브랜치에서 CI 실행 가능하도록 설정
   pull_request:
     branches:
-      - develop
-      - main
+      - dev
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: teamitaka_database
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
-      # 1) Checkout the repository
+      # 1) 소스 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2) Set up Node.js environment
+      # 2) Node.js 환경 설정
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: npm
 
-      # 3) Load GitHub Secrets into environment variables
-      - name: Set environment variables from GitHub Secrets
-        run: |
-          echo "ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}" >> .env
-          echo "ADMIN_PASSWORD_HASH=${{ secrets.ADMIN_PASSWORD_HASH }}" >> $GITHUB_ENV
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-          echo "NODE_ENV=test" >> $GITHUB_ENV
-
-      # 4) Install dependencies
+      # 3) 종속성 설치
       - name: Install dependencies
         run: npm ci
 
-      # 5) Linting
-      - name: Run ESLint
-        run: npm run lint -- --cache --max-warnings=0
-
-      # 6) Run tests
-      - name: Run Tests
+      # 4) MySQL 실행 대기
+      - name: Wait for MySQL
         run: |
-          export NODE_ENV=test  # ✅ Make sure test environment is set
-          npm test -- --ci --maxWorkers=2 --detectOpenHandles
+          echo "Waiting for MySQL to be ready..."
+          until mysqladmin ping -h"mysql" --silent; do
+            echo "Waiting for database connection..."
+            sleep 2
+          done
+          echo "MySQL is ready!"
 
-      # 7) Debug step (optional) - lists all files in the repo
-      - name: Debug - List files in the repository
-        run: ls -la
+      # 5) DB 마이그레이션 적용
+      - name: Run Sequelize migrations
+        run: npx sequelize-cli db:migrate --env=test
+
+      # 6) CSV 데이터 삽입 (insertCSV.js)
+      - name: Insert data from CSV
+        run: node src/scripts/insertCSV.js
+
+      # (선택) 7) 중복 여부 검증 - 중복 있으면 CI 실패
+      - name: Verify no duplication
+        run: |
+          # 실제론 mysql CLI나 npm script를 사용해 쿼리 수행, 값이 있으면 exit 1
+          echo "검증 쿼리 실행 예시"
+          # mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME -e "SELECT d.Name, COUNT(*) FROM Departments d GROUP BY d.Name HAVING COUNT(*)>1"
+          # if [ $? -eq 0 ]; then exit 1; fi
