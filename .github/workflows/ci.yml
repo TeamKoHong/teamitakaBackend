@@ -72,10 +72,12 @@ jobs:
           docker exec $(docker ps -q --filter ancestor=mysql:8.0) \
           mysql -uroot -proot -e "SHOW DATABASES;"
 
-      # 9) DB 마이그레이션 실행
+      # 9) DB 마이그레이션 실행 (테스트 환경에서는 실행하지 않음)
       - name: Run Sequelize migrations
-        run: npx sequelize-cli db:migrate --env=test
-
-      # 10) CSV 데이터 삽입
+        if: env.NODE_ENV != 'test'
+        run: npx sequelize-cli db:migrate --config config/migration.config.js --env=test
+    
+      # 10) CSV 데이터 삽입 (마찬가지로 테스트 환경에서는 실행하지 않음)
       - name: Insert data from CSV
+        if: env.NODE_ENV != 'test'
         run: node src/scripts/insertCSV.js
