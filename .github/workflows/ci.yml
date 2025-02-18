@@ -22,6 +22,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
+          --network-alias mysql
           --health-cmd="mysqladmin ping -h mysql --silent"
           --health-interval=10s
           --health-timeout=5s
@@ -51,11 +52,13 @@ jobs:
       - name: Debug environment variables
         run: env | grep NODE_ENV
 
-      # 6) MySQL 실행 대기 (더 안정적인 방식으로 변경)
+      # 6) MySQL 실행 대기 (DNS 전파를 위한 초기 지연 추가)
       - name: Wait for MySQL
         run: |
+          echo "Sleeping for 10 seconds to allow DNS propagation..."
+          sleep 10
           echo "Waiting for MySQL to be ready..."
-          until nc -z mysql 3306; do
+          until mysqladmin ping -h mysql -uroot -proot --silent; do
             echo "Waiting for database connection..."
             sleep 2
           done
@@ -75,8 +78,8 @@ jobs:
       # 9) DB 마이그레이션 실행 (테스트 환경에서는 실행하지 않음)
       - name: Run Sequelize migrations
         if: env.NODE_ENV != 'test'
-        run: npx sequelize-cli db:migrate --config config/migration.config.js --env=test
-    
+        run: npx sequelize-cli db:migrate --env=test
+
       # 10) CSV 데이터 삽입 (마찬가지로 테스트 환경에서는 실행하지 않음)
       - name: Insert data from CSV
         if: env.NODE_ENV != 'test'
