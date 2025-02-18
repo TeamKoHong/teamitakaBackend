@@ -12,8 +12,8 @@ module.exports = {
   test: {
     username: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "",
-    database: process.env.DB_NAME || "teamitaka_database",
-    host: process.env.DB_HOST || "mysql",  // ✅ 변경: 컨테이너명 사용
+    database: process.env.DB_NAME || "test_db",
+    host: "mysql",  // ✅ 컨테이너 내 MySQL 서비스 참조
     dialect: "mysql",
     logging: false,
   },
