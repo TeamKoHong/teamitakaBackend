@@ -39,7 +39,7 @@ router.get("/recruitment/:recruitment_id", async (req, res) => {
 
 //모집공고 작성
 router.post("/recruitment", authMiddleWare, async (req, res) => {
-    const { title, description, status } = req.body;
+    const { title, description, status, start_date, end_date } = req.body;
     const user_id = res.locals.user.user_id;
     const created_at = new Date(); // 현재 시간 설정
     //const project_id = res.locals.project.project_id
@@ -49,6 +49,8 @@ router.post("/recruitment", authMiddleWare, async (req, res) => {
         description,
         status,
         user_id,
+        start_date,
+        end_date,
         created_at,
         //project_id,
       });
@@ -61,11 +63,11 @@ router.post("/recruitment", authMiddleWare, async (req, res) => {
   });
 
 
-//수정정
+//수정
   router.put("/recruitment/:recruitment_id", authMiddleWare, async (req, res) => {
     try {
       const { recruitment_id } = req.params;
-      const { title, description, status } = req.body;
+      const { title, description, status, start_date, end_date } = req.body;
   
       // 모집공고 찾기
       const recruitment = await Recruitment.findByPk(recruitment_id);
@@ -95,7 +97,7 @@ router.post("/recruitment", authMiddleWare, async (req, res) => {
   
       // 모집공고 상태 업데이트
       await Recruitment.update(
-        { title, description, status },
+        { title, description, status, start_date, end_date },
         { where: { recruitment_id } }
       );
   
