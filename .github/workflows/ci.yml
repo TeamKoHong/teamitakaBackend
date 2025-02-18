@@ -47,7 +47,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # 5) MySQL 실행 대기
+      # 5) 환경 변수 디버깅
+      - name: Debug environment variables
+        run: env | grep NODE_ENV
+
+      # 6) MySQL 실행 대기
       - name: Wait for MySQL
         run: |
           echo "Waiting for MySQL to be ready..."
@@ -57,15 +61,14 @@ jobs:
           done
           echo "MySQL is ready!"
 
-      # 6) DB 마이그레이션 적용
+      # 7) MySQL 컨테이너 로그 출력
+      - name: Debug MySQL container
+        run: docker logs $(docker ps -q --filter ancestor=mysql:8.0)
+
+      # 8) DB 마이그레이션 실행
       - name: Run Sequelize migrations
         run: npx sequelize-cli db:migrate --env=test
 
-      # 7) CSV 데이터 삽입 (insertCSV.js)
+      # 9) CSV 데이터 삽입
       - name: Insert data from CSV
         run: node src/scripts/insertCSV.js
-
-      # 8) 중복 여부 검증 (선택)
-      - name: Verify no duplication
-        run: |
-          echo "검증 쿼리 실행 예시"

@@ -3,11 +3,11 @@ require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  process.env.DB_NAME || "test_db", // ✅ 기본값 설정
+  process.env.DB_USER || "root",
+  process.env.DB_PASSWORD || "",
   {
-    host: process.env.DB_HOST,
+    host: process.env.DB_HOST || "127.0.0.1",
     dialect: "mysql",
     logging: false,
     timezone: "+09:00",
@@ -21,6 +21,11 @@ const sequelize = new Sequelize(
 );
 
 const connectDB = async () => {
+  if (process.env.NODE_ENV === "test") {
+    console.log("🚀 Running in test mode - Skipping DB connection");
+    return;
+  }
+
   try {
     await sequelize.authenticate();
     console.log("✅ Database connection established.");
@@ -31,10 +36,6 @@ const connectDB = async () => {
 };
 
 // ✅ 테스트 환경에서는 DB 연결을 완전히 제거
-if (process.env.NODE_ENV !== "test") {
-  connectDB();
-} else {
-  console.log("🚀 Running in test mode - Skipping DB connection");
-}
+connectDB();
 
 module.exports = { sequelize, connectDB };
