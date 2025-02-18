@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { Recruitment, Comment, Like } = require("../models");
 const { Op } = require("sequelize");
-const authMiddleWare = require("../middlewares/auth-middleware");
+const authMiddleWare = require("../middlewares/authMiddleware");
 
 // 특정 모집공고의 댓글 조회
 router.get("/recruitments/:recruitment_id/comment", async (req, res) => {
