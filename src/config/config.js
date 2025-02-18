@@ -11,7 +11,7 @@ module.exports = {
   },
   test: {
     username: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "",
+    password: process.env.DB_PASSWORD || "root",
     database: process.env.DB_NAME || "test_db",
     host: "mysql",  // ✅ 컨테이너 내 MySQL 서비스 참조
     dialect: "mysql",
