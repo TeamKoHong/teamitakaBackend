@@ -7,6 +7,8 @@
 prisma/migrations/
 prisma/migration_lock.toml
 node_modules/
+npm-debug.log
+yarn-error.log
 
 .DS_Store
 backup.sql
