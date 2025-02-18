@@ -3,7 +3,7 @@ const router = express.Router();
 const cookieParser = require("cookie-parser");
 const { Recruitment, Project } = require("../models");
 
-const { Recruitment, Comment, Like } = require("../models");
+const { Recruitment, Comment, Scrap } = require("../models");
 const { Op } = require("sequelize");
 const authMiddleWare = require("../middlewares/auth-middleware");
 
