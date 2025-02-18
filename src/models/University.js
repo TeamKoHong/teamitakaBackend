@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   
     University.associate = (models) => {
-      University.hasMany(models.Campus, {
+      University.hasMany(models.College, {
         foreignKey: "UniversityID",
         onDelete: "CASCADE",
       });

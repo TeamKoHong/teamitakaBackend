@@ -9,11 +9,11 @@ module.exports = {
         autoIncrement: true,
         primaryKey: true,
       },
-      CampusID: {
+      UniversityID: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Campuses', // Campuses 테이블 참조
+          model: 'Universities',
           key: 'ID',
         },
         onDelete: 'CASCADE',
