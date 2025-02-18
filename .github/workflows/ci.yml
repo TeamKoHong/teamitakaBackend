@@ -57,13 +57,14 @@ jobs:
         run: |
           echo "Sleeping for 10 seconds to allow DNS propagation..."
           sleep 10
+          export MYSQL_PWD=root
           echo "Waiting for MySQL to be ready..."
-          until mysqladmin ping -h mysql -uroot -proot --silent; do
+          until mysqladmin ping -h mysql --silent; do
             echo "Waiting for database connection..."
             sleep 2
           done
           echo "MySQL is ready!"
-
+    
       # 7) MySQL 컨테이너 상태 확인 (디버깅용)
       - name: Debug MySQL container
         run: docker logs $(docker ps -q --filter ancestor=mysql:8.0)
