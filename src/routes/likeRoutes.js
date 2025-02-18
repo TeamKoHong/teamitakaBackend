@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const { Recruitment, Like, User } = require("../models");
-const authMiddleWare = require("../middlewares/auth-middleware");
+const authMiddleWare = require("../middlewares/authMiddleware");
 
 router.get("/likes/recruitments", authMiddleWare, async (req, res) => {
   const user_id = res.locals.user.userId;
