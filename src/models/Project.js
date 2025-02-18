@@ -38,6 +38,7 @@ module.exports = (sequelize) => {
       },
     },
     {
+      freezeTableName: true,
       timestamps: true, // createdAt, updatedAt 자동 추가
     }
   );
