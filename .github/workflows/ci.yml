@@ -41,8 +41,15 @@ jobs:
       - name: Set compute region
         run: gcloud config set compute/region ${{ secrets.GCP_REGION }}
         
-      - name: Connect to Cloud SQL
-        run: gcloud sql connect ${{ secrets.GCP_CLOUDSQL_INSTANCE }} --user=root
+        - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Connect to Cloud SQL using IAM
+        run: |
+          gcloud auth activate-service-account --key-file=${{ secrets.GCP_SA_KEY }}
+          gcloud sql connect ${{ secrets.GCP_CLOUDSQL_INSTANCE }} --user=root --quiet      
         
 
       - name: Run Sequelize migrations
