@@ -21,8 +21,8 @@ db.University = require("./University")(sequelize, Sequelize.DataTypes);
 db.College = require("./College")(sequelize, Sequelize.DataTypes);
 db.Department = require("./Department")(sequelize, Sequelize.DataTypes);
 db.Application = require("./Application")(sequelize, Sequelize.DataTypes);
-db.Hashtag = require("./Hashtag")(sequelize, Sequelize.DataTypes); // ✅ 추가
-db.RecruitmentHashtag = require("./RecruitmentHashtag")(sequelize, Sequelize.DataTypes); // ✅ 추가
+db.Hashtag = require("./Hashtag")(sequelize, Sequelize.DataTypes);
+db.RecruitmentHashtag = require("./RecruitmentHashtag")(sequelize, Sequelize.DataTypes);
 
 // 모델 간 관계 설정
 Object.values(db).forEach((model) => {
