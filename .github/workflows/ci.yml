@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # ✅ OIDC 토큰을 올바르게 전달하기 위해 필요
+      id-token: write  # OIDC 토큰 전달을 위해 필요
       contents: read
 
     steps:
@@ -61,27 +61,25 @@ jobs:
       - name: Configure gcloud SDK
         if: ${{ env.ENV == 'production' }}
         run: |
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-          gcloud config set compute/region ${{ secrets.GCP_REGION }}
+          gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
+          gcloud config set compute/region "${{ secrets.GCP_REGION }}"
 
-          - name: Securely Connect to Cloud SQL (Production)
-          if: ${{ env.ENV == 'production' }}
-          run: |
-            set -o errexit -o nounset -o pipefail
-            echo "🔒 Connecting to Cloud SQL using IAM authentication..."
-            attempt=0
-            max_attempts=5
-            until gcloud sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet --enable-iam; do
-              attempt=$((attempt+1))
-              if [ $attempt -ge $max_attempts ]; then
-                echo "❌ ERROR: Cloud SQL Connection Failed after $max_attempts attempts. Verify IAM permissions and network settings."
-                exit 1
-              fi
-              echo "❗ Operation in progress. Retrying in 10 seconds... (Attempt: $attempt)"
-              sleep 10
-            done
-        
-        
+      - name: Securely Connect to Cloud SQL (Production)
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          set -o errexit -o nounset -o pipefail
+          echo "🔒 Connecting to Cloud SQL using IAM authentication..."
+          attempt=0
+          max_attempts=5
+          until gcloud sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet --enable-iam; do
+            attempt=$((attempt+1))
+            if [ $attempt -ge $max_attempts ]; then
+              echo "❌ ERROR: Cloud SQL Connection Failed after $max_attempts attempts. Verify IAM permissions and network settings."
+              exit 1
+            fi
+            echo "❗ Operation in progress. Retrying in 10 seconds... (Attempt: $attempt)"
+            sleep 10
+          done
 
       - name: Run Sequelize migrations
         run: |
