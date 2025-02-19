@@ -29,6 +29,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # ✅ 환경 감지 및 ENV 변수 설정
       - name: Determine Environment
         id: env-check
         run: |
