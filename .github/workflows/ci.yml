@@ -51,6 +51,11 @@ jobs:
           echo "DB_CHARSET=utf8mb4" >> .env
           echo "✅ .env file for development has been created."
 
+      - name: Write service account key to file
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > service-account-key.json
+
       - name: Authenticate to Google Cloud (Workload Identity Federation)
         if: ${{ env.ENV == 'production' }}
         uses: google-github-actions/auth@v1
@@ -64,17 +69,21 @@ jobs:
           gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
           gcloud config set compute/region "${{ secrets.GCP_REGION }}"
 
+      - name: Download Cloud SQL Auth Proxy (Production)
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          echo "🔽 Downloading Cloud SQL Auth Proxy..."
+          curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
+          chmod +x cloud_sql_proxy
+
       - name: Start Cloud SQL Auth Proxy (Production)
         if: ${{ env.ENV == 'production' }}
         run: |
           echo "🔒 Starting Cloud SQL Auth Proxy with IAM authentication..."
-          ./cloud-sql-proxy --auto-iam-authn "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --credentials-file="/path/to/service-account-key.json" --port 3306 &
+          ./cloud_sql_proxy --auto-iam-authn "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --credentials-file="service-account-key.json" --port 3306 &
           echo "Waiting for Cloud SQL Auth Proxy to fully start..."
-          # 대기 시간을 30초로 늘림
           sleep 30
-          # 디버깅: 3306 포트에 리스닝 중인지 확인 (옵션)
           lsof -i :3306 || echo "Port 3306 not listening yet"
-        
 
       - name: Run Sequelize migrations
         run: |
@@ -104,8 +113,7 @@ env:
   # ✅ Production 환경 (Cloud SQL)
   GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
   GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
-  # GCP_DB_PASSWORD는 IAM 인증 사용자에서는 필요하지 않으므로 제거하거나 빈 값으로 처리합니다.
-  GCP_DB_PASSWORD: ""
+  GCP_DB_PASSWORD: ""  # IAM 인증 사용자에서는 비밀번호 사용하지 않음
   GCP_CLOUDSQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}  # 예: teamitaka:us-central1:teamitaka
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: ${{ secrets.GCP_REGION }}
