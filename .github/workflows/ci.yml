@@ -1,75 +1,39 @@
-name: CI Pipeline
+name: CI
 
 on:
   push:
     branches:
-      - dev
-      - "feature/*"
+      - main
   pull_request:
-    branches:
-      - dev
 
 jobs:
-  build:
+  cloud-sql-connection:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Set environment variables
-        run: echo "NODE_ENV=production" >> $GITHUB_ENV
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Authenticate to Google Cloud (IAM 기반)
+      - name: Authenticate to Google Cloud (WIF)
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Configure gcloud SDK
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          install_components: sql
+
+      - name: Verify gcloud Authentication
         run: |
-          set -o errexit -o nounset -o pipefail
-          echo "🔄 Configuring Google Cloud SDK..."
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-          gcloud config set compute/region ${{ secrets.GCP_REGION }}
+          gcloud auth list
+          gcloud auth application-default print-access-token
 
-      - name: Securely Connect to Cloud SQL
+      - name: Connect to Cloud SQL using IAM
+        env:
+          CLOUD_SQL_INSTANCE: ${{ secrets.CLOUD_SQL_CONNECTION_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
         run: |
-          set -o errexit -o nounset -o pipefail
-          echo "🔒 Connecting to Cloud SQL using IAM authentication..."
-          if ! gcloud sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet; then
-            echo "❌ ERROR: Cloud SQL Connection Failed. Verify IAM permissions and network settings."
-            exit 1
-          fi
-
-      - name: Run Sequelize migrations
-        run: npx sequelize-cli db:migrate --env=production
-
-      - name: Insert data from CSV
-        run: node src/scripts/insertCSV.js
-
-      - name: Deploy Application
-        run: npm run start
-
-env:
-  DB_USER: ${{ secrets.DB_USER }}
-  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  DB_NAME: ${{ secrets.DB_NAME }}
-  DB_HOST: ${{ secrets.GCP_CLOUDSQL_PUBLIC_IP }}
-  DB_DIALECT: "mysql"
-
-  # ✅ Google Cloud SQL 전용 환경 변수 추가
-  GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
-  GCP_DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
-  GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
-  GCP_DB_HOST: ${{ secrets.GCP_DB_HOST }}
-  GCP_DB_PORT: "3306"
+          # 접속 시 impersonation 옵션을 통해 IAM 인증을 적용
+          gcloud sql connect "$CLOUD_SQL_INSTANCE" --user="$DB_USER" --quiet --impersonate-service-account="${{ secrets.GCP_SERVICE_ACCOUNT }}"
