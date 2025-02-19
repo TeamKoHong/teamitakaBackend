@@ -1,7 +1,5 @@
 require("dotenv").config();
 
-const isCloudEnv = process.env.NODE_ENV === "production";
-
 module.exports = {
   development: {
     username: process.env.DB_USER || "root",
@@ -12,13 +10,13 @@ module.exports = {
     logging: false,
   },
   production: {
-    // When running in a Cloud environment (using Cloud SQL Auth Proxy),
-    // force the host to localhost since the proxy exposes the database on 127.0.0.1.
-    username: isCloudEnv ? (process.env.GCP_DB_USER || "root") : (process.env.DB_USER || "root"),
-    password: isCloudEnv ? (process.env.GCP_DB_PASSWORD || "") : (process.env.DB_PASSWORD || ""),
-    database: isCloudEnv ? (process.env.GCP_DB_NAME || "teamitaka_database") : (process.env.DB_NAME || "teamitaka_database"),
-    host: isCloudEnv ? "127.0.0.1" : (process.env.DB_HOST || "127.0.0.1"),
-    port: isCloudEnv ? (process.env.GCP_DB_PORT || 3306) : (process.env.DB_PORT || 3306),
+    // Cloud SQL Auth Proxy를 사용할 경우, 
+    // 데이터베이스는 반드시 로컬(IPv4: 127.0.0.1)로 연결되어야 합니다.
+    username: process.env.GCP_DB_USER || "root",
+    password: process.env.GCP_DB_PASSWORD || "",
+    database: process.env.GCP_DB_NAME || "teamitaka_database",
+    host: "127.0.0.1", // 강제로 IPv4 로컬 주소 사용
+    port: 3306,       // 표준 포트 사용
     dialect: "mysql",
     logging: false,
   },
