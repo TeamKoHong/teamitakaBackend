@@ -12,10 +12,12 @@ module.exports = {
     logging: false,
   },
   production: {
+    // When running in a Cloud environment (using Cloud SQL Auth Proxy),
+    // force the host to localhost since the proxy exposes the database on 127.0.0.1.
     username: isCloudEnv ? (process.env.GCP_DB_USER || "root") : (process.env.DB_USER || "root"),
     password: isCloudEnv ? (process.env.GCP_DB_PASSWORD || "") : (process.env.DB_PASSWORD || ""),
     database: isCloudEnv ? (process.env.GCP_DB_NAME || "teamitaka_database") : (process.env.DB_NAME || "teamitaka_database"),
-    host: isCloudEnv ? (process.env.GCP_DB_HOST || "127.0.0.1") : (process.env.DB_HOST || "127.0.0.1"),
+    host: isCloudEnv ? "127.0.0.1" : (process.env.DB_HOST || "127.0.0.1"),
     port: isCloudEnv ? (process.env.GCP_DB_PORT || 3306) : (process.env.DB_PORT || 3306),
     dialect: "mysql",
     logging: false,
