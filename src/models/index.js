@@ -20,9 +20,11 @@ if (sequelize) {
   db.University = require("./University")(sequelize, Sequelize.DataTypes);
   db.College = require("./College")(sequelize, Sequelize.DataTypes);
   db.Department = require("./Department")(sequelize, Sequelize.DataTypes);
-
+  db.Application = require("./Application")(sequelize, Sequelize.DataTypes);
+  
   Object.values(db).forEach((model) => {
     if (model && model.associate) {
+      console.log('Associating model: ${model.name}');
       model.associate(db);
     }
   });
