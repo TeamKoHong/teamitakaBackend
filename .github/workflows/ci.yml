@@ -64,22 +64,14 @@ jobs:
           gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
           gcloud config set compute/region "${{ secrets.GCP_REGION }}"
 
-      - name: Securely Connect to Cloud SQL (Production)
+      - name: Start Cloud SQL Auth Proxy (Production)
         if: ${{ env.ENV == 'production' }}
         run: |
-          set -o errexit -o nounset -o pipefail
-          echo "🔒 Connecting to Cloud SQL using IAM authentication..."
-          attempt=0
-          max_attempts=5
-          until gcloud beta sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet --enable-iam; do
-            attempt=$((attempt+1))
-            if [ $attempt -ge $max_attempts ]; then
-              echo "❌ ERROR: Cloud SQL Connection Failed after $max_attempts attempts. Verify IAM permissions and network settings."
-              exit 1
-            fi
-            echo "❗ Operation in progress. Retrying in 10 seconds... (Attempt: $attempt)"
-            sleep 10
-          done
+          echo "🔒 Starting Cloud SQL Auth Proxy using IAM authentication..."
+          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+          chmod +x cloud_sql_proxy
+          ./cloud_sql_proxy -instances="${{ secrets.GCP_CLOUDSQL_INSTANCE }}"=tcp:3306 -enable_iam_login &
+          sleep 10
 
       - name: Run Sequelize migrations
         run: |
