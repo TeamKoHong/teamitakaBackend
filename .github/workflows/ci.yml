@@ -71,7 +71,7 @@ jobs:
           echo "🔒 Connecting to Cloud SQL using IAM authentication..."
           attempt=0
           max_attempts=5
-          until gcloud sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet --enable-iam; do
+          until gcloud beta sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet --enable-iam; do
             attempt=$((attempt+1))
             if [ $attempt -ge $max_attempts ]; then
               echo "❌ ERROR: Cloud SQL Connection Failed after $max_attempts attempts. Verify IAM permissions and network settings."
