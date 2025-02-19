@@ -4,36 +4,55 @@ on:
   push:
     branches:
       - main
-  pull_request:
+  pull_request_target:  # 외부 PR에서도 Secrets가 안전하게 전달됨
 
 jobs:
   cloud-sql-connection:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v2
 
+      - name: Check if required Secrets are set
+        run: |
+          if [ -z "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ]; then
+            echo "WARNING: GCP_WORKLOAD_IDENTITY_PROVIDER not set"
+          else
+            echo "::add-mask::${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+            echo "GCP_WORKLOAD_IDENTITY_PROVIDER is set"
+          fi
+          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT }}" ]; then
+            echo "WARNING: GCP_SERVICE_ACCOUNT not set"
+          else
+            echo "::add-mask::${{ secrets.GCP_SERVICE_ACCOUNT }}"
+            echo "GCP_SERVICE_ACCOUNT is set"
+          fi
+
       - name: Authenticate to Google Cloud (WIF)
+        # 내부 PR에서만 실행하여 외부 PR에서는 인증 단계를 건너뛰도록 설정
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Setup gcloud CLI
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           install_components: sql
 
-      - name: Verify gcloud Authentication
+      - name: Verify Authentication
+        if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
           gcloud auth list
           gcloud auth application-default print-access-token
 
       - name: Connect to Cloud SQL using IAM
+        if: github.event.pull_request.head.repo.full_name == github.repository
         env:
-          CLOUD_SQL_INSTANCE: ${{ secrets.CLOUD_SQL_CONNECTION_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
+          CLOUD_SQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}
+          DB_USER: ${{ secrets.GCP_DB_USER }}
         run: |
-          # 접속 시 impersonation 옵션을 통해 IAM 인증을 적용
           gcloud sql connect "$CLOUD_SQL_INSTANCE" --user="$DB_USER" --quiet --impersonate-service-account="${{ secrets.GCP_SERVICE_ACCOUNT }}"
