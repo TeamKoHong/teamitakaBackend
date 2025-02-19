@@ -34,15 +34,12 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
             echo "ENV=development" >> $GITHUB_ENV
-            echo "::set-output name=ENV::development"
           else
             echo "ENV=production" >> $GITHUB_ENV
-            echo "::set-output name=ENV::production"
           fi
 
-      # ✅ 로컬 개발 환경일 경우 .env 파일 생성
       - name: Generate .env file (for development)
-        if: ${{ steps.env-check.outputs.ENV == 'development' }}
+        if: ${{ env.ENV == 'development' }}
         run: |
           echo "NODE_ENV=development" >> .env
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
@@ -52,34 +49,37 @@ jobs:
           echo "PORT=${{ secrets.PORT }}" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
           echo "DB_CHARSET=utf8mb4" >> .env
-          echo "✅ .env file for development has been created."
 
-      # ✅ 배포 환경에서 GCP Workload Identity Federation을 활용하여 인증
       - name: Authenticate to Google Cloud (Workload Identity Federation)
-        if: ${{ steps.env-check.outputs.ENV == 'production' }}
+        if: env.ENV == 'production'
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Configure gcloud SDK
-        if: ${{ steps.env-check.outputs.ENV == 'production' }}
+        if: env.ENV == 'production'
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/region ${{ secrets.GCP_REGION }}
 
-      # ✅ 배포 환경에서 Cloud SQL에 안전하게 연결
+      - name: Unset GOOGLE_APPLICATION_CREDENTIALS
+        if: env.ENV == 'production'
+        run: unset GOOGLE_APPLICATION_CREDENTIALS
+
       - name: Securely Connect to Cloud SQL (Production)
-        if: ${{ steps.env-check.outputs.ENV == 'production' }}
+        if: env.ENV == 'production'
         run: |
+          set -o errexit -o nounset -o pipefail
           echo "🔒 Connecting to Cloud SQL using IAM authentication..."
-          gcloud auth application-default login
-          gcloud sql connect teamitaka --user=teamitaka@teamitaka.iam.gserviceaccount.com --quiet --enable-iam
-    
+          if ! gcloud sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet --enable-iam; then
+            echo "❌ ERROR: Cloud SQL Connection Failed. Verify IAM permissions and network settings."
+            exit 1
+          fi
 
       - name: Run Sequelize migrations
         run: |
-          if [[ "${{ steps.env-check.outputs.ENV }}" == "development" ]]; then
+          if [[ "${{ env.ENV }}" == "development" ]]; then
             npx sequelize-cli db:migrate --env=development
           else
             npx sequelize-cli db:migrate --env=production
@@ -90,3 +90,23 @@ jobs:
 
       - name: Deploy Application
         run: npm run start
+
+env:
+  NODE_ENV: ${{ env.ENV }}
+
+  # ✅ 로컬 개발 환경 변수
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  PORT: ${{ secrets.PORT }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DB_CHARSET: "utf8mb4"
+  DB_DIALECT: "mysql"
+
+  # ✅ CI/CD 배포 환경 변수 (Cloud SQL)
+  GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
+  GCP_DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
+  GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
+  GCP_DB_HOST: ${{ secrets.GCP_DB_HOST }}
+  GCP_DB_PORT: "3306"
