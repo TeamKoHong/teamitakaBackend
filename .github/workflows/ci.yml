@@ -12,82 +12,108 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: teamitaka_database
-        ports:
-          - 3306:3306
-        options: >-
-          --network-alias mysql
-          --health-cmd="mysqladmin ping -h mysql --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+    permissions:
+      id-token: write  # OIDC 토큰 전달을 위해 필요
+      contents: read
 
     steps:
-      # 1) 환경 변수 설정 (NODE_ENV=test)
-      - name: Set environment variables
-        run: echo "NODE_ENV=test" >> $GITHUB_ENV
-
-      # 2) 소스 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 3) Node.js 환경 설정
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: npm
 
-      # 4) 종속성 설치
       - name: Install dependencies
         run: npm ci
 
-      # 5) 환경 변수 디버깅 (정상 설정 확인)
-      - name: Debug environment variables
-        run: env | grep NODE_ENV
-
-      # 6) MySQL 실행 대기 (DNS 전파를 위한 초기 지연 추가)
-      - name: Wait for MySQL
+      - name: Determine Environment
+        id: env-check
         run: |
-          echo "Sleeping for 10 seconds to allow DNS propagation..."
-          sleep 10
-          export MYSQL_PWD=root
-          echo "Waiting for MySQL to be ready..."
-          for i in $(seq 1 30); do
-            if mysqladmin -u root ping -h mysql --silent; then
-              echo "MySQL is ready!"
-              exit 0
-            fi
-            echo "Waiting for database connection..."
-            sleep 2
-          done
-          echo "MySQL did not become ready in time"
-          exit 1
+          if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "ENV=development" >> $GITHUB_ENV
+          else
+            echo "ENV=production" >> $GITHUB_ENV
+          fi
 
-    
-      # 7) MySQL 컨테이너 상태 확인 (디버깅용)
-      - name: Debug MySQL container
-        run: docker logs $(docker ps -q --filter ancestor=mysql:8.0)
-
-      # 8) MySQL 접속 테스트 (디버깅용)
-      - name: Debug MySQL Connection
+      - name: Generate .env file (for development)
+        if: ${{ env.ENV == 'development' }}
         run: |
-          echo "Checking MySQL connection..."
-          docker exec $(docker ps -q --filter ancestor=mysql:8.0) \
-          mysql -uroot -proot -e "SHOW DATABASES;"
+          echo "NODE_ENV=development" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "DB_CHARSET=utf8mb4" >> .env
+          echo "✅ .env file for development has been created."
 
-      # 9) DB 마이그레이션 실행 (테스트 환경에서는 실행하지 않음)
+      - name: Write service account key to file
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > service-account-key.json
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        if: ${{ env.ENV == 'production' }}
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Configure gcloud SDK
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
+          gcloud config set compute/region "${{ secrets.GCP_REGION }}"
+
+      - name: Download Cloud SQL Auth Proxy (Production)
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          echo "🔽 Downloading Cloud SQL Auth Proxy..."
+          curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
+          chmod +x cloud_sql_proxy
+
+      - name: Start Cloud SQL Auth Proxy (Production)
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          echo "🔒 Starting Cloud SQL Auth Proxy with IAM authentication..."
+          ./cloud_sql_proxy --auto-iam-authn "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --credentials-file="service-account-key.json" --port 3306 &
+          echo "Waiting for Cloud SQL Auth Proxy to fully start..."
+          sleep 30
+          lsof -i :3306 || echo "Port 3306 not listening yet"
+
       - name: Run Sequelize migrations
-        if: env.NODE_ENV != 'test'
-        run: npx sequelize-cli db:migrate --env=test
+        run: |
+          if [[ "${{ env.ENV }}" == "development" ]]; then
+            npx sequelize-cli db:migrate --env=development
+          else
+            npx sequelize-cli db:migrate --env=production
+          fi
 
-      # 10) CSV 데이터 삽입 (마찬가지로 테스트 환경에서는 실행하지 않음)
       - name: Insert data from CSV
-        if: env.NODE_ENV != 'test'
         run: node src/scripts/insertCSV.js
+
+      - name: Deploy Application
+        run: npm run start
+
+env:
+  # ✅ 로컬 개발 환경 변수
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  PORT: ${{ secrets.PORT }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DB_CHARSET: "utf8mb4"
+  DB_DIALECT: "mysql"
+
+  # ✅ Production 환경 (Cloud SQL)
+  GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
+  GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
+  GCP_DB_PASSWORD: ""  # IAM 인증 사용자에서는 비밀번호 사용하지 않음
+  GCP_CLOUDSQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}  # 예: teamitaka:us-central1:teamitaka
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ secrets.GCP_REGION }}
