@@ -3,7 +3,12 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - dev
+      - "feature/*"
+  pull_request:
+    branches:
+      - dev
+  workflow_dispatch:
   pull_request_target:  # 외부 PR에서도 Secrets가 안전하게 전달됨
 
 jobs:
