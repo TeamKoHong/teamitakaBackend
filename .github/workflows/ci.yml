@@ -58,3 +58,10 @@ env:
   DB_NAME: ${{ secrets.DB_NAME }}
   DB_HOST: ${{ secrets.GCP_CLOUDSQL_PUBLIC_IP }}
   DB_DIALECT: "mysql"
+
+  # ✅ Google Cloud SQL 전용 환경 변수 추가
+  GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
+  GCP_DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
+  GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
+  GCP_DB_HOST: ${{ secrets.GCP_DB_HOST }}
+  GCP_DB_PORT: "3306"
