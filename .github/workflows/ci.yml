@@ -40,21 +40,22 @@ jobs:
       - name: Set compute region
         run: gcloud config set compute/region ${{ secrets.GCP_REGION }}
 
-      - name: Securely Connect to Cloud SQL
+      - name: Authenticate to Google Cloud
         run: |
           set -o errexit -o nounset -o pipefail
-          echo "::add-mask::${{ secrets.GCP_SA_KEY }}"  # Secrets 마스킹
-          echo "🔄 Authenticating with Google Cloud..."
-          gcloud auth activate-service-account --key-file=${{ secrets.GCP_SA_KEY }} || { echo "❌ GCloud authentication failed"; exit 1; }
+          echo "::add-mask::${{ secrets.GCP_SA_KEY }}"  # 서비스 계정 키 마스킹
+          echo "🔒 Authenticating with Google Cloud..."
           
-          echo "🔍 Checking Google Cloud SQL Instance..."
-          echo "🔹 Cloud SQL Instance: ${GCP_CLOUDSQL_INSTANCE:0:5}****"
-          
-          echo "🔄 Running Cloud SQL Connection Test..."
+          echo "${{ secrets.GCP_SA_KEY }}" > /tmp/gcp_key.json  # 환경 변수로 저장 후 사용
+          gcloud auth activate-service-account --key-file=/tmp/gcp_key.json
+      
+          echo "🔄 Connecting to Cloud SQL..."
           if ! gcloud sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet; then
-            echo "❌ ERROR: Cloud SQL Connection Failed"
+            echo "❌ ERROR: Cloud SQL Connection Failed. Check IAM permissions and network settings."
             exit 1
           fi
+      
+          rm -f /tmp/gcp_key.json  # 인증 후 파일 삭제      
 
       - name: Run Sequelize migrations
         run: npx sequelize-cli db:migrate --env=production
