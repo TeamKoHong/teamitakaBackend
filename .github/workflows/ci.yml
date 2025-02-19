@@ -36,13 +36,14 @@ jobs:
       
 
       - name: Configure gcloud SDK
-        run: |
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-          gcloud config set compute/region ${{ secrets.GCP_REGION }}
-
+        run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+        
+      - name: Set compute region
+        run: gcloud config set compute/region ${{ secrets.GCP_REGION }}
+        
       - name: Connect to Cloud SQL
-        run: |
-          gcloud sql connect ${{ secrets.GCP_CLOUDSQL_INSTANCE }} --user=root --quiet
+        run: gcloud sql connect ${{ secrets.GCP_CLOUDSQL_INSTANCE }} --user=root
+        
 
       - name: Run Sequelize migrations
         run: npx sequelize-cli db:migrate --env=production
