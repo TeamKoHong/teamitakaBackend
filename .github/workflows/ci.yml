@@ -69,7 +69,12 @@ jobs:
         run: |
           echo "🔒 Starting Cloud SQL Auth Proxy with IAM authentication..."
           ./cloud-sql-proxy --auto-iam-authn "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --credentials-file="/path/to/service-account-key.json" --port 3306 &
-          sleep 10
+          echo "Waiting for Cloud SQL Auth Proxy to fully start..."
+          # 대기 시간을 30초로 늘림
+          sleep 30
+          # 디버깅: 3306 포트에 리스닝 중인지 확인 (옵션)
+          lsof -i :3306 || echo "Port 3306 not listening yet"
+        
 
       - name: Run Sequelize migrations
         run: |

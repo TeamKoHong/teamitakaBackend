@@ -10,12 +10,10 @@ module.exports = {
     logging: false,
   },
   production: {
-    // Cloud SQL Auth Proxy가 127.0.0.1:3306에서 실행되므로 호스트를 127.0.0.1로 고정합니다.
-    // IAM 인증 사용자이므로 비밀번호는 빈 문자열("")입니다.
     username: process.env.GCP_DB_USER || "iam_user",
-    password: "",
+    password: "",  // IAM 인증 사용자이므로 비밀번호 없음
     database: process.env.GCP_DB_NAME || "teamitaka_database",
-    host: "127.0.0.1",
+    host: "127.0.0.1",  // Cloud SQL Auth Proxy가 리스닝하는 주소
     port: 3306,
     dialect: "mysql",
     logging: false,
