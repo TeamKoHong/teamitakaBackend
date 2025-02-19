@@ -13,8 +13,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: 'read'
-      id-token: 'write'  # Workload Identity Federation을 사용하려면 필요
+      id-token: write  # ✅ OIDC 토큰을 올바르게 전달하기 위해 필요
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -29,19 +29,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Authenticate to Google Cloud (IAM 기반)
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
+      - name: Debug OIDC Token (확인용)
+        run: |
+          echo "🔍 Checking OIDC token claims..."
+          curl -s -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" $ACTIONS_ID_TOKEN_REQUEST_URL | jq .
+
       - name: Configure gcloud SDK
         run: |
-          gcloud config set project teamitaka
-          gcloud config set compute/region us-central1
+          gcloud config set project ${{ secrets.GCP_PROJECT }}
+          gcloud config set compute/region ${{ secrets.GCP_REGION }}
 
       - name: Securely Connect to Cloud SQL
         run: |
+          set -o errexit -o nounset -o pipefail
           echo "🔒 Connecting to Cloud SQL using IAM authentication..."
           if ! gcloud sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet; then
             echo "❌ ERROR: Cloud SQL Connection Failed. Verify IAM permissions and network settings."
@@ -56,3 +62,17 @@ jobs:
 
       - name: Deploy Application
         run: npm run start
+
+env:
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+  DB_HOST: ${{ secrets.GCP_CLOUDSQL_PUBLIC_IP }}
+  DB_DIALECT: "mysql"
+
+  # ✅ Google Cloud SQL 전용 환경 변수 추가
+  GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
+  GCP_DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
+  GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
+  GCP_DB_HOST: ${{ secrets.GCP_DB_HOST }}
+  GCP_DB_PORT: "3306"
