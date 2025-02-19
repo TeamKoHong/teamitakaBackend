@@ -12,6 +12,7 @@ const userRoutes = require("./routes/userRoutes"); // ← 새로 추가
 const recruitmentRoutes = require("./routes/recruitmentRoutes");// ← 새로 추가
 const commentRoutes = require("./routes/commentRoutes");// ← 새로 추가
 const scrapRoutes = require("./routes/scrapRoutes");// ← 새로 추가
+const applicationRoutes = require("./routes/applicationRoutes");//지원
 
 const app = express();
 app.use(cors());
@@ -26,9 +27,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/dev", devRoutes);
 app.use("/api/univcert", univCertRoutes);
 
-// ✅ 새로 추가: /user
+// ✅ 새로 추가
 app.use("/api/user", userRoutes);
-app.use("/api", [recruitmentRoutes, commentRoutes, scrapRoutes]);
+app.use("/api", [recruitmentRoutes, commentRoutes, scrapRoutes, applicationRoutes,]);
 
 // 기본 라우트
 app.get("/", (req, res) => {

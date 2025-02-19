@@ -21,6 +21,10 @@ module.exports = (sequelize) => {
         type: DataTypes.ENUM("OPEN", "CLOSED"),
         defaultValue: "OPEN",
       },
+      required_members: { // 필요 지원 인원
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
       views: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
@@ -46,6 +50,9 @@ module.exports = (sequelize) => {
       foreignKey: "user_id",
       onDelete: "CASCADE",
     });
+  Recruitment.associate = (models) => {
+    Recruitment.hasMany(models.Application, { foreignKey: "recruitment_id", onDelete: "CASCADE" });
+  };
 
     // ✅ 모집공고가 프로젝트와 1:1 관계를 가지도록 설정
     Recruitment.hasOne(models.Project, {
