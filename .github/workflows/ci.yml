@@ -1,4 +1,4 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
@@ -8,56 +8,51 @@ on:
   pull_request:
     branches:
       - dev
-  workflow_dispatch:
-  pull_request_target:  # 외부 PR에서도 Secrets가 안전하게 전달됨
 
 jobs:
-  cloud-sql-connection:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'  # Workload Identity Federation을 사용하려면 필요
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Check if required Secrets are set
-        run: |
-          if [ -z "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ]; then
-            echo "WARNING: GCP_WORKLOAD_IDENTITY_PROVIDER not set"
-          else
-            echo "::add-mask::${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-            echo "GCP_WORKLOAD_IDENTITY_PROVIDER is set"
-          fi
-          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT }}" ]; then
-            echo "WARNING: GCP_SERVICE_ACCOUNT not set"
-          else
-            echo "::add-mask::${{ secrets.GCP_SERVICE_ACCOUNT }}"
-            echo "GCP_SERVICE_ACCOUNT is set"
-          fi
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
 
-      - name: Authenticate to Google Cloud (WIF)
-        # 내부 PR에서만 실행하여 외부 PR에서는 인증 단계를 건너뛰도록 설정
-        if: github.event.pull_request.head.repo.full_name == github.repository
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate to Google Cloud (IAM 기반)
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Setup gcloud CLI
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          install_components: sql
-
-      - name: Verify Authentication
-        if: github.event.pull_request.head.repo.full_name == github.repository
+      - name: Configure gcloud SDK
         run: |
-          gcloud auth list
-          gcloud auth application-default print-access-token
+          gcloud config set project teamitaka
+          gcloud config set compute/region us-central1
 
-      - name: Connect to Cloud SQL using IAM
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          CLOUD_SQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}
-          DB_USER: ${{ secrets.GCP_DB_USER }}
+      - name: Securely Connect to Cloud SQL
         run: |
-          gcloud sql connect "$CLOUD_SQL_INSTANCE" --user="$DB_USER" --quiet --impersonate-service-account="${{ secrets.GCP_SERVICE_ACCOUNT }}"
+          echo "🔒 Connecting to Cloud SQL using IAM authentication..."
+          if ! gcloud sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet; then
+            echo "❌ ERROR: Cloud SQL Connection Failed. Verify IAM permissions and network settings."
+            exit 1
+          fi
+
+      - name: Run Sequelize migrations
+        run: npx sequelize-cli db:migrate --env=production
+
+      - name: Insert data from CSV
+        run: node src/scripts/insertCSV.js
+
+      - name: Deploy Application
+        run: npm run start
