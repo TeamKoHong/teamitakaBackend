@@ -1,5 +1,5 @@
 //like를 scrap으로 수정필요요
-const express = require("express");
+/*const express = require("express");
 const router = express.Router();
 const { Recruitment, Like } = require("../models");
 const authMiddleWare = require("../middlewares/authMiddleware");
@@ -57,3 +57,4 @@ router.put("/recruitment/:recruitment_id/like", authMiddleWare, async (req, res)
 });
 
 module.exports = router;
+*/
