@@ -68,6 +68,8 @@ jobs:
         if: ${{ env.ENV == 'production' }}
         run: |
           echo "🔒 Starting Cloud SQL Auth Proxy using IAM authentication..."
+          # 주의: GCP_CLOUDSQL_INSTANCE 값은 반드시 "project:region:instance-name" 형식이어야 합니다.
+          # 예시: teamitaka:us-central1:teamitaka
           wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
           chmod +x cloud_sql_proxy
           ./cloud_sql_proxy -instances="${{ secrets.GCP_CLOUDSQL_INSTANCE }}"=tcp:3306 -enable_iam_login &
