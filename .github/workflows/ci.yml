@@ -67,12 +67,8 @@ jobs:
       - name: Start Cloud SQL Auth Proxy (Production)
         if: ${{ env.ENV == 'production' }}
         run: |
-          echo "🔒 Starting Cloud SQL Auth Proxy using IAM authentication..."
-          # 주의: GCP_CLOUDSQL_INSTANCE 값은 반드시 "project:region:instance-name" 형식이어야 합니다.
-          # 예시: teamitaka:us-central1:teamitaka
-          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
-          chmod +x cloud_sql_proxy
-          ./cloud_sql_proxy -instances="${{ secrets.GCP_CLOUDSQL_INSTANCE }}"=tcp:3306 -enable_iam_login &
+          echo "🔒 Starting Cloud SQL Auth Proxy with IAM authentication..."
+          ./cloud-sql-proxy --auto-iam-authn "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --credentials-file="/path/to/service-account-key.json" --port 3306 &
           sleep 10
 
       - name: Run Sequelize migrations
@@ -100,9 +96,11 @@ env:
   DB_CHARSET: "utf8mb4"
   DB_DIALECT: "mysql"
 
-  # ✅ CI/CD 배포 환경 변수 (Cloud SQL)
+  # ✅ Production 환경 (Cloud SQL)
   GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
-  GCP_DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
   GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
-  GCP_DB_HOST: ${{ secrets.GCP_DB_HOST }}
-  GCP_DB_PORT: "3306"
+  # GCP_DB_PASSWORD는 IAM 인증 사용자에서는 필요하지 않으므로 제거하거나 빈 값으로 처리합니다.
+  GCP_DB_PASSWORD: ""
+  GCP_CLOUDSQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}  # 예: teamitaka:us-central1:teamitaka
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ secrets.GCP_REGION }}
