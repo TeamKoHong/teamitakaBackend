@@ -72,12 +72,10 @@ jobs:
       - name: Securely Connect to Cloud SQL (Production)
         if: ${{ steps.env-check.outputs.ENV == 'production' }}
         run: |
-          set -o errexit -o nounset -o pipefail
           echo "🔒 Connecting to Cloud SQL using IAM authentication..."
-          if ! gcloud sql connect "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --user=root --quiet; then
-            echo "❌ ERROR: Cloud SQL Connection Failed. Verify IAM permissions and network settings."
-            exit 1
-          fi
+          gcloud auth application-default login
+          gcloud sql connect teamitaka --user=teamitaka@teamitaka.iam.gserviceaccount.com --quiet --enable-iam
+    
 
       - name: Run Sequelize migrations
         run: |
