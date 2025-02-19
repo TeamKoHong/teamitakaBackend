@@ -35,25 +35,26 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Debug OIDC Token (확인용)
+      - name: Debug GCP Authentication
         run: |
-          echo "🔍 Checking OIDC token claims..."
-          curl -s -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" $ACTIONS_ID_TOKEN_REQUEST_URL | jq .
+          echo "🔍 Checking Workload Identity Federation..."
+          echo "GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          echo "GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}"
 
       - name: Configure gcloud SDK
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set compute/region ${{ secrets.GCP_REGION }}
 
-      - name: Set environment variables (Production)
-        if: github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/heads/feature/')
+      - name: Debug Environment Variables
         run: |
-          echo "NODE_ENV=production" >> $GITHUB_ENV
-          echo "DB_USER=${{ secrets.GCP_DB_USER }}" >> $GITHUB_ENV
-          echo "DB_PASSWORD=${{ secrets.GCP_DB_PASSWORD }}" >> $GITHUB_ENV
-          echo "DB_NAME=${{ secrets.GCP_DB_NAME }}" >> $GITHUB_ENV
-          echo "DB_HOST=${{ secrets.GCP_DB_HOST }}" >> $GITHUB_ENV
-          echo "DB_PORT=${{ secrets.GCP_DB_PORT }}" >> $GITHUB_ENV
+          echo "🔍 Checking environment variables..."
+          echo "NODE_ENV: $NODE_ENV"
+          echo "DB_USER: $DB_USER"
+          echo "DB_HOST: $DB_HOST"
+          echo "GCP_DB_USER: $GCP_DB_USER"
+          echo "GCP_DB_HOST: $GCP_DB_HOST"
+          echo "GCP_CLOUDSQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}"
 
       - name: Securely Connect to Cloud SQL
         run: |
@@ -64,8 +65,7 @@ jobs:
             exit 1
           fi
 
-      - name: Run Sequelize migrations (Production)
-        if: github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/heads/feature/')
+      - name: Run Sequelize migrations
         run: npx sequelize-cli db:migrate --env=production
 
       - name: Insert data from CSV
@@ -73,3 +73,21 @@ jobs:
 
       - name: Deploy Application
         run: npm run start
+
+env:
+  NODE_ENV: production
+
+  # ✅ 로컬 개발 환경 변수
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_DIALECT: "mysql"
+
+  # ✅ CI/CD 배포 환경 변수 (Cloud SQL)
+  GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
+  GCP_DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
+  GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
+  GCP_DB_HOST: ${{ secrets.GCP_DB_HOST }}
+  GCP_DB_PORT: "3306"
+
