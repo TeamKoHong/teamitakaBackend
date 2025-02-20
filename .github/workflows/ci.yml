@@ -34,8 +34,10 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
             echo "ENV=development" >> $GITHUB_ENV
+            echo "NODE_ENV=development" >> $GITHUB_ENV
           else
             echo "ENV=production" >> $GITHUB_ENV
+            echo "NODE_ENV=production" >> $GITHUB_ENV
           fi
 
       - name: Generate .env file (for development)
@@ -68,6 +70,10 @@ jobs:
         run: |
           gcloud config set compute/region "${{ secrets.GCP_REGION }}"
 
+      - name: Set Cloud SQL Proxy flag (Production)
+        if: ${{ env.ENV == 'production' }}
+        run: echo "USE_CLOUD_SQL_PROXY=true" >> $GITHUB_ENV
+
       - name: Download and Start Cloud SQL Proxy (Production)
         if: ${{ env.ENV == 'production' }}
         run: |
@@ -97,9 +103,10 @@ jobs:
       - name: Insert data from CSV
         if: env.NODE_ENV != 'test'
         run: |
-          export DB_HOST=mysql
+          if [[ "${{ env.ENV }}" == "development" ]]; then
+            export DB_HOST=mysql
+          fi
           node src/scripts/insertCSV.js
-        
 
       - name: Deploy Application
         run: npm run start
