@@ -69,8 +69,8 @@ jobs:
       - name: Download and Start Cloud SQL Proxy (Production)
         if: ${{ env.ENV == 'production' }}
         run: |
-          echo "🔽 Downloading Cloud SQL Proxy..."
-          curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 || (echo "⚠️ Download failed" && exit 1)
+          echo "🔽 Downloading Cloud SQL Proxy v2..."
+          curl -o cloud_sql_proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64 || (echo "⚠️ Download failed" && exit 1)
           chmod +x cloud_sql_proxy
           echo "🔒 Starting Cloud SQL Proxy with no TLS..."
           echo "Instance: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}"
@@ -78,7 +78,8 @@ jobs:
             echo "⚠️ GCP_CLOUDSQL_INSTANCE is empty!"
             exit 1
           fi
-          ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable_tls -verbose > proxy_log.txt 2>&1 &
+          ./cloud_sql_proxy --version  # 버전 확인
+          ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable-tls -verbose > proxy_log.txt 2>&1 &
           PROXY_PID=$!
           echo "Proxy PID: $PROXY_PID"
           echo "Waiting for Proxy to stabilize..."
