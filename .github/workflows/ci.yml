@@ -52,12 +52,12 @@ jobs:
           echo "✅ .env file for development has been created."
 
       - name: Authenticate to Google Cloud (Workload Identity Federation)
-        if: ${{ env.ENV == 'production' }}
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: "https://iam.googleapis.com/projects/732827775376/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider"
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+        
 
       - name: Configure gcloud SDK
         if: ${{ env.ENV == 'production' }}
