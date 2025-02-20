@@ -101,11 +101,14 @@ jobs:
 
       - name: Run Sequelize migrations
         run: |
-          if [[ "${{ env.ENV }}" == "development" ]]; then
-            npx sequelize-cli db:migrate --env=development
-          else
+          if [[ "${{ env.ENV }}" == "production" ]]; then
+            export USE_CLOUD_SQL_PROXY=true
+            export DB_HOST=127.0.0.1
             npx sequelize-cli db:migrate --env=production
+          else
+            npx sequelize-cli db:migrate --env=development
           fi
+        
 
       - name: Insert data from CSV
         if: env.NODE_ENV != 'test'
