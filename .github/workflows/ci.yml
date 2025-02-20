@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # OIDC 토큰을 전달하기 위해 필요
+      id-token: write  # OIDC 토큰 전달을 위해 필요
       contents: read
 
     steps:
@@ -52,17 +52,30 @@ jobs:
           echo "✅ .env file for development has been created."
 
       - name: Authenticate to Google Cloud (Workload Identity Federation)
+        if: ${{ env.ENV == 'production' }}
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-        
+
+      - name: Check if already authenticated with Google Cloud
+        run: |
+          echo "🔍 Checking current GCP authentication..."
+          if gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q "@"; then
+            echo "✅ Already authenticated. Skipping login process."
+          else
+            echo "⚠️ Not authenticated. Logging in..."
+            gcloud auth login || echo "⚠️ Login failed, but continuing with CI/CD..."
+          fi
+
+      - name: Set GCP project
+        run: |
+          gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
 
       - name: Configure gcloud SDK
         if: ${{ env.ENV == 'production' }}
         run: |
-          gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
           gcloud config set compute/region "${{ secrets.GCP_REGION }}"
 
       - name: Download Cloud SQL Auth Proxy (Production)
@@ -76,10 +89,10 @@ jobs:
         if: ${{ env.ENV == 'production' }}
         run: |
           echo "🔒 Starting Cloud SQL Auth Proxy with IAM authentication..."
-          ./cloud_sql_proxy --credentials-file=/dev/null --instances="${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --port=3306 &
+          ./cloud_sql_proxy --auto-iam-authn "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --credentials-file="service-account-key.json" --port 3306 &
           echo "Waiting for Cloud SQL Auth Proxy to fully start..."
           sleep 30
-          lsof -i :3306 || echo "Port 3306 not listening yet"
+          lsof -i :3306 || echo "⚠️ Port 3306 not listening yet"
 
       - name: Run Sequelize migrations
         run: |
@@ -110,6 +123,6 @@ env:
   GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
   GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
   GCP_DB_PASSWORD: ""  # IAM 인증 사용자에서는 비밀번호 사용하지 않음
-  GCP_CLOUDSQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}  # 예: teamitaka:us-central1:teamitaka
+  GCP_CLOUDSQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: ${{ secrets.GCP_REGION }}
