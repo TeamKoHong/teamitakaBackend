@@ -14,11 +14,11 @@ module.exports = {
     username: process.env.GCP_DB_USER || "root",
     password: process.env.GCP_DB_PASSWORD || "",
     database: process.env.GCP_DB_NAME || "teamitaka_database",
-    host: "127.0.0.1", // Proxy를 통한 로컬 연결
+    host: "127.0.0.1",
     port: 3306,
     dialect: "mysql",
     dialectOptions: {
-      ssl: { rejectUnauthorized: false },
+      ssl: false // SSL 비활성화 (Proxy 사용 시)
     },
     logging: false,
   },
