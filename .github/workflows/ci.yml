@@ -26,17 +26,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          # cache 속성 제거로 기본 동작(캐시 사용 안 함) 적용
+          # 캐시 속성 생략으로 기본 동작 적용
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Debug - Post Setup Node Environment
-        run: |
-          echo "Node version: $(node -v)"
-          echo "NPM version: $(npm -v)"
-          echo "Current directory: $(pwd)"
-          ls -la
 
       - name: Determine Environment
         id: env-check
@@ -82,18 +75,25 @@ jobs:
           curl -o cloud_sql_proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64 || (echo "⚠️ Download failed" && exit 1)
           chmod +x cloud_sql_proxy
           echo "🔒 Starting Cloud SQL Proxy with no TLS..."
-          echo "Instance: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}"
-          if [ -z "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" ] || ! echo "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" | grep -q ":"; then
+          INSTANCE="${{ secrets.GCP_CLOUDSQL_INSTANCE }}"
+          echo "Instance value: $INSTANCE"
+          if [ -z "$INSTANCE" ] || ! echo "$INSTANCE" | grep -q ":"; then
             echo "⚠️ GCP_CLOUDSQL_INSTANCE is empty or invalid (format: project:region:instance)!"
             exit 1
           fi
           echo "Memory status before Proxy start:"
           free -h
           ./cloud_sql_proxy --version  # 버전 확인
-          PROXY_CMD="./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable-tls -verbose"
-          echo "Executing command: $PROXY_CMD"
+          # 명령어 분리 및 변수화
+          PROXY_BASE="./cloud_sql_proxy"
+          PROXY_FLAG="-instances=${INSTANCE}=tcp:3306"
+          PROXY_OPTS="-disable-tls -verbose"
+          PROXY_CMD="$PROXY_BASE $PROXY_FLAG $PROXY_OPTS"
+          echo "Constructed command: $PROXY_CMD"
+          # 최종 명령어 검증
           if echo "$PROXY_CMD" | grep -q "nstances"; then
-            echo "⚠️ Detected typo 'nstances' in command! Should be 'instances'."
+            echo "⚠️ Detected typo 'nstances' in command! Expected 'instances'."
+            echo "Command breakdown: $PROXY_BASE | $PROXY_FLAG | $PROXY_OPTS"
             exit 1
           fi
           set -x  # 디버깅 활성화
