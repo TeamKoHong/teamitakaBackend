@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const Like = sequelize.define("Like", {
+  const Scrap = sequelize.define("Scrap", {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -27,10 +27,10 @@ module.exports = (sequelize) => {
     },
   });
 
-  Like.associate = (models) => {
-    Like.belongsTo(models.User, { foreignKey: "user_id" });
-    Like.belongsTo(models.Recruitment, { foreignKey: "recruitment_id" });
+  Scrap.associate = (models) => {
+    Scrap.belongsTo(models.User, { foreignKey: "user_id" });
+    Scrap.belongsTo(models.Recruitment, { foreignKey: "recruitment_id" });
   };
 
-  return Like;
+  return Scrap;
 };
