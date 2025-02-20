@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # OIDC 토큰 전달을 위해 필요
+      id-token: write
       contents: read
 
     steps:
@@ -49,7 +49,6 @@ jobs:
           echo "PORT=${{ secrets.PORT }}" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
           echo "DB_CHARSET=utf8mb4" >> .env
-          echo "✅ .env file for development created."
 
       - name: Authenticate to Google Cloud (Workload Identity Federation)
         if: ${{ env.ENV == 'production' }}
@@ -72,14 +71,20 @@ jobs:
       - name: Download and Start Cloud SQL Proxy (Production)
         if: ${{ env.ENV == 'production' }}
         run: |
-          echo "🔽 Downloading Cloud SQL Auth Proxy..."
+          echo "🔽 Downloading Cloud SQL Proxy..."
           curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
           chmod +x cloud_sql_proxy
-          echo "🔒 Starting Cloud SQL Proxy with no TLS..."
+          echo "🔒 Starting Cloud SQL Proxy..."
           ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable_tls -verbose &
-          echo "Waiting for Proxy to start..."
-          sleep 60  # 충분한 대기 시간
-          lsof -i :3306 || (echo "⚠️ Port 3306 not ready" && exit 1)  # 포트 확인
+          echo "Waiting for Proxy to stabilize..."
+          sleep 90  # 대기 시간 증가
+          lsof -i :3306 || (echo "⚠️ Proxy failed to start on 3306" && exit 1)  # 강력한 포트 확인
+
+      - name: Verify Proxy Connection
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          echo "🔍 Checking Proxy connection..."
+          curl -s localhost:3306 || echo "⚠️ Proxy not responding"
 
       - name: Run Sequelize migrations
         run: |
@@ -96,7 +101,6 @@ jobs:
         run: npm run start
 
 env:
-  # 로컬 개발 환경 변수
   DB_HOST: ${{ secrets.DB_HOST }}
   DB_NAME: ${{ secrets.DB_NAME }}
   DB_USER: ${{ secrets.DB_USER }}
@@ -105,11 +109,9 @@ env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   DB_CHARSET: "utf8mb4"
   DB_DIALECT: "mysql"
-
-  # Production 환경 (Cloud SQL)
   GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
   GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
-  GCP_DB_PASSWORD: ""  # IAM 인증 사용자에서는 비밀번호 사용하지 않음
+  GCP_DB_PASSWORD: ""
   GCP_CLOUDSQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: ${{ secrets.GCP_REGION }}
