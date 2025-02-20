@@ -4,23 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "NODE_ENV=production node index.js",
+    "start": "cross-env NODE_ENV=production node index.js",
     "dev": "NODE_ENV=development nodemon index.js",
     "test": "NODE_ENV=test jest --coverage",
     "lint": "eslint .",
-    
     "migrate:dev": "dotenv -e .env.development -- npx sequelize-cli db:migrate",
     "migrate:prod": "dotenv -e .env.production -- npx sequelize-cli db:migrate",
     "migrate:test": "dotenv -e .env.test -- npx sequelize-cli db:migrate",
-
     "undo-migrate:dev": "dotenv -e .env.development -- npx sequelize-cli db:migrate:undo:all",
     "undo-migrate:prod": "dotenv -e .env.production -- npx sequelize-cli db:migrate:undo:all",
     "undo-migrate:test": "dotenv -e .env.test -- npx sequelize-cli db:migrate:undo:all",
-
     "seed:dev": "dotenv -e .env.development -- npx sequelize-cli db:seed:all",
     "seed:prod": "dotenv -e .env.production -- npx sequelize-cli db:seed:all",
     "seed:test": "dotenv -e .env.test -- npx sequelize-cli db:seed:all",
-
     "rollback:dev": "dotenv -e .env.development -- npx sequelize-cli db:migrate:undo",
     "rollback:prod": "dotenv -e .env.production -- npx sequelize-cli db:migrate:undo",
     "rollback:test": "dotenv -e .env.test -- npx sequelize-cli db:migrate:undo"
@@ -49,6 +45,7 @@
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "csv-parser": "^3.2.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
