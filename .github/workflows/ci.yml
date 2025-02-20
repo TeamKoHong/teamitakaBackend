@@ -74,15 +74,24 @@ jobs:
           chmod +x cloud_sql_proxy
           echo "🔒 Starting Cloud SQL Proxy with no TLS..."
           ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable_tls -verbose > proxy_log.txt 2>&1 &
+          PROXY_PID=$!
+          echo "Proxy PID: $PROXY_PID"
           echo "Waiting for Proxy to stabilize..."
-          sleep 60
-          lsof -i :3306 || (echo "⚠️ Proxy failed to start on 3306" && cat proxy_log.txt && exit 1)
+          sleep 90  # 대기 시간 증가
+          if lsof -i :3306; then
+            echo "✅ Proxy is running on 3306"
+          else
+            echo "⚠️ Proxy failed to start on 3306"
+            cat proxy_log.txt
+            kill -9 $PROXY_PID 2>/dev/null || true
+            exit 1
+          fi
 
       - name: Verify Proxy Connection
         if: ${{ env.ENV == 'production' }}
         run: |
           echo "🔍 Checking Proxy connection..."
-          nc -zv 127.0.0.1 3306 || (echo "⚠️ Proxy is not responding!" && exit 1)
+          nc -zv 127.0.0.1 3306 || (echo "⚠️ Proxy is not responding!" && cat proxy_log.txt && exit 1)
 
       - name: Debug - Print DATABASE_URL
         run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
