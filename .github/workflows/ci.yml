@@ -74,26 +74,35 @@ jobs:
           chmod +x cloud_sql_proxy
           echo "🔒 Starting Cloud SQL Proxy with no TLS..."
           echo "Instance: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}"
-          if [ -z "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" ]; then
-            echo "⚠️ GCP_CLOUDSQL_INSTANCE is empty or invalid!"
+          if [ -z "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" ] || ! echo "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" | grep -q ":"; then
+            echo "⚠️ GCP_CLOUDSQL_INSTANCE is empty or invalid (format: project:region:instance)!"
             exit 1
           fi
+          echo "Memory status before Proxy start:"
+          free -h
           ./cloud_sql_proxy --version  # 버전 확인
           PROXY_CMD="./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable-tls -verbose"
           echo "Executing: $PROXY_CMD"
+          set -x  # 디버깅 활성화
           $PROXY_CMD > proxy_log.txt 2>&1 &
           PROXY_PID=$!
           echo "Proxy PID: $PROXY_PID"
-          echo "Waiting for Proxy to stabilize..."
-          sleep 90
-          if ps -p $PROXY_PID > /dev/null && lsof -i :3306; then
-            echo "✅ Proxy is running on 3306 (PID: $PROXY_PID)"
-          else
-            echo "⚠️ Proxy failed to start or bind to 3306"
-            cat proxy_log.txt
-            kill -9 $PROXY_PID 2>/dev/null || true
-            exit 1
-          fi
+          echo "Waiting for Proxy to stabilize (10s intervals)..."
+          for i in {1..9}; do
+            sleep 10
+            if ps -p $PROXY_PID > /dev/null && lsof -i :3306; then
+              echo "✅ Proxy is running on 3306 (PID: $PROXY_PID) after $((i*10))s"
+              break
+            fi
+            echo "Still waiting... ($((i*10))s elapsed)"
+            if [ $i -eq 9 ]; then
+              echo "⚠️ Proxy failed to start or bind to 3306 after 90s"
+              cat proxy_log.txt
+              kill -9 $PROXY_PID 2>/dev/null || true
+              exit 1
+            fi
+          done
+          set +x
 
       - name: Verify Proxy Connection
         if: ${{ env.ENV == 'production' }}
