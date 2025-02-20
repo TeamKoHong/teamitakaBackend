@@ -14,7 +14,7 @@ module.exports = {
     username: process.env.GCP_DB_USER || "root",
     password: process.env.GCP_DB_PASSWORD || "",
     database: process.env.GCP_DB_NAME || "teamitaka_database",
-    host: "127.0.0.1",
+    host: process.env.GCP_DB_HOST || "mysql",
     port: 3306,
     dialect: "mysql",
     dialectOptions: {
