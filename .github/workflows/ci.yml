@@ -13,18 +13,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # OIDC 토큰 전달을 위해 필요
+      id-token: write
       contents: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -49,12 +50,6 @@ jobs:
           echo "PORT=${{ secrets.PORT }}" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
           echo "DB_CHARSET=utf8mb4" >> .env
-          echo "✅ .env file for development has been created."
-
-      - name: Write service account key to file
-        if: ${{ env.ENV == 'production' }}
-        run: |
-          echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > service-account-key.json
 
       - name: Authenticate to Google Cloud (Workload Identity Federation)
         if: ${{ env.ENV == 'production' }}
@@ -62,45 +57,121 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Set GCP project
+        if: ${{ env.ENV == 'production' }}
+        run: gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
 
       - name: Configure gcloud SDK
         if: ${{ env.ENV == 'production' }}
-        run: |
-          gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
-          gcloud config set compute/region "${{ secrets.GCP_REGION }}"
+        run: gcloud config set compute/region "${{ secrets.GCP_REGION }}"
 
-      - name: Download Cloud SQL Auth Proxy (Production)
+      - name: Download and Start Cloud SQL Proxy (Production)
         if: ${{ env.ENV == 'production' }}
         run: |
-          echo "🔽 Downloading Cloud SQL Auth Proxy..."
-          curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
+          echo "🔽 Downloading Cloud SQL Proxy v2..."
+          curl -o cloud_sql_proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64 || (echo "⚠️ Download failed" && exit 1)
           chmod +x cloud_sql_proxy
+          echo "🔒 Starting Cloud SQL Proxy with no TLS..."
+          INSTANCE="${{ secrets.GCP_CLOUDSQL_INSTANCE }}"
+          echo "Raw GCP_CLOUDSQL_INSTANCE value: '$INSTANCE'"
+          if [ -z "$INSTANCE" ] || ! echo "$INSTANCE" | grep -q ":"; then
+            echo "⚠️ GCP_CLOUDSQL_INSTANCE is empty or invalid! Expected format: project:region:instance"
+            exit 1
+          fi
+          echo "Checking instance status with gcloud..."
+          gcloud sql instances describe "$(echo $INSTANCE | cut -d':' -f3)" --project="$(echo $INSTANCE | cut -d':' -f1)" || {
+            echo "⚠️ Failed to verify instance '$INSTANCE'. Check if it exists and is running."
+            exit 1
+          }
+          echo "Workload Identity token status:"
+          gcloud auth print-identity-token || echo "⚠️ Token retrieval failed, authentication may be misconfigured."
+          echo "Environment status before Proxy start:"
+          echo "Disk space:"
+          df -h
+          echo "Memory:"
+          free -h
+          ./cloud_sql_proxy --version  # 버전 확인
+          PROXY_BASE="./cloud_sql_proxy"
+          PROXY_INSTANCES="-instances=${INSTANCE}=tcp:3306"
+          PROXY_OPTS="-disable-tls -verbose -debug-logs"
+          PROXY_CMD="${PROXY_BASE} ${PROXY_INSTANCES} ${PROXY_OPTS}"
+          echo "Final constructed command: $PROXY_CMD"
+          set -x  # 디버깅 활성화
+          # 실시간 로그 출력
+          $PROXY_CMD 2>&1 | tee proxy_log.txt &
+          PROXY_PID=$!
+          echo "Proxy PID: $PROXY_PID"
+          echo "Waiting for Proxy to stabilize (10s intervals)..."
+          for i in {1..9}; do
+            sleep 10
+            if ps -p $PROXY_PID > /dev/null && lsof -i :3306; then
+              echo "✅ Proxy is running on 3306 (PID: $PROXY_PID) after $((i*10))s"
+              nc -zv 127.0.0.1 3306 && echo "✅ Connection test passed" || echo "⚠️ Connection test failed"
+              break
+            fi
+            echo "Still waiting... ($((i*10))s elapsed)"
+            if [ $i -eq 9 ]; then
+              echo "⚠️ Proxy failed to start or bind to 3306 after 90s"
+              echo "Proxy log contents:"
+              cat proxy_log.txt
+              echo "Running processes:"
+              ps -aux | grep cloud_sql_proxy || true
+              kill -9 $PROXY_PID 2>/dev/null || true
+              exit 1
+            fi
+          done
+          set +x
 
-      - name: Start Cloud SQL Auth Proxy (Production)
+      - name: Verify Proxy Connection
         if: ${{ env.ENV == 'production' }}
         run: |
-          echo "🔒 Starting Cloud SQL Auth Proxy with IAM authentication..."
-          ./cloud_sql_proxy --auto-iam-authn "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --credentials-file="service-account-key.json" --port 3306 &
-          echo "Waiting for Cloud SQL Auth Proxy to fully start..."
-          sleep 30
-          lsof -i :3306 || echo "Port 3306 not listening yet"
+          echo "🔍 Checking Proxy connection..."
+          nc -zv 127.0.0.1 3306 || (echo "⚠️ Proxy is not responding!" && cat proxy_log.txt && exit 1)
 
-      - name: Run Sequelize migrations
+      - name: Debug - Print DATABASE_URL
+        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
+
+      - name: Check if Users table exists
+        run: node src/scripts/checkDB.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Run Sequelize migrations (Users first)
         run: |
-          if [[ "${{ env.ENV }}" == "development" ]]; then
-            npx sequelize-cli db:migrate --env=development
-          else
-            npx sequelize-cli db:migrate --env=production
-          fi
+          npx sequelize-cli db:migrate --name 20250219140000-create-users.js
+          npx sequelize-cli db:migrate --name 20250219140810-create-applications.js
 
       - name: Insert data from CSV
-        run: node src/scripts/insertCSV.js
+        if: env.NODE_ENV != 'test'
+        run: |
+          if [[ "${{ env.ENV }}" == "production" ]]; then
+            export DB_HOST=127.0.0.1
+          else
+            export DB_HOST=mysql
+          fi
+          echo "🔍 Inserting data into DB from CSV..."
+          node src/scripts/insertCSV.js
+          echo "✅ CSV Insert Completed"
+
+      - name: Validate Cloud SQL Proxy is Running
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          echo "🔍 Validating Cloud SQL Proxy..."
+          if lsof -i :3306; then
+            echo "✅ Cloud SQL Proxy is running"
+          else
+            echo "❌ Cloud SQL Proxy is NOT running! Exiting..."
+            exit 1
+          fi
 
       - name: Deploy Application
-        run: npm run start
+        run: |
+          echo "🚀 Starting Application..."
+          npm run start
 
 env:
-  # ✅ 로컬 개발 환경 변수
   DB_HOST: ${{ secrets.DB_HOST }}
   DB_NAME: ${{ secrets.DB_NAME }}
   DB_USER: ${{ secrets.DB_USER }}
@@ -109,11 +180,10 @@ env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   DB_CHARSET: "utf8mb4"
   DB_DIALECT: "mysql"
-
-  # ✅ Production 환경 (Cloud SQL)
   GCP_DB_USER: ${{ secrets.GCP_DB_USER }}
   GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}
-  GCP_DB_PASSWORD: ""  # IAM 인증 사용자에서는 비밀번호 사용하지 않음
-  GCP_CLOUDSQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}  # 예: teamitaka:us-central1:teamitaka
+  GCP_DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
+  GCP_CLOUDSQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: ${{ secrets.GCP_REGION }}
+  USE_CLOUD_SQL_PROXY: "true"
