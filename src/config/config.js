@@ -10,12 +10,17 @@ module.exports = {
     logging: false,
   },
   production: {
-    username: process.env.GCP_DB_USER || "iam_user",
-    password: "",  // IAM 인증 사용자이므로 비밀번호 없음
+    username: process.env.GCP_DB_USER || "root",
+    password: process.env.GCP_DB_PASSWORD || "",  // IAM 인증 사용자는 비밀번호 사용 안 함
     database: process.env.GCP_DB_NAME || "teamitaka_database",
-    host: "127.0.0.1",  // Cloud SQL Auth Proxy가 리스닝하는 주소
+    host: "127.0.0.1", // Cloud SQL Auth Proxy를 통해 로컬에서 연결
     port: 3306,
     dialect: "mysql",
+    dialectOptions: {
+      ssl: {
+        rejectUnauthorized: false, // Cloud SQL SSL 사용 시 필요
+      },
+    },
     logging: false,
   },
 };
