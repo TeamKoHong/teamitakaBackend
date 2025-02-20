@@ -117,6 +117,14 @@ jobs:
           fi
           node src/scripts/insertCSV.js
 
+      - name: Generate ADMIN_PASSWORD_HASH
+        run: |
+          echo "Generating ADMIN_PASSWORD_HASH..."
+          HASH=$(node -e "console.log(require('bcryptjs').hashSync(process.env.ADMIN_PASSWORD, 10))")
+          echo "ADMIN_PASSWORD_HASH=${HASH}" >> $GITHUB_ENV
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+
       - name: Deploy Application
         run: npm run start
 
