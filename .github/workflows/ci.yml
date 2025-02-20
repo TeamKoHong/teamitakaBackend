@@ -79,6 +79,7 @@ jobs:
             exit 1
           fi
           ./cloud_sql_proxy --version  # 버전 확인
+          echo "Running: ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable-tls -verbose"
           ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable-tls -verbose > proxy_log.txt 2>&1 &
           PROXY_PID=$!
           echo "Proxy PID: $PROXY_PID"
