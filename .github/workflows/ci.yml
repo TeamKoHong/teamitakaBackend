@@ -75,20 +75,20 @@ jobs:
           echo "🔒 Starting Cloud SQL Proxy with no TLS..."
           echo "Instance: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}"
           if [ -z "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" ]; then
-            echo "⚠️ GCP_CLOUDSQL_INSTANCE is empty!"
+            echo "⚠️ GCP_CLOUDSQL_INSTANCE is empty or invalid!"
             exit 1
           fi
           ./cloud_sql_proxy --version  # 버전 확인
-          echo "Running: ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable-tls -verbose"
+          echo "Executing: ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable-tls -verbose"
           ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable-tls -verbose > proxy_log.txt 2>&1 &
           PROXY_PID=$!
           echo "Proxy PID: $PROXY_PID"
           echo "Waiting for Proxy to stabilize..."
           sleep 90
-          if lsof -i :3306; then
-            echo "✅ Proxy is running on 3306"
+          if ps -p $PROXY_PID > /dev/null && lsof -i :3306; then
+            echo "✅ Proxy is running on 3306 (PID: $PROXY_PID)"
           else
-            echo "⚠️ Proxy failed to start on 3306"
+            echo "⚠️ Proxy failed to start or bind to 3306"
             cat proxy_log.txt
             kill -9 $PROXY_PID 2>/dev/null || true
             exit 1
