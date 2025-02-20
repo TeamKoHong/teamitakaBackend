@@ -36,6 +36,19 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE",
       },
+      start_date: { // ✅ 시작일 추가
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      end_date: { // ✅ 종료일 추가
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      status: { // ✅ 상태 관리
+        type: DataTypes.ENUM("예정", "진행 중", "완료"),
+        defaultValue: "예정",
+        allowNull: false,
+      },
     },
     {
       freezeTableName: true,
