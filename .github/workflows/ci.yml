@@ -34,10 +34,8 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
             echo "ENV=development" >> $GITHUB_ENV
-            echo "NODE_ENV=development" >> $GITHUB_ENV
           else
             echo "ENV=production" >> $GITHUB_ENV
-            echo "NODE_ENV=production" >> $GITHUB_ENV
           fi
 
       - name: Generate .env file (for development)
@@ -70,10 +68,6 @@ jobs:
         run: |
           gcloud config set compute/region "${{ secrets.GCP_REGION }}"
 
-      - name: Set Cloud SQL Proxy flag (Production)
-        if: ${{ env.ENV == 'production' }}
-        run: echo "USE_CLOUD_SQL_PROXY=true" >> $GITHUB_ENV
-
       - name: Download and Start Cloud SQL Proxy (Production)
         if: ${{ env.ENV == 'production' }}
         run: |
@@ -83,7 +77,7 @@ jobs:
           echo "🔒 Starting Cloud SQL Proxy..."
           ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -verbose > proxy_log.txt 2>&1 &
           echo "Waiting for Proxy to stabilize..."
-          sleep 120  # 대기 시간 증가
+          sleep 120
           lsof -i :3306 || (echo "⚠️ Proxy failed to start on 3306" && cat proxy_log.txt && exit 1)
 
       - name: Verify Proxy Connection
@@ -91,6 +85,19 @@ jobs:
         run: |
           echo "🔍 Checking Proxy connection..."
           curl -s localhost:3306 || echo "⚠️ Proxy not responding"
+
+      - name: Reset Database (Production)
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          echo "Dropping and recreating production database..."
+          export DB_HOST=127.0.0.1
+          mysql -h 127.0.0.1 -u $GCP_DB_USER -p$GCP_DB_PASSWORD -e "DROP DATABASE IF EXISTS $GCP_DB_NAME; CREATE DATABASE $GCP_DB_NAME;"
+
+      - name: Reset Database (Development)
+        if: ${{ env.ENV == 'development' }}
+        run: |
+          echo "Dropping and recreating development database..."
+          mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD -e "DROP DATABASE IF EXISTS $DB_NAME; CREATE DATABASE $DB_NAME;"
 
       - name: Run Sequelize migrations
         run: |
@@ -103,7 +110,9 @@ jobs:
       - name: Insert data from CSV
         if: env.NODE_ENV != 'test'
         run: |
-          if [[ "${{ env.ENV }}" == "development" ]]; then
+          if [[ "${{ env.ENV }}" == "production" ]]; then
+            export DB_HOST=127.0.0.1
+          else
             export DB_HOST=mysql
           fi
           node src/scripts/insertCSV.js
