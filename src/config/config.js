@@ -14,13 +14,13 @@ module.exports = {
     username: process.env.GCP_DB_USER || "root",
     password: process.env.GCP_DB_PASSWORD || "",
     database: process.env.GCP_DB_NAME || "teamitaka_database",
-    // USE_CLOUD_SQL_PROXY가 true이면 127.0.0.1, 아니면 secrets의 DB_HOST 값 또는 기본 "mysql" 사용
+    // Cloud SQL Proxy 사용 시, USE_CLOUD_SQL_PROXY가 "true"이면 127.0.0.1, 그렇지 않으면 GCP_DB_HOST 또는 기본 "mysql" 사용
     host: process.env.USE_CLOUD_SQL_PROXY === "true" ? "127.0.0.1" : (process.env.GCP_DB_HOST || "mysql"),
     port: 3306,
     dialect: "mysql",
     dialectOptions: {
-      ssl: false, // Cloud SQL Proxy 사용 시 SSL 비활성화
+      ssl: false
     },
     logging: false,
-  },
+  },  
 };

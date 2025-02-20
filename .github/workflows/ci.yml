@@ -143,3 +143,4 @@ env:
   GCP_CLOUDSQL_INSTANCE: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: ${{ secrets.GCP_REGION }}
+  USE_CLOUD_SQL_PROXY: "true"  # 추가: Cloud SQL Proxy 사용 시 true로 설정
