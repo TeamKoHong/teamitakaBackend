@@ -57,24 +57,23 @@ router.get("/recruitment/:recruitment_id", async (req, res) => {
   }
 });
 
-// 모집공고 작성
-router.post("/recruitment", authMiddleWare, async (req, res) => {
-  const { title, description, status, start_date, end_date, hashtags } = req.body;
-  const user_id = res.locals.user.user_id;
-  const created_at = new Date(); 
-
+// ✅ 모집공고 작성 (임시저장 포함)
+router.post("/recruitment", authMiddleware, async (req, res) => {
   try {
+    const { title, description, status, start_date, end_date, hashtags, is_draft } = req.body;
+    const user_id = res.locals.user.user_id;
+
     const recruitment = await Recruitment.create({
       title,
       description,
-      status,
-      user_id,
+      status: is_draft ? "임시저장" : status,
       start_date,
       end_date,
-      created_at,
+      user_id,
+      is_draft: is_draft || false,
     });
 
-    // 해시태그 처리
+    // 해시태그 저장
     if (hashtags && hashtags.length > 0) {
       const hashtagPromises = hashtags.map(async (tag) => {
         const [hashtag] = await Hashtag.findOrCreate({ where: { content: tag } });
@@ -85,7 +84,7 @@ router.post("/recruitment", authMiddleWare, async (req, res) => {
       await recruitment.addHashtags(hashtagResults);
     }
 
-    res.send(recruitment);
+    res.status(201).json(recruitment);
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: error.message });
