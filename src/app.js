@@ -1,4 +1,3 @@
-// src/app.js
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
@@ -7,10 +6,11 @@ const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
 const devRoutes = require("./routes/devRoutes");
 const univCertRoutes = require("./routes/univCertRoutes");
-const userRoutes = require("./routes/userRoutes"); // ← 새로 추가
-const recruitmentRoutes = require("./routes/recruitmentRoutes");// ← 새로 추가
-const commentRoutes = require("./routes/commentRoutes");// ← 새로 추가
-const likeRoutes = require("./routes/likeRoutes");// ← 새로 추가
+const userRoutes = require("./routes/userRoutes");
+const recruitmentRoutes = require("./routes/recruitmentRoutes"); // ← ✅ 추가된 부분
+const commentRoutes = require("./routes/commentRoutes");
+
+console.log("✅ recruitmentRoutes: ", recruitmentRoutes); // ✅ recruitmentRoutes 확인
 
 const app = express();
 app.use(cors());
@@ -26,12 +26,9 @@ app.use("/api/univcert", univCertRoutes);
 // ✅ 새로 추가: /user
 app.use("/api/user", userRoutes);
 
-//recruitment, comment, like
-app.use("/api", [
-  recruitmentRoutes,
-  commentRoutes,
-  likeRoutes,
-]);
+// recruitment, comment, like
+app.use("/api/recruitment", recruitmentRoutes); // ✅ 개별 등록 방식
+app.use("/api/comment", commentRoutes);
 
 // 기본 라우트
 app.get("/", (req, res) => {
