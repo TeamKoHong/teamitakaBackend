@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # OIDC 토큰 전달을 위해 필요
+      id-token: write  # OIDC 토큰을 전달하기 위해 필요
       contents: read
 
     steps:
@@ -51,11 +51,6 @@ jobs:
           echo "DB_CHARSET=utf8mb4" >> .env
           echo "✅ .env file for development has been created."
 
-      - name: Write service account key to file
-        if: ${{ env.ENV == 'production' }}
-        run: |
-          echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > service-account-key.json
-
       - name: Authenticate to Google Cloud (Workload Identity Federation)
         if: ${{ env.ENV == 'production' }}
         uses: google-github-actions/auth@v1
@@ -81,10 +76,10 @@ jobs:
         if: ${{ env.ENV == 'production' }}
         run: |
           echo "🔒 Starting Cloud SQL Auth Proxy with IAM authentication..."
-          ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -enable_iam_login -credential_file=service-account-key.json &
+          ./cloud_sql_proxy --credentials-file=/dev/null --instances="${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --port=3306 &
           echo "Waiting for Cloud SQL Auth Proxy to fully start..."
           sleep 30
-          netstat -tulnp | grep 3306 || echo "⚠️ Cloud SQL Auth Proxy is NOT running!"
+          lsof -i :3306 || echo "Port 3306 not listening yet"
 
       - name: Run Sequelize migrations
         run: |
