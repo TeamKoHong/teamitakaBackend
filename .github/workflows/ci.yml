@@ -82,7 +82,9 @@ jobs:
             exit 1
           fi
           echo "Checking instance status with gcloud..."
-          gcloud sql instances describe "$(echo $INSTANCE | cut -d':' -f3)" --project="$(echo $INSTANCE | cut -d':' -f1)" || {
+          INSTANCE_NAME=$(echo "$INSTANCE" | cut -d':' -f3)
+          PROJECT_ID=$(echo "$INSTANCE" | cut -d':' -f1)
+          gcloud sql instances describe "$INSTANCE_NAME" --project="$PROJECT_ID" || {
             echo "⚠️ Failed to verify instance '$INSTANCE'. Check if it exists and is running."
             exit 1
           }
@@ -93,6 +95,8 @@ jobs:
           df -h
           echo "Memory:"
           free -h
+          echo "Network connectivity test to Google (ping):"
+          ping -c 4 google.com || echo "⚠️ Network connectivity issue detected!"
           ./cloud_sql_proxy --version  # 버전 확인
           PROXY_BASE="./cloud_sql_proxy"
           PROXY_INSTANCES="-instances=${INSTANCE}=tcp:3306"
@@ -100,6 +104,7 @@ jobs:
           PROXY_CMD="${PROXY_BASE} ${PROXY_INSTANCES} ${PROXY_OPTS}"
           echo "Final constructed command: $PROXY_CMD"
           set -x  # 디버깅 활성화
+          # 실시간 로그 출력 및 파일 저장
           $PROXY_CMD 2>&1 | tee proxy_log.txt &
           PROXY_PID=$!
           echo "Proxy PID: $PROXY_PID"
@@ -114,10 +119,12 @@ jobs:
             echo "Still waiting... ($((i*10))s elapsed)"
             if [ $i -eq 9 ]; then
               echo "⚠️ Proxy failed to start or bind to 3306 after 90s"
-              echo "Proxy log contents:"
-              cat proxy_log.txt
+              echo "Proxy log contents (last 50 lines):"
+              tail -n 50 proxy_log.txt
               echo "Running processes:"
               ps -aux | grep cloud_sql_proxy || true
+              echo "Network status:"
+              netstat -tulnp | grep 3306 || echo "No process bound to 3306"
               kill -9 $PROXY_PID 2>/dev/null || true
               exit 1
             fi
