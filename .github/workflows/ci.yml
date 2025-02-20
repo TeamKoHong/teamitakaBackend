@@ -60,13 +60,11 @@ jobs:
 
       - name: Set GCP project
         if: ${{ env.ENV == 'production' }}
-        run: |
-          gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
+        run: gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
 
       - name: Configure gcloud SDK
         if: ${{ env.ENV == 'production' }}
-        run: |
-          gcloud config set compute/region "${{ secrets.GCP_REGION }}"
+        run: gcloud config set compute/region "${{ secrets.GCP_REGION }}"
 
       - name: Download and Start Cloud SQL Proxy (Production)
         if: ${{ env.ENV == 'production' }}
@@ -85,6 +83,9 @@ jobs:
         run: |
           echo "🔍 Checking Proxy connection..."
           nc -zv 127.0.0.1 3306 || (echo "⚠️ Proxy is not responding!" && exit 1)
+
+      - name: Debug - Print DATABASE_URL
+        run: echo "DATABASE_URL=${DATABASE_URL}"
 
       - name: Check if Users table exists
         run: node src/scripts/checkDB.js
@@ -124,7 +125,6 @@ jobs:
           echo "🚀 Starting Application..."
           npm run start
   
-
       - name: Generate ADMIN_PASSWORD_HASH
         run: |
           echo "Generating ADMIN_PASSWORD_HASH..."
