@@ -81,10 +81,10 @@ jobs:
         if: ${{ env.ENV == 'production' }}
         run: |
           echo "🔒 Starting Cloud SQL Auth Proxy with IAM authentication..."
-          ./cloud_sql_proxy --auto-iam-authn "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" --credentials-file="service-account-key.json" --port 3306 &
+          ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -enable_iam_login -credential_file=service-account-key.json &
           echo "Waiting for Cloud SQL Auth Proxy to fully start..."
           sleep 30
-          lsof -i :3306 || echo "Port 3306 not listening yet"
+          netstat -tulnp | grep 3306 || echo "⚠️ Cloud SQL Auth Proxy is NOT running!"
 
       - name: Run Sequelize migrations
         run: |
