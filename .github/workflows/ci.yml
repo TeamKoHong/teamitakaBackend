@@ -95,7 +95,11 @@ jobs:
           fi
 
       - name: Insert data from CSV
-        run: node src/scripts/insertCSV.js
+        if: env.NODE_ENV != 'test'
+        run: |
+          export DB_HOST=mysql
+          node src/scripts/insertCSV.js
+        
 
       - name: Deploy Application
         run: npm run start
