@@ -87,7 +87,7 @@ jobs:
           nc -zv 127.0.0.1 3306 || (echo "⚠️ Proxy is not responding!" && exit 1)
 
       - name: Check if Users table exists
-        run: node scripts/checkDB.js
+        run: node src/scripts/checkDB.js
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
