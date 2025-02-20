@@ -4,7 +4,7 @@ const cookieParser = require("cookie-parser");
 const { Recruitment, Project, Comment, Scrap, Hashtag } = require("../models");
 
 const { Op } = require("sequelize");
-const authMiddleWare = require("../middlewares/authMiddleware"); // 수정된 경로
+const authMiddleware = require("../middlewares/authMiddleware"); // 수정된 경로
 
 const app = express();
 app.use(cookieParser());
@@ -92,7 +92,7 @@ router.post("/recruitment", authMiddleware, async (req, res) => {
 });
 
 // 모집공고 수정
-router.put("/recruitment/:recruitment_id", authMiddleWare, async (req, res) => {
+router.put("/recruitment/:recruitment_id", authMiddleware, async (req, res) => {
   try {
     const { recruitment_id } = req.params;
     const { title, description, status, start_date, end_date, hashtags } = req.body;
@@ -142,7 +142,7 @@ router.put("/recruitment/:recruitment_id", authMiddleWare, async (req, res) => {
 });
 
 // 모집공고 삭제
-router.delete("/recruitment/:recruitment_id", authMiddleWare, async (req, res) => {
+router.delete("/recruitment/:recruitment_id", authMiddleware, async (req, res) => {
   try {
     const { recruitment_id } = req.params;
 
