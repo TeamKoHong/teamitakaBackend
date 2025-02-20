@@ -60,9 +60,9 @@ jobs:
         run: |
           curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64
           chmod +x cloud_sql_proxy
-          ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 &
-          sleep 60  # 충분한 대기 시간 확보
-          lsof -i :3306 || exit 1  # 포트 확인
+          echo "🔒 Starting Cloud SQL Proxy..."
+          ./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -verbose &
+          sleep 60  # 대기 시간 확보            lsof -i :3306 || (echo "⚠️ Port 3306 not ready" && exit 1)  # 포트 확인 강화
 
       - name: Run Sequelize migrations
         run: npx sequelize-cli db:migrate --env=${{ env.ENV }}
