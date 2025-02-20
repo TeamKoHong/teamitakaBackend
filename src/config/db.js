@@ -1,20 +1,25 @@
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
-const isCloudEnv = process.env.NODE_ENV === "production";
+// 환경 변수 출력 (디버깅용)
+console.log("DB_HOST:", process.env.DB_HOST);
+console.log("DB_NAME:", process.env.DB_NAME);
+console.log("DB_USER:", process.env.DB_USER);
+console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
+console.log("DB_PORT:", process.env.DB_PORT);
 
 const sequelize = new Sequelize(
-  isCloudEnv ? process.env.GCP_DB_NAME : process.env.DB_NAME,
-  isCloudEnv ? process.env.GCP_DB_USER : process.env.DB_USER,
-  isCloudEnv ? process.env.GCP_DB_PASSWORD : process.env.DB_PASSWORD,
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
   {
-    host: isCloudEnv ? process.env.GCP_DB_HOST : process.env.DB_HOST,
-    port: isCloudEnv ? process.env.GCP_DB_PORT : process.env.DB_PORT,
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 3306,  // ✅ 여기서 포트 사용
     dialect: "mysql",
     logging: false,
     timezone: "+09:00",
     dialectOptions: {
-      charset: "utf8mb4",
+      charset: process.env.DB_CHARSET || "utf8mb4",
     },
     define: {
       collate: "utf8mb4_unicode_ci",
