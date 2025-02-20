@@ -55,7 +55,7 @@ jobs:
         if: ${{ env.ENV == 'production' }}
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          workload_identity_provider: "https://iam.googleapis.com/projects/732827775376/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider"
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
