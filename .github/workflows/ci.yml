@@ -19,12 +19,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # 전체 히스토리 가져오기
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: npm
+          cache: none  # 캐시 완전 제거
 
       - name: Install dependencies
         run: npm ci
@@ -73,16 +75,22 @@ jobs:
           curl -o cloud_sql_proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64 || (echo "⚠️ Download failed" && exit 1)
           chmod +x cloud_sql_proxy
           echo "🔒 Starting Cloud SQL Proxy with no TLS..."
-          echo "Instance: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}"
+          echo "Instance value: ${{ secrets.GCP_CLOUDSQL_INSTANCE }}"
           if [ -z "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" ] || ! echo "${{ secrets.GCP_CLOUDSQL_INSTANCE }}" | grep -q ":"; then
-            echo "⚠️ GCP_CLOUDSQL_INSTANCE is empty or invalid (format: project:region:instance)!"
+            echo "⚠️ GCP_CLOUDSQL_INSTANCE is empty or invalid (expected format: project:region:instance)!"
             exit 1
           fi
+          echo "Current directory contents:"
+          ls -la
           echo "Memory status before Proxy start:"
           free -h
           ./cloud_sql_proxy --version  # 버전 확인
           PROXY_CMD="./cloud_sql_proxy -instances=${{ secrets.GCP_CLOUDSQL_INSTANCE }}=tcp:3306 -disable-tls -verbose"
-          echo "Executing: $PROXY_CMD"
+          echo "Final command to execute: $PROXY_CMD"
+          if echo "$PROXY_CMD" | grep -q "nstances"; then
+            echo "⚠️ Detected typo 'nstances' in command! Should be 'instances'."
+            exit 1
+          fi
           set -x  # 디버깅 활성화
           $PROXY_CMD > proxy_log.txt 2>&1 &
           PROXY_PID=$!
@@ -97,7 +105,10 @@ jobs:
             echo "Still waiting... ($((i*10))s elapsed)"
             if [ $i -eq 9 ]; then
               echo "⚠️ Proxy failed to start or bind to 3306 after 90s"
+              echo "Proxy log contents:"
               cat proxy_log.txt
+              echo "Process status:"
+              ps -aux | grep cloud_sql_proxy || true
               kill -9 $PROXY_PID 2>/dev/null || true
               exit 1
             fi
