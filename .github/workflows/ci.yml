@@ -116,7 +116,26 @@ jobs:
           else
             export DB_HOST=mysql
           fi
+          echo "🔍 Inserting data into DB from CSV..."
           node src/scripts/insertCSV.js
+          echo "✅ CSV Insert Completed"
+  
+      - name: Validate Cloud SQL Proxy is Running
+        if: ${{ env.ENV == 'production' }}
+        run: |
+          echo "🔍 Validating Cloud SQL Proxy..."
+          if lsof -i :3306; then
+            echo "✅ Cloud SQL Proxy is running"
+          else
+            echo "❌ Cloud SQL Proxy is NOT running! Exiting..."
+            exit 1
+          fi
+  
+      - name: Deploy Application
+        run: |
+          echo "🚀 Starting Application..."
+          npm run start
+  
 
       - name: Generate ADMIN_PASSWORD_HASH
         run: |
