@@ -1,12 +1,10 @@
-recruitmentRoutes.js
-
 const express = require("express");
 const router = express.Router();
 const cookieParser = require("cookie-parser");
 const { Recruitment, Project, Comment, Scrap, Hashtag } = require("../models");
 
 const { Op } = require("sequelize");
-const authMiddleWare = require("../middlewares/auth-middleware");
+const authMiddleWare = require("../middlewares/authMiddleware"); // 수정된 경로
 
 const app = express();
 app.use(cookieParser());
