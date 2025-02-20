@@ -38,9 +38,10 @@ jobs:
           else
             echo "ENV=production" >> $GITHUB_ENV
           fi
+          echo "Determined ENV: ${{ env.ENV }}"
 
       - name: Generate .env file (for development)
-        if: ${{ env.ENV == 'development' }}
+        if: env.ENV == 'development'
         run: |
           echo "NODE_ENV=development" >> .env
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
@@ -52,7 +53,7 @@ jobs:
           echo "DB_CHARSET=utf8mb4" >> .env
 
       - name: Authenticate to Google Cloud (Workload Identity Federation)
-        if: ${{ env.ENV == 'production' }}
+        if: env.ENV == 'production'
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -60,15 +61,15 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Set GCP project
-        if: ${{ env.ENV == 'production' }}
+        if: env.ENV == 'production'
         run: gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
 
       - name: Configure gcloud SDK
-        if: ${{ env.ENV == 'production' }}
+        if: env.ENV == 'production'
         run: gcloud config set compute/region "${{ secrets.GCP_REGION }}"
 
       - name: Download and Start Cloud SQL Proxy (Production)
-        if: ${{ env.ENV == 'production' }}
+        if: env.ENV == 'production'
         run: |
           echo "🔽 Downloading Cloud SQL Proxy v2..."
           curl -o cloud_sql_proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.13.0/cloud-sql-proxy.linux.amd64 || (echo "⚠️ Download failed" && exit 1)
@@ -99,7 +100,6 @@ jobs:
           PROXY_CMD="${PROXY_BASE} ${PROXY_INSTANCES} ${PROXY_OPTS}"
           echo "Final constructed command: $PROXY_CMD"
           set -x  # 디버깅 활성화
-          # 실시간 로그 출력
           $PROXY_CMD 2>&1 | tee proxy_log.txt &
           PROXY_PID=$!
           echo "Proxy PID: $PROXY_PID"
@@ -125,7 +125,7 @@ jobs:
           set +x
 
       - name: Verify Proxy Connection
-        if: ${{ env.ENV == 'production' }}
+        if: env.ENV == 'production'
         run: |
           echo "🔍 Checking Proxy connection..."
           nc -zv 127.0.0.1 3306 || (echo "⚠️ Proxy is not responding!" && cat proxy_log.txt && exit 1)
@@ -156,7 +156,7 @@ jobs:
           echo "✅ CSV Insert Completed"
 
       - name: Validate Cloud SQL Proxy is Running
-        if: ${{ env.ENV == 'production' }}
+        if: env.ENV == 'production'
         run: |
           echo "🔍 Validating Cloud SQL Proxy..."
           if lsof -i :3306; then
