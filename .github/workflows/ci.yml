@@ -45,6 +45,7 @@ jobs:
           echo "RAW_DATABASE_URL=${{ secrets.DATABASE_URL }}"
           echo "DECODED_URL=$(echo ${{ secrets.DATABASE_URL }} | base64 -d 2>/dev/null || echo ${{ secrets.DATABASE_URL }})"
           echo "URL_ENCODED=$(echo -n "${{ secrets.DATABASE_URL }}" | xxd -p)"
+          echo "URL_DECODED=$(echo -n "${{ secrets.DATABASE_URL }}" | perl -pe 's/%([0-9a-fA-F]{2})/chr(hex($1))/ge')"
 
       - name: Test Cloud SQL Connection
         run: |
