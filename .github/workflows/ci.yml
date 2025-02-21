@@ -68,7 +68,7 @@ jobs:
 
       - name: Run Sequelize migrations (Users first)
         run: |
-          # Override the DB_HOST to use Cloud SQL Proxy (localhost)
+          # Override DB_HOST and DB_PORT for Cloud SQL Proxy connection
           export DB_HOST=127.0.0.1
           export DB_PORT=3306
           npx sequelize-cli db:migrate --name 20250219140000-create-users.js --env production
@@ -79,6 +79,8 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
+          # 기존 DB_PORT는 위에서 3306으로 재설정됨
+  
 
       - name: Insert data from CSV
         run: |
