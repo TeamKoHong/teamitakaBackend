@@ -60,7 +60,7 @@ jobs:
 
       - name: Debug - Before Migration
         run: |
-          echo "Running migration with DATABASE_URL: ${{ secrets.DIMITIVE_URL }}"
+          echo "Running migration with DATABASE_URL: ${{ secrets.DATABASE_URL }}"
 
       - name: Run Sequelize migrations (Users first)
         run: |
