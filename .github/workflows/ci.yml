@@ -68,6 +68,8 @@ jobs:
 
       - name: Run Sequelize migrations (Users first)
         run: |
+          # Override the DB_HOST to use Cloud SQL Proxy (localhost)
+          export DB_HOST=127.0.0.1
           npx sequelize-cli db:migrate --name 20250219140000-create-users.js --env production
           npx sequelize-cli db:migrate --name 20250219140810-create-applications.js --env production
         env:
