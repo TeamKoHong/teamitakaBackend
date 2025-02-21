@@ -49,7 +49,7 @@ jobs:
           echo "Testing connection to Cloud SQL at 35.223.147.232:3306..."
           nc -zv 35.223.147.232 3306 || {
             echo "⚠️ Failed to connect to Cloud SQL at 35.223.147.232:3306"
-            echo "Check GCP Firewall and instance status for IP 20.42.14.164"
+            echo "Check GCP Firewall and instance status for IP 52.155.59.82"
             exit 1
           }
           echo "✅ Connection to Cloud SQL successful"
