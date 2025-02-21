@@ -61,7 +61,6 @@ jobs:
           echo "Testing connection to Cloud SQL at 35.223.147.232:3306..."
           nc -zv 35.223.147.232 3306 || {
             echo "⚠️ Failed to connect to Cloud SQL at 35.223.147.232:3306"
-            echo "Check GCP Firewall, instance status, and Secrets settings."
             exit 1
           }
           echo "✅ Connection to Cloud SQL successful"
@@ -75,23 +74,25 @@ jobs:
         run: |
           npx sequelize-cli db:migrate --name 20250219140000-create-users.js
           npx sequelize-cli db:migrate --name 20250219140810-create-applications.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Insert data from CSV
         if: env.NODE_ENV != 'test'
         run: |
-          if [[ "${{ env.ENV }}" == "production" ]]; then
-            export DB_HOST=${{ secrets.DB_HOST }}
-          else
-            export DB_HOST=mysql
-          fi
           echo "🔍 Inserting data into DB from CSV..."
           node src/scripts/insertCSV.js
           echo "✅ CSV Insert Completed"
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Deploy Application
         run: |
           echo "🚀 Starting Application..."
           npm run start
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
 env:
   DB_HOST: ${{ secrets.DB_HOST }}
