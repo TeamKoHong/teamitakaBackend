@@ -42,6 +42,7 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
           echo "DB_NAME=${{ secrets.DB_NAME }}"
           echo "DB_PORT=${{ secrets.DB_PORT }}"
+          echo "RAW_DATABASE_URL=${{ secrets.DATABASE_URL }}"
 
       - name: Test Cloud SQL Connection
         run: |
@@ -60,6 +61,7 @@ jobs:
 
       - name: Run Sequelize migrations
         run: |
+          echo "Running migration with DATABASE_URL: ${{ secrets.DATABASE_URL }}"
           npx sequelize-cli db:migrate --url "${{ secrets.DATABASE_URL }}"
         env:
           NODE_ENV: production
