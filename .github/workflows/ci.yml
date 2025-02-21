@@ -58,14 +58,9 @@ jobs:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Debug - Before Migration
+      - name: Run Sequelize migrations
         run: |
-          echo "Running migration with DATABASE_URL: ${{ secrets.DATABASE_URL }}"
-
-      - name: Run Sequelize migrations (Users first)
-        run: |
-          npx sequelize-cli db:migrate --url "${{ secrets.DATABASE_URL }}" --name 20250219140000-create-users.js
-          npx sequelize-cli db:migrate --url "${{ secrets.DATABASE_URL }}" --name 20250219140810-create-applications.js
+          npx sequelize-cli db:migrate --url "${{ secrets.DATABASE_URL }}"
         env:
           NODE_ENV: production
 
