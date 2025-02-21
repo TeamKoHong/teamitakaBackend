@@ -43,14 +43,6 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}"
           echo "DB_PORT=${{ secrets.DB_PORT }}"
 
-      - name: Start Cloud SQL Proxy
-        run: |
-          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
-          chmod +x cloud_sql_proxy
-          # INSTANCE_CONNECTION_NAME은 Cloud SQL 인스턴스 연결 이름으로 대체
-          ./cloud_sql_proxy -instances=${{ secrets.INSTANCE_CONNECTION_NAME }}=tcp:3306 &
-          sleep 5  # Proxy가 완전히 실행될 때까지 대기
-
       - name: Test Cloud SQL Connection
         run: |
           echo "Testing connection to Cloud SQL at 35.223.147.232:3306..."
@@ -67,20 +59,17 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Run Sequelize migrations (Users first)
-        env:
-          NODE_ENV: production
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_HOST: 127.0.0.1    # 명시적으로 로컬 호스트 사용
-          DB_PORT: 3306         # 명시적으로 포트 3306 사용
         run: |
           npx sequelize-cli db:migrate --name 20250219140000-create-users.js --env production
           npx sequelize-cli db:migrate --name 20250219140810-create-applications.js --env production
-  
-  
-  
+        env:
+          NODE_ENV: production
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PORT: ${{ secrets.DB_PORT }}
 
       - name: Insert data from CSV
         run: |
