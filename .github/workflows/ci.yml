@@ -70,16 +70,15 @@ jobs:
         run: |
           # Override the DB_HOST to use Cloud SQL Proxy (localhost)
           export DB_HOST=127.0.0.1
+          export DB_PORT=3306
           npx sequelize-cli db:migrate --name 20250219140000-create-users.js --env production
           npx sequelize-cli db:migrate --name 20250219140810-create-applications.js --env production
         env:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DB_HOST: ${{ secrets.DB_HOST }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
-          DB_PORT: ${{ secrets.DB_PORT }}
 
       - name: Insert data from CSV
         run: |
