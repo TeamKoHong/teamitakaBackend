@@ -35,7 +35,7 @@ jobs:
           if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
             echo "ENV=development" >> $GITHUB_ENV
           else
-            echo "ENV=production" >> $GITHUB_ENV
+            echo "ENV=production" >> $GITHUB_ENV  # feature/* 포함
           fi
           echo "Determined ENV: ${{ env.ENV }}"
 
