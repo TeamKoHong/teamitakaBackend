@@ -5,22 +5,21 @@ module.exports = {
     username: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "",
     database: process.env.DB_NAME || "teamitaka_database",
-    host: process.env.DB_HOST || "127.0.0.1", // IPv4 명시
+    host: process.env.DB_HOST || "127.0.0.1",
     port: process.env.DB_PORT || 3306,
     dialect: "mysql",
     logging: false,
   },
   production: {
-    username: process.env.GCP_DB_USER || "root",
-    password: process.env.GCP_DB_PASSWORD || "",
-    database: process.env.GCP_DB_NAME || "teamitaka_database",
-    // Cloud SQL Proxy 사용 시, USE_CLOUD_SQL_PROXY가 "true"이면 127.0.0.1, 그렇지 않으면 GCP_DB_HOST 또는 기본 "mysql" 사용
-    host: process.env.USE_CLOUD_SQL_PROXY === "true" ? "127.0.0.1" : (process.env.GCP_DB_HOST || "mysql"),
-    port: 3306,
+    username: process.env.DB_USER || "iam_user",  // GCP_DB_USER → DB_USER
+    password: process.env.DB_PASSWORD || "Teamitaka123!",  // GCP_DB_PASSWORD → DB_PASSWORD
+    database: process.env.DB_NAME || "teamitaka_database",  // GCP_DB_NAME → DB_NAME
+    host: process.env.DB_HOST || "35.223.147.232",  // GCP_DB_HOST → DB_HOST, 기본값 명시
+    port: process.env.DB_PORT || 3306,
     dialect: "mysql",
     dialectOptions: {
       ssl: false
     },
-    logging: false,
-  },  
+    logging: console.log,  // 디버깅용 로그 활성화
+  },
 };

@@ -38,6 +38,10 @@ jobs:
         run: |
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
           echo "DB_HOST=${{ secrets.DB_HOST }}"
+          echo "DB_USER=${{ secrets.DB_USER }}"
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
+          echo "DB_NAME=${{ secrets.DB_NAME }}"
+          echo "DB_PORT=${{ secrets.DB_PORT }}"
 
       - name: Test Cloud SQL Connection
         run: |
@@ -61,6 +65,11 @@ jobs:
         env:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PORT: ${{ secrets.DB_PORT }}
 
       - name: Insert data from CSV
         run: |
@@ -69,7 +78,6 @@ jobs:
           echo "✅ CSV Insert Completed"
         env:
           NODE_ENV: production
-          DB_HOST: ${{ secrets.DB_HOST }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Deploy Application
@@ -85,7 +93,7 @@ env:
   DB_NAME: ${{ secrets.DB_NAME }}
   DB_USER: ${{ secrets.DB_USER }}
   DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  PORT: ${{ secrets.PORT }}
+  PORT: ${{ secrets.DB_PORT }}
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   DB_CHARSET: "utf8mb4"
   DB_DIALECT: "mysql"
