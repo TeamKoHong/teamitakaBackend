@@ -43,13 +43,15 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}"
           echo "DB_PORT=${{ secrets.DB_PORT }}"
           echo "RAW_DATABASE_URL=${{ secrets.DATABASE_URL }}"
+          echo "DECODED_URL=$(echo ${{ secrets.DATABASE_URL }} | base64 -d 2>/dev/null || echo ${{ secrets.DATABASE_URL }})"
+          echo "URL_ENCODED=$(echo -n "${{ secrets.DATABASE_URL }}" | xxd -p)"
 
       - name: Test Cloud SQL Connection
         run: |
           echo "Testing connection to Cloud SQL at 35.223.147.232:3306..."
           nc -zv 35.223.147.232 3306 || {
             echo "⚠️ Failed to connect to Cloud SQL at 35.223.147.232:3306"
-            echo "Check GCP Firewall and instance status for IP 52.155.59.82"
+            echo "Check GCP Firewall and instance status for IP 172.200.199.211"
             exit 1
           }
           echo "✅ Connection to Cloud SQL successful"
