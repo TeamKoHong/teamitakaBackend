@@ -46,6 +46,7 @@ jobs:
           echo "DECODED_URL=$(echo ${{ secrets.DATABASE_URL }} | base64 -d 2>/dev/null || echo ${{ secrets.DATABASE_URL }})"
           echo "URL_ENCODED=$(echo -n "${{ secrets.DATABASE_URL }}" | xxd -p)"
           echo "URL_DECODED=$(echo -n "${{ secrets.DATABASE_URL }}" | perl -pe 's/%([0-9a-fA-F]{2})/chr(hex($1))/ge')"
+          echo "URL_TEST=$(echo -n "${{ secrets.DATABASE_URL }}" | sed 's/%23/\#/g; s/%2D/-/g; s/%5F/_/g; s/%2E/./g; s/%7E/~/g')"
 
       - name: Test Cloud SQL Connection
         run: |
