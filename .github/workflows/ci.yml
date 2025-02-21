@@ -43,6 +43,14 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}"
           echo "DB_PORT=${{ secrets.DB_PORT }}"
 
+      - name: Start Cloud SQL Proxy
+        run: |
+          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+          chmod +x cloud_sql_proxy
+          # INSTANCE_CONNECTION_NAME은 Cloud SQL 인스턴스 연결 이름으로 대체
+          ./cloud_sql_proxy -instances=${{ secrets.INSTANCE_CONNECTION_NAME }}=tcp:3306 &
+          sleep 5  # Proxy가 완전히 실행될 때까지 대기
+
       - name: Test Cloud SQL Connection
         run: |
           echo "Testing connection to Cloud SQL at 35.223.147.232:3306..."
