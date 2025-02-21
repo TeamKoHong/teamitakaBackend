@@ -29,27 +29,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Determine Environment
-        id: env-check
+      - name: Set Production Environment
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-            echo "ENV=development" >> $GITHUB_ENV
-          else
-            echo "ENV=production" >> $GITHUB_ENV  # feature/* 포함
-          fi
+          echo "ENV=production" >> $GITHUB_ENV
           echo "Determined ENV: ${{ env.ENV }}"
-
-      - name: Generate .env file (for development)
-        if: env.ENV == 'development'
-        run: |
-          echo "NODE_ENV=development" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "PORT=${{ secrets.PORT }}" >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-          echo "DB_CHARSET=utf8mb4" >> .env
 
       - name: Debug - Print Environment
         run: |
@@ -78,7 +61,6 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Insert data from CSV
-        if: env.NODE_ENV != 'test'
         run: |
           echo "🔍 Inserting data into DB from CSV..."
           node src/scripts/insertCSV.js
