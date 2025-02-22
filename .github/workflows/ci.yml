@@ -26,8 +26,13 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t teamitaka-app .
+        working-directory: .
 
       - name: Set Production Environment
         run: |
@@ -52,30 +57,32 @@ jobs:
       - name: Test Cloud SQL Connection
         run: |
           echo "Testing connection to Cloud SQL at 35.223.147.232:3306..."
-          nc -zv 35.223.147.232 3306 || {
+          docker run --rm teamitaka-app nc -zv 35.223.147.232 3306 || {
             echo "⚠️ Failed to connect to Cloud SQL at 35.223.147.232:3306"
-            echo "Check GCP Firewall and instance status for IP 20.57.71.178"
+            echo "Check GCP Firewall and instance status for IP 20.42.10.173"
             exit 1
           }
           echo "✅ Connection to Cloud SQL successful"
 
-      - name: Check if Users table exists
-        run: node src/scripts/checkDB.js
+      - name: Run Sequelize migrations in Docker
+        run: |
+          echo "Running migration with DATABASE_URL: ${{ secrets.DATABASE_URL }}"
+          docker run teamitaka-app npx sequelize-cli db:migrate --url "${{ secrets.DATABASE_URL }}"
         env:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Run Sequelize migrations
+      - name: Check if Users table exists
         run: |
-          echo "Running migration with DATABASE_URL: ${{ secrets.DATABASE_URL }}"
-          npx sequelize-cli db:migrate --url "${{ secrets.DATABASE_URL }}"
+          docker run teamitaka-app node src/scripts/checkDB.js
         env:
           NODE_ENV: production
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Insert data from CSV
         run: |
           echo "🔍 Inserting data into DB from CSV..."
-          node src/scripts/insertCSV.js
+          docker run teamitaka-app node src/scripts/insertCSV.js
           echo "✅ CSV Insert Completed"
         env:
           NODE_ENV: production
@@ -84,7 +91,7 @@ jobs:
       - name: Deploy Application
         run: |
           echo "🚀 Starting Application..."
-          npm run start
+          docker run -d -p 3000:3000 teamitaka-app npm run start
         env:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
