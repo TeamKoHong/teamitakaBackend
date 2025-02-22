@@ -29,6 +29,142 @@ module.exports = {
         type: Sequelize.STRING(255),
         allowNull: false,
       },
+      profileImageUrl: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
+      userType: {
+        type: Sequelize.ENUM("ADMIN", "MEMBER"),
+        defaultValue: "MEMBER",
+      },
+      role: {
+        type: Sequelize.ENUM("ADMIN", "MEMBER"),
+        defaultValue: "MEMBER",
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // Admins 테이블 생성
+    await queryInterface.createTable("Admins", {
+      id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      email: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      password: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      role: {
+        type: Sequelize.STRING,
+        defaultValue: "ADMIN",
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // Universities 테이블 생성
+    await queryInterface.createTable("Universities", {
+      ID: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      Name: {
+        type: Sequelize.STRING(255),
+        allowNull: false,
+        unique: true,
+      },
+      Country: {
+        type: Sequelize.STRING(100),
+        allowNull: false,
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // Colleges 테이블 생성
+    await queryInterface.createTable("Colleges", {
+      ID: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      UniversityID: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "Universities",
+          key: "ID",
+        },
+        onDelete: "CASCADE",
+      },
+      Name: {
+        type: Sequelize.STRING(255),
+        allowNull: false,
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // Departments 테이블 생성
+    await queryInterface.createTable("Departments", {
+      ID: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      CollegeID: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "Colleges",
+          key: "ID",
+        },
+        onDelete: "CASCADE",
+      },
+      Name: {
+        type: Sequelize.STRING(255),
+        allowNull: false,
+      },
       createdAt: {
         type: Sequelize.DATE,
         allowNull: false,
@@ -44,41 +180,36 @@ module.exports = {
     // Projects 테이블 생성
     await queryInterface.createTable("Projects", {
       project_id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      uuid: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
-        allowNull: false,
-        unique: true,
+        primaryKey: true,
       },
-      name: {
-        type: Sequelize.STRING(255),
+      title: {
+        type: Sequelize.STRING,
         allowNull: false,
       },
       description: {
         type: Sequelize.TEXT,
         allowNull: false,
       },
-      owner_id: {
+      user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: { model: "Users", key: "user_id" },
+        references: {
+          model: "Users",
+          key: "user_id",
+        },
         onDelete: "CASCADE",
       },
-      startDate: {
-        type: Sequelize.DATE,
+      recruitment_id: {
+        type: Sequelize.UUID,
         allowNull: false,
-      },
-      endDate: {
-        type: Sequelize.DATE,
-        allowNull: false,
-      },
-      status: {
-        type: Sequelize.ENUM("PLANNED", "RECRUITING", "CLOSED"),
-        defaultValue: "PLANNED",
+        unique: true,
+        references: {
+          model: "Recruitments",
+          key: "recruitment_id",
+        },
+        onDelete: "CASCADE",
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -95,18 +226,12 @@ module.exports = {
     // Recruitments 테이블 생성
     await queryInterface.createTable("Recruitments", {
       recruitment_id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      uuid: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
-        allowNull: false,
-        unique: true,
+        primaryKey: true,
       },
       title: {
-        type: Sequelize.STRING(255),
+        type: Sequelize.STRING,
         allowNull: false,
       },
       description: {
@@ -117,10 +242,13 @@ module.exports = {
         type: Sequelize.ENUM("OPEN", "CLOSED"),
         defaultValue: "OPEN",
       },
-      project_id: {
+      user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: { model: "Projects", key: "project_id" },
+        references: {
+          model: "Users",
+          key: "user_id",
+        },
         onDelete: "CASCADE",
       },
       createdAt: {
@@ -128,32 +256,105 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.NOW,
       },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
     });
 
-    // Applications 테이블 생성
-    await queryInterface.createTable("Applications", {
-      application_id: {
+    // Comments 테이블 생성
+    await queryInterface.createTable("Comments", {
+      id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
-        allowNull: false,
       },
-      status: {
-        type: Sequelize.ENUM("PENDING", "APPROVED", "REJECTED"),
-        defaultValue: "PENDING",
+      content: {
+        type: Sequelize.TEXT,
         allowNull: false,
       },
       user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: { model: "Users", key: "user_id" },
+        references: {
+          model: "Users",
+          key: "user_id",
+        },
         onDelete: "CASCADE",
       },
       recruitment_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+          model: "Recruitments",
+          key: "recruitment_id",
+        },
+        onDelete: "CASCADE",
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // Likes 테이블 생성
+    await queryInterface.createTable("Likes", {
+      id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true,
+      },
+      user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: { model: "Recruitments", key: "recruitment_id" },
+        references: {
+          model: "Users",
+          key: "user_id",
+        },
         onDelete: "CASCADE",
+      },
+      recruitment_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+          model: "Recruitments",
+          key: "recruitment_id",
+        },
+        onDelete: "CASCADE",
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // Notifications 테이블 생성
+    await queryInterface.createTable("Notifications", {
+      id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true,
+      },
+      message: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+      },
+      isRead: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -169,34 +370,10 @@ module.exports = {
 
     // Reviews 테이블 생성
     await queryInterface.createTable("Reviews", {
-      review_id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      uuid: {
+      id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
-        allowNull: false,
-        unique: true,
-      },
-      reviewer_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: { model: "Users", key: "user_id" },
-        onDelete: "CASCADE",
-      },
-      reviewee_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: { model: "Users", key: "user_id" },
-        onDelete: "CASCADE",
-      },
-      project_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: { model: "Projects", key: "project_id" },
-        onDelete: "CASCADE",
+        primaryKey: true,
       },
       rating: {
         type: Sequelize.INTEGER,
@@ -211,36 +388,94 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.NOW,
       },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
     });
 
-    // Notifications 테이블 생성
-    await queryInterface.createTable("Notifications", {
-      notification_id: {
+    // Keywords 테이블 생성
+    await queryInterface.createTable("Keywords", {
+      id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      uuid: {
+      keyword: {
+        type: Sequelize.STRING,
+        unique: true,
+      },
+      count: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // Searches 테이블 생성
+    await queryInterface.createTable("Searches", {
+      id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      keyword: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      searchTime: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // VerifiedEmails 테이블 생성
+    await queryInterface.createTable("VerifiedEmails", {
+      id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
+        primaryKey: true,
+      },
+      email: {
+        type: Sequelize.STRING,
         allowNull: false,
         unique: true,
       },
-      user_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: { model: "Users", key: "user_id" },
-        onDelete: "CASCADE",
+      certified_date: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
       },
-      message: {
-        type: Sequelize.TEXT,
+      expires_at: {
+        type: Sequelize.DATE,
         allowNull: false,
-      },
-      isRead: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
+        defaultValue: Sequelize.fn("DATE_ADD", Sequelize.NOW(), Sequelize.literal("INTERVAL 24 HOUR")),
       },
       createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW,
@@ -249,11 +484,19 @@ module.exports = {
   },
 
   down: async (queryInterface) => {
-    await queryInterface.dropTable("Notifications");
+    await queryInterface.dropTable("VerifiedEmails");
+    await queryInterface.dropTable("Searches");
+    await queryInterface.dropTable("Keywords");
     await queryInterface.dropTable("Reviews");
-    await queryInterface.dropTable("Applications");
+    await queryInterface.dropTable("Notifications");
+    await queryInterface.dropTable("Likes");
+    await queryInterface.dropTable("Comments");
     await queryInterface.dropTable("Recruitments");
     await queryInterface.dropTable("Projects");
+    await queryInterface.dropTable("Departments");
+    await queryInterface.dropTable("Colleges");
+    await queryInterface.dropTable("Universities");
+    await queryInterface.dropTable("Admins");
     await queryInterface.dropTable("Users");
   },
 };
