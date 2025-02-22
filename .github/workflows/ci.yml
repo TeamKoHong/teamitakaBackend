@@ -108,7 +108,7 @@ jobs:
             -e NODE_ENV=production \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
             teamitaka-app \
-            bash -c "npx sequelize-cli db:migrate --debug"
+            bash -c "npx sequelize-cli db:migrate --url ${{ env.DATABASE_URL }} --debug"
         env:
           NODE_ENV: production
 
