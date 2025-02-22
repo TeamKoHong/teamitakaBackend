@@ -33,11 +33,17 @@ jobs:
           node-version: 18
 
       # ---------------------------------------------------------
-      # 1) Prepare Service Account Key
-      #    - Cloud SQL Auth Proxy를 위해 비밀 키(JSON) 파일 생성
+      # 1) Prepare Service Account Key (멀티라인 안전 저장)
+      #    - cat <<EOF ... EOF 사용
       # ---------------------------------------------------------
       - name: Prepare Service Account Key
-        run: echo "${{ secrets.GCP_SA_KEY }}" > sa-key.json
+        run: |
+          # 주의: 아래 구문은 secrets.GCP_SA_KEY에
+          # { ... } 전체 JSON이 들어있어야 합니다.
+          cat <<EOF > sa-key.json
+${{ secrets.GCP_SA_KEY }}
+EOF
+          echo "Service Account JSON saved to sa-key.json"
 
       # ---------------------------------------------------------
       # 2) Download Cloud SQL Proxy
@@ -49,7 +55,6 @@ jobs:
 
       # ---------------------------------------------------------
       # 3) Start Cloud SQL Proxy (background)
-      #    - 깃액션 호스트의 localhost:3306 에서 DB 터널링
       # ---------------------------------------------------------
       - name: Start Cloud SQL Proxy
         run: |
@@ -61,11 +66,11 @@ jobs:
 
       # ---------------------------------------------------------
       # 4) [Optional] Test DB connection from host (netcat)
-      #    - 호스트 레벨에서 포트 3306 열렸는지 체크
       # ---------------------------------------------------------
       - name: Test Cloud SQL Connection (host)
         run: |
           sudo apt-get update
+          # Install netcat
           sudo apt-get install -y netcat-openbsd
           echo "Testing connection to local Proxy at 127.0.0.1:3306..."
           nc -zv 127.0.0.1 3306 || {
@@ -78,7 +83,6 @@ jobs:
 
       # ---------------------------------------------------------
       # 5) Docker Build (Production Image)
-      #    - Dockerfile.prod 사용
       # ---------------------------------------------------------
       - name: Install Docker (Buildx)
         uses: docker/setup-buildx-action@v3
@@ -110,8 +114,6 @@ jobs:
 
       # ---------------------------------------------------------
       # 7) Test Cloud SQL Connection in Docker
-      #    - "--add-host=host.docker.internal:host-gateway"옵션으로
-      #      컨테이너 내부에서 깃액션 호스트를 "host.docker.internal"로 매핑
       # ---------------------------------------------------------
       - name: Test Cloud SQL Connection (docker)
         run: |
@@ -126,8 +128,6 @@ jobs:
 
       # ---------------------------------------------------------
       # 8) Run Sequelize migrations in Docker
-      #    - host.docker.internal: 깃액션 호스트의 3306
-      #    - DB_USER, DB_PASSWORD, DB_NAME는 Secrets
       # ---------------------------------------------------------
       - name: Run Sequelize migrations in Docker
         run: |
@@ -189,6 +189,5 @@ jobs:
           echo "✅ App container started on port 3000"
 
 env:
-  # (Optional) Generally for local usage, prefer secrets for production
   DB_CHARSET: "utf8mb4"
   DB_DIALECT: "mysql"
