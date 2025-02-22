@@ -1,43 +1,11 @@
-version: '3.8'
-
+version: '3'
 services:
-  database:
-    image: mariadb:latest
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: teamitaka_database
-      MYSQL_USER: teamitaka_user
-      MYSQL_PASSWORD: password
-    ports:
-      - "3307:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  backend:
+  app:
     build: .
-    restart: always
-    depends_on:
-      database:
-        condition: service_healthy
     environment:
-      DB_HOST: database
-      DB_PORT: 3306
-      DB_USER: teamitaka_user
-      DB_PASSWORD: password
-      DB_NAME: teamitaka_database
-      PORT: 3001
-    ports:
-      - "3001:3001"
-    volumes:
-      - .:/app
-    working_dir: /app
-    command: npm run dev
-
-volumes:
-  db_data:
+      - DATABASE_URL=mysql://iam_user:Strong_Password123%2D@35.223.147.232:3306/teamitaka_database
+    networks:
+      - gcp-network
+networks:
+  gcp-network:
+    external: true
