@@ -13,11 +13,10 @@ const sequelize = new Sequelize(databaseUrl, {
   dialect: "mysql",
   logging: console.log, // 디버깅용 로깅 활성화
   dialectOptions: {
-    ssl: false, // Cloud SQL Proxy가 SSL을 처리
-    connectTimeout: 10000, // 타임아웃 증가
-    host: "127.0.0.1", // 강제로 IPv4 사용
+    ssl: false, // 프록시가 SSL 처리
+    connectTimeout: 10000,
   },
-  host: "127.0.0.1", // 명시적으로 IPv4 설정
+  host: "127.0.0.1",
 });
 
 const connectDB = async () => {
