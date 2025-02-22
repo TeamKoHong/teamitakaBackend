@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Users 테이블 생성
+    // 1. Users 테이블 생성 (참조되는 기본 테이블)
     await queryInterface.createTable("Users", {
       user_id: {
         type: Sequelize.INTEGER,
@@ -53,7 +53,7 @@ module.exports = {
       },
     });
 
-    // Admins 테이블 생성
+    // 2. Admins 테이블 생성 (독립적)
     await queryInterface.createTable("Admins", {
       id: {
         type: Sequelize.INTEGER,
@@ -85,7 +85,7 @@ module.exports = {
       },
     });
 
-    // Universities 테이블 생성
+    // 3. Universities 테이블 생성 (독립적)
     await queryInterface.createTable("Universities", {
       ID: {
         type: Sequelize.INTEGER,
@@ -113,7 +113,7 @@ module.exports = {
       },
     });
 
-    // Colleges 테이블 생성
+    // 4. Colleges 테이블 생성 (Universities 참조)
     await queryInterface.createTable("Colleges", {
       ID: {
         type: Sequelize.INTEGER,
@@ -145,7 +145,7 @@ module.exports = {
       },
     });
 
-    // Departments 테이블 생성
+    // 5. Departments 테이블 생성 (Colleges 참조)
     await queryInterface.createTable("Departments", {
       ID: {
         type: Sequelize.INTEGER,
@@ -177,7 +177,7 @@ module.exports = {
       },
     });
 
-    // Recruitments 테이블 생성
+    // 6. Recruitments 테이블 생성 (Users 참조)
     await queryInterface.createTable("Recruitments", {
       recruitment_id: {
         type: Sequelize.UUID,
@@ -217,7 +217,7 @@ module.exports = {
       },
     });
 
-    // Projects 테이블 생성
+    // 7. Projects 테이블 생성 (Users, Recruitments 참조)
     await queryInterface.createTable("Projects", {
       project_id: {
         type: Sequelize.UUID,
@@ -263,7 +263,7 @@ module.exports = {
       },
     });
 
-    // Comments 테이블 생성
+    // 8. Comments 테이블 생성 (Users, Recruitments 참조)
     await queryInterface.createTable("Comments", {
       id: {
         type: Sequelize.UUID,
@@ -304,7 +304,7 @@ module.exports = {
       },
     });
 
-    // Likes 테이블 생성
+    // 9. Likes 테이블 생성 (Users, Recruitments 참조)
     await queryInterface.createTable("Likes", {
       id: {
         type: Sequelize.UUID,
@@ -341,7 +341,7 @@ module.exports = {
       },
     });
 
-    // Notifications 테이블 생성
+    // 10. Notifications 테이블 생성 (독립적)
     await queryInterface.createTable("Notifications", {
       id: {
         type: Sequelize.UUID,
@@ -368,7 +368,7 @@ module.exports = {
       },
     });
 
-    // Reviews 테이블 생성
+    // 11. Reviews 테이블 생성 (독립적)
     await queryInterface.createTable("Reviews", {
       id: {
         type: Sequelize.UUID,
@@ -395,7 +395,7 @@ module.exports = {
       },
     });
 
-    // Keywords 테이블 생성
+    // 12. Keywords 테이블 생성 (독립적)
     await queryInterface.createTable("Keywords", {
       id: {
         type: Sequelize.INTEGER,
@@ -422,7 +422,7 @@ module.exports = {
       },
     });
 
-    // Searches 테이블 생성
+    // 13. Searches 테이블 생성 (독립적)
     await queryInterface.createTable("Searches", {
       id: {
         type: Sequelize.INTEGER,
@@ -449,7 +449,7 @@ module.exports = {
       },
     });
 
-    // VerifiedEmails 테이블 생성
+    // 14. VerifiedEmails 테이블 생성 (독립적)
     await queryInterface.createTable("VerifiedEmails", {
       id: {
         type: Sequelize.UUID,
