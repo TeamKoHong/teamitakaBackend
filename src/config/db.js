@@ -13,7 +13,7 @@ const sequelize = new Sequelize(databaseUrl, {
   dialect: "mysql",
   logging: console.log, // 디버깅용 로깅 활성화
   dialectOptions: {
-    ssl: false, // 프록시가 SSL 처리
+    ssl: false, // Cloud SQL Proxy가 SSL 처리
     connectTimeout: 10000,
   },
   host: "127.0.0.1",

@@ -77,7 +77,7 @@ jobs:
       - name: Set Production Environment
         run: |
           echo "NODE_ENV=production" >> $GITHUB_ENV
-          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}?ssl=false" >> $GITHUB_ENV
+          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}" >> $GITHUB_ENV
           echo "Determined NODE_ENV: ${{ env.NODE_ENV }}"
           echo "Determined DATABASE_URL: ${{ env.DATABASE_URL }}"
 
