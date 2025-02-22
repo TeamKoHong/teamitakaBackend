@@ -92,7 +92,7 @@ async function insertDataFromCSV(filePath) {
 
 // 실행
 if (require.main === module) {
-  insertDataFromCSV("seeders/universities_colleges_departments.csv").catch((err) => {
+  insertDataFromCSV("/app/seeders/universities_colleges_departments.csv").catch((err) => {
     console.error(err);
     process.exit(1);
   });
