@@ -29,41 +29,51 @@ jobs:
       - name: Install Docker
         uses: docker/setup-buildx-action@v3
 
+      # ---------------------------------------------------------
+      # 1) Docker Build (Production Image)
+      # ---------------------------------------------------------
       - name: Build Docker Image
         run: |
-          docker build -t teamitaka-app .
+          docker build -t teamitaka-app -f Dockerfile.prod .
         working-directory: .
-
+      
       - name: Set Production Environment
         run: |
           echo "NODE_ENV=production" >> $GITHUB_ENV
           echo "Determined NODE_ENV: ${{ env.NODE_ENV }}"
 
+      # ---------------------------------------------------------
+      # 2) Debug - Print Environment
+      #    여기서 Secrets로 넘어온 DB 비밀번호의 특수문자 인코딩 여부 확인 가능
+      # ---------------------------------------------------------
       - name: Debug - Print Environment
         run: |
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-          echo "DB_HOST=${{ secrets.DB_HOST }}"
-          echo "DB_USER=${{ secrets.DB_USER }}"
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
-          echo "DB_NAME=${{ secrets.DB_NAME }}"
-          echo "DB_PORT=${{ secrets.DB_PORT }}"
-          echo "RAW_DATABASE_URL=${{ secrets.DATABASE_URL }}"
-          echo "DECODED_URL=$(echo -n "${{ secrets.DATABASE_URL }}" | base64 -d 2>/dev/null || echo -n "${{ secrets.DATABASE_URL }}")"
-          echo "URL_ENCODED=$(echo -n "${{ secrets.DATABASE_URL }}" | xxd -p)"
-          echo "URL_DECODED=$(echo -n "${{ secrets.DATABASE_URL }}" | perl -pe 's/%([0-9a-fA-F]{2})/chr(hex($1))/ge')"
-          echo "URL_TEST=$(echo -n "${{ secrets.DATABASE_URL }}" | sed 's/%23/\#/g; s/%2D/-/g; s/%5F/_/g; s/%2E/./g; s/%7E/~/g')"
+          echo "GCP_DB_HOST=${{ secrets.GCP_DB_HOST }}"
+          echo "GCP_DB_USER=${{ secrets.GCP_DB_USER }}"
+          echo "GCP_DB_PASSWORD=${{ secrets.GCP_DB_PASSWORD }}"
+          echo "GCP_DB_NAME=${{ secrets.GCP_DB_NAME }}"
+          echo "GCP_DB_PORT=${{ secrets.GCP_DB_PORT }}"
+          # 필요시 URL 인코딩/디코딩 테스트
           echo "URL_PARSED=$(echo -n "${{ secrets.DATABASE_URL }}" | python3 -c 'import urllib.parse; print(urllib.parse.unquote(input()))')"
 
+      # ---------------------------------------------------------
+      # 3) Test Cloud SQL Connection
+      #    Dockerfile.prod에서 netcat 설치가 되었는지 확인 필요
+      # ---------------------------------------------------------
       - name: Test Cloud SQL Connection
         run: |
-          echo "Testing connection to Cloud SQL at 35.223.147.232:3306..."
-          docker run --rm teamitaka-app nc -zv 35.223.147.232 3306 || {
-            echo "⚠️ Failed to connect to Cloud SQL at 35.223.147.232:3306"
-            echo "Check GCP Firewall and instance status for IP 20.42.10.173"
+          echo "Testing connection to Cloud SQL at ${{ secrets.GCP_DB_HOST }}:${{ secrets.GCP_DB_PORT }}"
+          docker run --rm teamitaka-app nc -zv ${{ secrets.GCP_DB_HOST }} ${{ secrets.GCP_DB_PORT }} || {
+            echo "⚠️ Failed to connect to Cloud SQL"
             exit 1
           }
           echo "✅ Connection to Cloud SQL successful"
 
+      # ---------------------------------------------------------
+      # 4) Run Sequelize migrations in Docker
+      #    DATABASE_URL or (host, user, password, etc.)로 접속 가능
+      # ---------------------------------------------------------
       - name: Run Sequelize migrations in Docker
         run: |
           echo "Running migration with DATABASE_URL: ${{ secrets.DATABASE_URL }}"
@@ -72,6 +82,9 @@ jobs:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      # ---------------------------------------------------------
+      # 5) DB 확인, CSV Insert 등
+      # ---------------------------------------------------------
       - name: Check if Users table exists
         run: |
           docker run teamitaka-app node src/scripts/checkDB.js
@@ -88,20 +101,24 @@ jobs:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      # ---------------------------------------------------------
+      # 6) Deploy Application
+      # ---------------------------------------------------------
       - name: Deploy Application
         run: |
           echo "🚀 Starting Application..."
-          docker run -d -p 3000:3000 teamitaka-app npm run start
+          docker run -d -p 3000:3000 --name teamitaka-prod teamitaka-app npm run start
         env:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
 env:
-  DB_HOST: ${{ secrets.DB_HOST }}
-  DB_NAME: ${{ secrets.DB_NAME }}
-  DB_USER: ${{ secrets.DB_USER }}
-  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  PORT: ${{ secrets.DB_PORT }}
+  # 깔끔하게 정리해뒀으나, 실제로는 Secrets 사용 권장
+  GCP_DB_HOST: ${{ secrets.DB_HOST }}
+  GCP_DB_NAME: ${{ secrets.DB_NAME }}
+  GCP_DB_USER: ${{ secrets.DB_USER }}
+  GCP_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  GCP_DB_PORT: ${{ secrets.DB_PORT }}
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   DB_CHARSET: "utf8mb4"
   DB_DIALECT: "mysql"

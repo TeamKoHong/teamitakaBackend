@@ -1,0 +1,22 @@
+# Dockerfile.prod
+
+FROM node:18-slim
+
+# 작업 디렉터리 지정
+WORKDIR /app
+
+# netcat 설치 (Cloud SQL 연결 테스트용)
+RUN apt-get update && apt-get install -y netcat-openbsd
+
+# package.json 복사 및 의존성 설치 (production)
+COPY package.json ./
+RUN npm install --production
+
+# 소스 전체 복사
+COPY . .
+
+# 컨테이너가 리슨할 포트 (예: 3000)
+EXPOSE 3000
+
+# 서버 실행 커맨드
+CMD ["npm", "run", "start"]
