@@ -30,6 +30,10 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE",
       },
+      photo: {  // 새 필드
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
     },
     {
       timestamps: true, // createdAt, updatedAt 자동 추가
