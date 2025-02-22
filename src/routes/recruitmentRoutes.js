@@ -58,10 +58,13 @@ router.get("/recruitment/:recruitment_id", async (req, res) => {
 });
 
 // ✅ 모집공고 작성 (임시저장 포함)
-router.post("/recruitment", authMiddleware, async (req, res) => {
+router.post("/recruitment", authMiddleware, upload.single("photo"), async (req, res) => {
   try {
     const { title, description, status, start_date, end_date, hashtags, is_draft } = req.body;
     const user_id = res.locals.user.user_id;
+    
+    // 업로드된 파일이 있다면 파일 경로를 저장 (없으면 null)
+    const photoPath = req.file ? req.file.path : null;
 
     const recruitment = await Recruitment.create({
       title,
@@ -71,6 +74,7 @@ router.post("/recruitment", authMiddleware, async (req, res) => {
       end_date,
       user_id,
       is_draft: is_draft || false,
+      photo: photoPath,  // 모델에 photo 필드가 있다고 가정
     });
 
     // 해시태그 저장
