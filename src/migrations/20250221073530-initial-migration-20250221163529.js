@@ -177,6 +177,46 @@ module.exports = {
       },
     });
 
+    // Recruitments 테이블 생성
+    await queryInterface.createTable("Recruitments", {
+      recruitment_id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true,
+      },
+      title: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      description: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+      },
+      status: {
+        type: Sequelize.ENUM("OPEN", "CLOSED"),
+        defaultValue: "OPEN",
+      },
+      user_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "Users",
+          key: "user_id",
+        },
+        onDelete: "CASCADE",
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
     // Projects 테이블 생성
     await queryInterface.createTable("Projects", {
       project_id: {
@@ -208,46 +248,6 @@ module.exports = {
         references: {
           model: "Recruitments",
           key: "recruitment_id",
-        },
-        onDelete: "CASCADE",
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-    });
-
-    // Recruitments 테이블 생성
-    await queryInterface.createTable("Recruitments", {
-      recruitment_id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
-      },
-      title: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      description: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-      },
-      status: {
-        type: Sequelize.ENUM("OPEN", "CLOSED"),
-        defaultValue: "OPEN",
-      },
-      user_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Users",
-          key: "user_id",
         },
         onDelete: "CASCADE",
       },
@@ -491,8 +491,8 @@ module.exports = {
     await queryInterface.dropTable("Notifications");
     await queryInterface.dropTable("Likes");
     await queryInterface.dropTable("Comments");
-    await queryInterface.dropTable("Recruitments");
     await queryInterface.dropTable("Projects");
+    await queryInterface.dropTable("Recruitments");
     await queryInterface.dropTable("Departments");
     await queryInterface.dropTable("Colleges");
     await queryInterface.dropTable("Universities");
