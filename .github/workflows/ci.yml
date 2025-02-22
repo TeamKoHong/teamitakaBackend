@@ -49,11 +49,11 @@ jobs:
       - name: Debug - Print Environment
         run: |
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-          echo "GCP_DB_HOST=${{ secrets.GCP_DB_HOST }}"
-          echo "GCP_DB_USER=${{ secrets.GCP_DB_USER }}"
-          echo "GCP_DB_PASSWORD=${{ secrets.GCP_DB_PASSWORD }}"
-          echo "GCP_DB_NAME=${{ secrets.GCP_DB_NAME }}"
-          echo "GCP_DB_PORT=${{ secrets.GCP_DB_PORT }}"
+          echo "GCP_DB_HOST=${{ secrets.DB_HOST }}"
+          echo "GCP_DB_USER=${{ secrets.DB_USER }}"
+          echo "GCP_DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
+          echo "GCP_DB_NAME=${{ secrets.DB_NAME }}"
+          echo "GCP_DB_PORT=${{ secrets.DB_PORT }}"
           # 필요시 URL 인코딩/디코딩 테스트
           echo "URL_PARSED=$(echo -n "${{ secrets.DATABASE_URL }}" | python3 -c 'import urllib.parse; print(urllib.parse.unquote(input()))')"
 
@@ -63,8 +63,8 @@ jobs:
       # ---------------------------------------------------------
       - name: Test Cloud SQL Connection
         run: |
-          echo "Testing connection to Cloud SQL at ${{ secrets.GCP_DB_HOST }}:${{ secrets.GCP_DB_PORT }}"
-          docker run --rm teamitaka-app nc -zv ${{ secrets.GCP_DB_HOST }} ${{ secrets.GCP_DB_PORT }} || {
+          echo "Testing connection to Cloud SQL at ${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}"
+          docker run --rm teamitaka-app nc -zv ${{ secrets.DB_HOST }} ${{ secrets.DB_PORT }} || {
             echo "⚠️ Failed to connect to Cloud SQL"
             exit 1
           }
