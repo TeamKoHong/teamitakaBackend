@@ -16,22 +16,72 @@ jobs:
       contents: read
 
     steps:
+      # ---------------------------------------------------------
+      # 0) Check out the repository code
+      # ---------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      # ---------------------------------------------------------
+      # 0-1) Node 설치
+      # ---------------------------------------------------------
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install Docker
-        uses: docker/setup-buildx-action@v3
+      # ---------------------------------------------------------
+      # 1) Prepare Service Account Key
+      #    - Cloud SQL Auth Proxy를 위해 비밀 키(JSON) 파일 생성
+      # ---------------------------------------------------------
+      - name: Prepare Service Account Key
+        run: echo "${{ secrets.GCP_SA_KEY }}" > sa-key.json
 
       # ---------------------------------------------------------
-      # 1) Docker Build (Production Image)
+      # 2) Download Cloud SQL Proxy
       # ---------------------------------------------------------
+      - name: Download Cloud SQL Proxy
+        run: |
+          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+          chmod +x cloud_sql_proxy
+
+      # ---------------------------------------------------------
+      # 3) Start Cloud SQL Proxy (background)
+      #    - 깃액션 호스트의 localhost:3306 에서 DB 터널링
+      # ---------------------------------------------------------
+      - name: Start Cloud SQL Proxy
+        run: |
+          ./cloud_sql_proxy \
+            -instances="${{ secrets.INSTANCE_CONNECTION_NAME }}=tcp:3306" \
+            -credential_file=sa-key.json \
+            > proxy.log 2>&1 &
+          echo "Cloud SQL Proxy started in the background."
+
+      # ---------------------------------------------------------
+      # 4) [Optional] Test DB connection from host (netcat)
+      #    - 호스트 레벨에서 포트 3306 열렸는지 체크
+      # ---------------------------------------------------------
+      - name: Test Cloud SQL Connection (host)
+        run: |
+          sudo apt-get update && sudo apt-get install -y netcat
+          echo "Testing connection to local Proxy at 127.0.0.1:3306..."
+          nc -zv 127.0.0.1 3306 || {
+            echo "⚠️ Failed to connect to local Proxy"
+            echo "Check proxy.log for details:"
+            cat proxy.log
+            exit 1
+          }
+          echo "✅ Cloud SQL Proxy is accessible on 127.0.0.1:3306"
+
+      # ---------------------------------------------------------
+      # 5) Docker Build (Production Image)
+      #    - Dockerfile.prod 사용
+      # ---------------------------------------------------------
+      - name: Install Docker (Buildx)
+        uses: docker/setup-buildx-action@v3
+
       - name: Build Docker Image
         run: |
           docker build -t teamitaka-app -f Dockerfile.prod .
@@ -43,82 +93,102 @@ jobs:
           echo "Determined NODE_ENV: ${{ env.NODE_ENV }}"
 
       # ---------------------------------------------------------
-      # 2) Debug - Print Environment
-      #    여기서 Secrets로 넘어온 DB 비밀번호의 특수문자 인코딩 여부 확인 가능
+      # 6) Debug - Print Environment (Secrets)
       # ---------------------------------------------------------
       - name: Debug - Print Environment
         run: |
+          echo "INSTANCE_CONNECTION_NAME=${{ secrets.INSTANCE_CONNECTION_NAME }}"
+          echo "DB_HOST=host.docker.internal"
+          echo "DB_PORT=3306"
+          echo "DB_USER=${{ secrets.DB_USER }}"
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
+          echo "DB_NAME=${{ secrets.DB_NAME }}"
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-          echo "GCP_DB_HOST=${{ secrets.DB_HOST }}"
-          echo "GCP_DB_USER=${{ secrets.DB_USER }}"
-          echo "GCP_DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
-          echo "GCP_DB_NAME=${{ secrets.DB_NAME }}"
-          echo "GCP_DB_PORT=${{ secrets.DB_PORT }}"
-          # 필요시 URL 인코딩/디코딩 테스트
+          # (만약 secrets.DATABASE_URL가 실제 DSN 형식이라면 인코딩 확인
           echo "URL_PARSED=$(echo -n "${{ secrets.DATABASE_URL }}" | python3 -c 'import urllib.parse; print(urllib.parse.unquote(input()))')"
 
       # ---------------------------------------------------------
-      # 3) Test Cloud SQL Connection
-      #    Dockerfile.prod에서 netcat 설치가 되었는지 확인 필요
+      # 7) Test Cloud SQL Connection in Docker
+      #    - "--add-host=host.docker.internal:host-gateway"옵션으로
+      #      컨테이너 내부에서 깃액션 호스트를 "host.docker.internal"로 매핑
       # ---------------------------------------------------------
-      - name: Test Cloud SQL Connection
+      - name: Test Cloud SQL Connection (docker)
         run: |
-          echo "Testing connection to Cloud SQL at ${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}"
-          docker run --rm teamitaka-app nc -zv ${{ secrets.DB_HOST }} ${{ secrets.DB_PORT }} || {
-            echo "⚠️ Failed to connect to Cloud SQL"
-            exit 1
-          }
-          echo "✅ Connection to Cloud SQL successful"
+          echo "Testing connection from container to Proxy at host.docker.internal:3306..."
+          docker run --rm \
+            --add-host=host.docker.internal:host-gateway \
+            teamitaka-app nc -zv host.docker.internal 3306 || {
+              echo "⚠️ Failed to connect from container"
+              exit 1
+            }
+          echo "✅ Container -> Cloud SQL Proxy connection successful"
 
       # ---------------------------------------------------------
-      # 4) Run Sequelize migrations in Docker
-      #    DATABASE_URL or (host, user, password, etc.)로 접속 가능
+      # 8) Run Sequelize migrations in Docker
+      #    - host.docker.internal: 깃액션 호스트의 3306
+      #    - DB_USER, DB_PASSWORD, DB_NAME는 Secrets
       # ---------------------------------------------------------
       - name: Run Sequelize migrations in Docker
         run: |
-          echo "Running migration with DATABASE_URL: ${{ secrets.DATABASE_URL }}"
-          docker run teamitaka-app npx sequelize-cli db:migrate --url "${{ secrets.DATABASE_URL }}"
+          echo "Running migration via container with Auth Proxy..."
+          docker run \
+            --add-host=host.docker.internal:host-gateway \
+            -e NODE_ENV=production \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            teamitaka-app \
+            npx sequelize-cli db:migrate --url "mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@host.docker.internal:3306/${{ secrets.DB_NAME }}"
         env:
+          # GitHub Action-level ENV (optional)
           NODE_ENV: production
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # ---------------------------------------------------------
-      # 5) DB 확인, CSV Insert 등
+      # 9) DB 확인, CSV Insert 등
       # ---------------------------------------------------------
       - name: Check if Users table exists
         run: |
-          docker run teamitaka-app node src/scripts/checkDB.js
-        env:
-          NODE_ENV: production
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          docker run \
+            --add-host=host.docker.internal:host-gateway \
+            -e NODE_ENV=production \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            teamitaka-app \
+            node src/scripts/checkDB.js
 
       - name: Insert data from CSV
         run: |
           echo "🔍 Inserting data into DB from CSV..."
-          docker run teamitaka-app node src/scripts/insertCSV.js
+          docker run \
+            --add-host=host.docker.internal:host-gateway \
+            -e NODE_ENV=production \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            teamitaka-app \
+            node src/scripts/insertCSV.js
           echo "✅ CSV Insert Completed"
-        env:
-          NODE_ENV: production
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # ---------------------------------------------------------
-      # 6) Deploy Application
+      # 10) Deploy Application (example)
       # ---------------------------------------------------------
       - name: Deploy Application
         run: |
-          echo "🚀 Starting Application..."
-          docker run -d -p 3000:3000 --name teamitaka-prod teamitaka-app npm run start
-        env:
-          NODE_ENV: production
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          echo "🚀 Starting Application (production)..."
+          docker run -d \
+            --add-host=host.docker.internal:host-gateway \
+            -p 3000:3000 \
+            --name teamitaka-prod \
+            -e NODE_ENV=production \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            teamitaka-app \
+            npm run start
+          echo "✅ App container started on port 3000"
 
 env:
-  # 깔끔하게 정리해뒀으나, 실제로는 Secrets 사용 권장
-  GCP_DB_HOST: ${{ secrets.DB_HOST }}
-  GCP_DB_NAME: ${{ secrets.DB_NAME }}
-  GCP_DB_USER: ${{ secrets.DB_USER }}
-  GCP_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  GCP_DB_PORT: ${{ secrets.DB_PORT }}
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  # (Optional) Generally for local usage, prefer secrets for production
   DB_CHARSET: "utf8mb4"
   DB_DIALECT: "mysql"
