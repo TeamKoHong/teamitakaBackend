@@ -11,11 +11,10 @@ module.exports = {
     logging: false,
   },
   production: {
-    use_env_variable: "DATABASE_URL", // Sequelize가 DATABASE_URL을 직접 사용하도록
+    use_env_variable: "DATABASE_URL",
     dialect: "mysql",
     dialectOptions: {
       ssl: false,
-      host: "127.0.0.1", // IPv4 강제
     },
     logging: console.log,
   },
