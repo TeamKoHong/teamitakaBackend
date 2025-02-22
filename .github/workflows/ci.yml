@@ -51,7 +51,7 @@ jobs:
           chmod +x cloud_sql_proxy
 
       # ---------------------------------------------------------
-      # 3) Start Cloud SQL Proxy (127.0.0.1 binding)
+      # 3) Start Cloud SQL Proxy
       # ---------------------------------------------------------
       - name: Start Cloud SQL Proxy
         run: |
@@ -98,7 +98,9 @@ jobs:
       - name: Set Production Environment
         run: |
           echo "NODE_ENV=production" >> $GITHUB_ENV
+          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}" >> $GITHUB_ENV
           echo "Determined NODE_ENV: ${{ env.NODE_ENV }}"
+          echo "Determined DATABASE_URL: ${{ env.DATABASE_URL }}"
 
       # ---------------------------------------------------------
       # 6) Debug - Print Environment
@@ -111,11 +113,10 @@ jobs:
           echo "DB_USER=${{ secrets.DB_USER }}"
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
           echo "DB_NAME=${{ secrets.DB_NAME }}"
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-          echo "URL_PARSED=$(echo -n "${{ secrets.DATABASE_URL }}" | python3 -c 'import urllib.parse; print(urllib.parse.unquote(input()))')"
+          echo "DATABASE_URL=${{ env.DATABASE_URL }}"
 
       # ---------------------------------------------------------
-      # 7) Test Cloud SQL Connection in Docker (host network)
+      # 7) Test Cloud SQL Connection in Docker
       # ---------------------------------------------------------
       - name: Test Cloud SQL Connection (docker)
         run: |
@@ -135,11 +136,9 @@ jobs:
           echo "Running migration via container with Auth Proxy..."
           docker run --network host \
             -e NODE_ENV=production \
-            -e DB_USER=${{ secrets.DB_USER }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
             teamitaka-app \
-            npx sequelize-cli db:migrate --url "mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}"
+            npx sequelize-cli db:migrate
         env:
           NODE_ENV: production
 
@@ -150,9 +149,7 @@ jobs:
         run: |
           docker run --network host \
             -e NODE_ENV=production \
-            -e DB_USER=${{ secrets.DB_USER }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
             teamitaka-app \
             node src/scripts/checkDB.js
 
@@ -161,9 +158,7 @@ jobs:
           echo "🔍 Inserting data into DB from CSV..."
           docker run --network host \
             -e NODE_ENV=production \
-            -e DB_USER=${{ secrets.DB_USER }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
             teamitaka-app \
             node src/scripts/insertCSV.js
           echo "✅ CSV Insert Completed"
@@ -177,9 +172,7 @@ jobs:
           docker run -d --network host \
             --name teamitaka-prod \
             -e NODE_ENV=production \
-            -e DB_USER=${{ secrets.DB_USER }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
             teamitaka-app \
             npm run start
           echo "✅ App container started (port 3000 exposed on host)"
