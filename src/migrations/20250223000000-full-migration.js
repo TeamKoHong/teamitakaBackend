@@ -2,7 +2,66 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // 1. Users 테이블 생성 (참조되는 기본 테이블)
+    // 1. 독립 테이블 먼저 생성
+    await queryInterface.createTable("Admins", {
+      id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      email: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      password: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      role: {
+        type: Sequelize.STRING,
+        defaultValue: "ADMIN",
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    await queryInterface.createTable("Universities", {
+      ID: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      Name: {
+        type: Sequelize.STRING(255),
+        allowNull: false,
+        unique: true,
+      },
+      Country: {
+        type: Sequelize.STRING(100),
+        allowNull: false,
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // 2. Users (Recruitments, Projects, Comments, Likes 참조)
     await queryInterface.createTable("Users", {
       user_id: {
         type: Sequelize.INTEGER,
@@ -53,131 +112,7 @@ module.exports = {
       },
     });
 
-    // 2. Admins 테이블 생성 (독립적)
-    await queryInterface.createTable("Admins", {
-      id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      email: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true,
-      },
-      password: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      role: {
-        type: Sequelize.STRING,
-        defaultValue: "ADMIN",
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-    });
-
-    // 3. Universities 테이블 생성 (독립적)
-    await queryInterface.createTable("Universities", {
-      ID: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      Name: {
-        type: Sequelize.STRING(255),
-        allowNull: false,
-        unique: true,
-      },
-      Country: {
-        type: Sequelize.STRING(100),
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-    });
-
-    // 4. Colleges 테이블 생성 (Universities 참조)
-    await queryInterface.createTable("Colleges", {
-      ID: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      UniversityID: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Universities",
-          key: "ID",
-        },
-        onDelete: "CASCADE",
-      },
-      Name: {
-        type: Sequelize.STRING(255),
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-    });
-
-    // 5. Departments 테이블 생성 (Colleges 참조)
-    await queryInterface.createTable("Departments", {
-      ID: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      CollegeID: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Colleges",
-          key: "ID",
-        },
-        onDelete: "CASCADE",
-      },
-      Name: {
-        type: Sequelize.STRING(255),
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW,
-      },
-    });
-
-    // 6. Recruitments 테이블 생성 (Users 참조)
+    // 3. Recruitments (Users 참조, Projects, Comments, Likes에서 참조)
     await queryInterface.createTable("Recruitments", {
       recruitment_id: {
         type: Sequelize.UUID,
@@ -217,7 +152,7 @@ module.exports = {
       },
     });
 
-    // 7. Projects 테이블 생성 (Users, Recruitments 참조)
+    // 4. Projects (Users, Recruitments 참조)
     await queryInterface.createTable("Projects", {
       project_id: {
         type: Sequelize.UUID,
@@ -263,7 +198,7 @@ module.exports = {
       },
     });
 
-    // 8. Comments 테이블 생성 (Users, Recruitments 참조)
+    // 5. Comments (Users, Recruitments 참조)
     await queryInterface.createTable("Comments", {
       id: {
         type: Sequelize.UUID,
@@ -304,7 +239,7 @@ module.exports = {
       },
     });
 
-    // 9. Likes 테이블 생성 (Users, Recruitments 참조)
+    // 6. Likes (Users, Recruitments 참조)
     await queryInterface.createTable("Likes", {
       id: {
         type: Sequelize.UUID,
@@ -341,7 +276,71 @@ module.exports = {
       },
     });
 
-    // 10. Notifications 테이블 생성 (독립적)
+    // 7. Colleges (Universities 참조)
+    await queryInterface.createTable("Colleges", {
+      ID: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      UniversityID: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "Universities",
+          key: "ID",
+        },
+        onDelete: "CASCADE",
+      },
+      Name: {
+        type: Sequelize.STRING(255),
+        allowNull: false,
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // 8. Departments (Colleges 참조)
+    await queryInterface.createTable("Departments", {
+      ID: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      CollegeID: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "Colleges",
+          key: "ID",
+        },
+        onDelete: "CASCADE",
+      },
+      Name: {
+        type: Sequelize.STRING(255),
+        allowNull: false,
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW,
+      },
+    });
+
+    // 9. 독립 테이블들
     await queryInterface.createTable("Notifications", {
       id: {
         type: Sequelize.UUID,
@@ -368,7 +367,6 @@ module.exports = {
       },
     });
 
-    // 11. Reviews 테이블 생성 (독립적)
     await queryInterface.createTable("Reviews", {
       id: {
         type: Sequelize.UUID,
@@ -395,7 +393,6 @@ module.exports = {
       },
     });
 
-    // 12. Keywords 테이블 생성 (독립적)
     await queryInterface.createTable("Keywords", {
       id: {
         type: Sequelize.INTEGER,
@@ -422,7 +419,6 @@ module.exports = {
       },
     });
 
-    // 13. Searches 테이블 생성 (독립적)
     await queryInterface.createTable("Searches", {
       id: {
         type: Sequelize.INTEGER,
@@ -449,7 +445,6 @@ module.exports = {
       },
     });
 
-    // 14. VerifiedEmails 테이블 생성 (독립적)
     await queryInterface.createTable("VerifiedEmails", {
       id: {
         type: Sequelize.UUID,
@@ -489,14 +484,14 @@ module.exports = {
     await queryInterface.dropTable("Keywords");
     await queryInterface.dropTable("Reviews");
     await queryInterface.dropTable("Notifications");
+    await queryInterface.dropTable("Departments");
+    await queryInterface.dropTable("Colleges");
     await queryInterface.dropTable("Likes");
     await queryInterface.dropTable("Comments");
     await queryInterface.dropTable("Projects");
     await queryInterface.dropTable("Recruitments");
-    await queryInterface.dropTable("Departments");
-    await queryInterface.dropTable("Colleges");
+    await queryInterface.dropTable("Users");
     await queryInterface.dropTable("Universities");
     await queryInterface.dropTable("Admins");
-    await queryInterface.dropTable("Users");
   },
 };
