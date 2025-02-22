@@ -101,7 +101,7 @@ jobs:
             }
           echo "✅ Container -> Cloud SQL Proxy connection successful"
 
-      - name: Reset Database (Drop All Tables with Foreign Key Disable)
+      - name: Reset Database (Drop All Tables)
         run: |
           echo "Resetting database by dropping all tables..."
           docker run --network host \
@@ -111,8 +111,6 @@ jobs:
             bash -c "echo 'SET FOREIGN_KEY_CHECKS = 0;' > reset.sql && \
                      echo 'DROP TABLE IF EXISTS VerifiedEmails, Searches, Keywords, Reviews, Notifications, Likes, Comments, Projects, Recruitments, Departments, Colleges, Universities, Admins, Users, SequelizeMeta;' >> reset.sql && \
                      echo 'SET FOREIGN_KEY_CHECKS = 1;' >> reset.sql && \
-                     npx sequelize-cli db:seed:undo:all --seeders-path /app/seeders --url ${{ env.DATABASE_URL }} && \
-                     npx sequelize-cli db:migrate:undo:all --url ${{ env.DATABASE_URL }} && \
                      mysql -h 127.0.0.1 -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} ${{ secrets.DB_NAME }} < reset.sql"
 
       - name: Run Sequelize migrations in Docker
