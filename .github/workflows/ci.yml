@@ -34,12 +34,9 @@ jobs:
 
       # ---------------------------------------------------------
       # 1) Prepare Service Account Key (멀티라인 안전 저장)
-      #    - cat <<EOF ... EOF 사용
       # ---------------------------------------------------------
       - name: Prepare Service Account Key
         run: |
-          # 주의: 아래 구문은 secrets.GCP_SA_KEY에
-          # { ... } 전체 JSON이 들어있어야 합니다.
           cat <<EOF > sa-key.json
           ${{ secrets.GCP_SA_KEY }}
           EOF
@@ -54,27 +51,32 @@ jobs:
           chmod +x cloud_sql_proxy
 
       # ---------------------------------------------------------
-      # 3) Start Cloud SQL Proxy (background)
+      # 3) Start Cloud SQL Proxy (background, 0.0.0.0 binding)
       # ---------------------------------------------------------
       - name: Start Cloud SQL Proxy
         run: |
           ./cloud_sql_proxy \
-            -instances="${{ secrets.INSTANCE_CONNECTION_NAME }}=tcp:3306" \
+            -instances="${{ secrets.INSTANCE_CONNECTION_NAME }}=tcp:0.0.0.0:3306" \
             -credential_file=sa-key.json \
             > proxy.log 2>&1 &
           echo "Cloud SQL Proxy started in the background."
+          sleep 5
+          cat proxy.log
 
       # ---------------------------------------------------------
-      # 4) [Optional] Test DB connection from host (netcat)
+      # 4) Test DB connection from host (netcat)
       # ---------------------------------------------------------
       - name: Test Cloud SQL Connection (host)
         run: |
           sudo apt-get update
-          # Install netcat
           sudo apt-get install -y netcat-openbsd
           echo "Testing connection to local Proxy at 127.0.0.1:3306..."
-          nc -zv 127.0.0.1 3306 || {
-            echo "⚠️ Failed to connect to local Proxy"
+          for i in {1..10}; do
+            nc -zv 127.0.0.1 3306 && break
+            echo "Attempt $i failed, retrying in 2 seconds..."
+            sleep 2
+          done || {
+            echo "⚠️ Failed to connect to local Proxy after 10 attempts"
             echo "Check proxy.log for details:"
             cat proxy.log
             exit 1
@@ -91,7 +93,7 @@ jobs:
         run: |
           docker build -t teamitaka-app -f Dockerfile.prod .
         working-directory: .
-      
+
       - name: Set Production Environment
         run: |
           echo "NODE_ENV=production" >> $GITHUB_ENV
@@ -109,7 +111,6 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
           echo "DB_NAME=${{ secrets.DB_NAME }}"
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-          # (만약 secrets.DATABASE_URL가 실제 DSN 형식이라면 인코딩 여부 확인
           echo "URL_PARSED=$(echo -n "${{ secrets.DATABASE_URL }}" | python3 -c 'import urllib.parse; print(urllib.parse.unquote(input()))')"
 
       # ---------------------------------------------------------
@@ -117,10 +118,10 @@ jobs:
       # ---------------------------------------------------------
       - name: Test Cloud SQL Connection (docker)
         run: |
-          echo "Testing connection from container to Proxy at host.docker.internal:3306..."
+          HOST_IP=$(ip route | awk '/default/ {print $3}')
+          echo "Testing connection from container to Proxy at $HOST_IP:3306..."
           docker run --rm \
-            --add-host=host.docker.internal:host-gateway \
-            teamitaka-app nc -zv host.docker.internal 3306 || {
+            teamitaka-app nc -zv $HOST_IP 3306 || {
               echo "⚠️ Failed to connect from container"
               exit 1
             }
@@ -131,15 +132,15 @@ jobs:
       # ---------------------------------------------------------
       - name: Run Sequelize migrations in Docker
         run: |
+          HOST_IP=$(ip route | awk '/default/ {print $3}')
           echo "Running migration via container with Auth Proxy..."
           docker run \
-            --add-host=host.docker.internal:host-gateway \
             -e NODE_ENV=production \
             -e DB_USER=${{ secrets.DB_USER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
             -e DB_NAME=${{ secrets.DB_NAME }} \
             teamitaka-app \
-            npx sequelize-cli db:migrate --url "mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@host.docker.internal:3306/${{ secrets.DB_NAME }}"
+            npx sequelize-cli db:migrate --url "mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@$HOST_IP:3306/${{ secrets.DB_NAME }}"
         env:
           NODE_ENV: production
 
@@ -148,8 +149,8 @@ jobs:
       # ---------------------------------------------------------
       - name: Check if Users table exists
         run: |
+          HOST_IP=$(ip route | awk '/default/ {print $3}')
           docker run \
-            --add-host=host.docker.internal:host-gateway \
             -e NODE_ENV=production \
             -e DB_USER=${{ secrets.DB_USER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
@@ -159,9 +160,9 @@ jobs:
 
       - name: Insert data from CSV
         run: |
+          HOST_IP=$(ip route | awk '/default/ {print $3}')
           echo "🔍 Inserting data into DB from CSV..."
           docker run \
-            --add-host=host.docker.internal:host-gateway \
             -e NODE_ENV=production \
             -e DB_USER=${{ secrets.DB_USER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
@@ -175,9 +176,9 @@ jobs:
       # ---------------------------------------------------------
       - name: Deploy Application
         run: |
+          HOST_IP=$(ip route | awk '/default/ {print $3}')
           echo "🚀 Starting Application (production)..."
           docker run -d \
-            --add-host=host.docker.internal:host-gateway \
             -p 3000:3000 \
             --name teamitaka-prod \
             -e NODE_ENV=production \
