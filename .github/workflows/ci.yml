@@ -43,17 +43,18 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}"
           echo "DB_PORT=${{ secrets.DB_PORT }}"
           echo "RAW_DATABASE_URL=${{ secrets.DATABASE_URL }}"
-          echo "DECODED_URL=$(echo ${{ secrets.DATABASE_URL }} | base64 -d 2>/dev/null || echo ${{ secrets.DATABASE_URL }})"
+          echo "DECODED_URL=$(echo -n "${{ secrets.DATABASE_URL }}" | base64 -d 2>/dev/null || echo -n "${{ secrets.DATABASE_URL }}")"
           echo "URL_ENCODED=$(echo -n "${{ secrets.DATABASE_URL }}" | xxd -p)"
           echo "URL_DECODED=$(echo -n "${{ secrets.DATABASE_URL }}" | perl -pe 's/%([0-9a-fA-F]{2})/chr(hex($1))/ge')"
           echo "URL_TEST=$(echo -n "${{ secrets.DATABASE_URL }}" | sed 's/%23/\#/g; s/%2D/-/g; s/%5F/_/g; s/%2E/./g; s/%7E/~/g')"
+          echo "URL_PARSED=$(echo -n "${{ secrets.DATABASE_URL }}" | python3 -c 'import urllib.parse; print(urllib.parse.unquote(input()))')"
 
       - name: Test Cloud SQL Connection
         run: |
           echo "Testing connection to Cloud SQL at 35.223.147.232:3306..."
           nc -zv 35.223.147.232 3306 || {
             echo "⚠️ Failed to connect to Cloud SQL at 35.223.147.232:3306"
-            echo "Check GCP Firewall and instance status for IP 172.200.199.211"
+            echo "Check GCP Firewall and instance status for IP 20.57.71.178"
             exit 1
           }
           echo "✅ Connection to Cloud SQL successful"
