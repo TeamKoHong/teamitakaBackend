@@ -57,7 +57,7 @@ router.get("/recruitment/:recruitment_id", async (req, res) => {
   }
 });
 
-// ✅ 모집공고 작성 (임시저장 포함)
+// ✅ 모집공고 작성
 router.post("/recruitment", authMiddleware, upload.single("photo"), async (req, res) => {
   try {
     const { title, description, status, start_date, end_date, hashtags, is_draft } = req.body;
