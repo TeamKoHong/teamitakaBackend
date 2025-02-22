@@ -26,74 +26,131 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Prepare Service Account Key
+        run: |
+          cat <<EOF > sa-key.json
+          ${{ secrets.GCP_SA_KEY }}
+          EOF
+          echo "Service Account JSON saved to sa-key.json"
+
+      - name: Download Cloud SQL Proxy
+        run: |
+          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+          chmod +x cloud_sql_proxy
+
+      - name: Start Cloud SQL Proxy
+        run: |
+          ./cloud_sql_proxy \
+            -instances="${{ secrets.INSTANCE_CONNECTION_NAME }}=tcp:127.0.0.1:3306" \
+            -credential_file=sa-key.json \
+            > proxy.log 2>&1 &
+          echo "Cloud SQL Proxy started in the background."
+          sleep 5
+          echo "Proxy log:"
+          cat proxy.log
+
+      - name: Test Cloud SQL Connection (host)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y netcat-openbsd
+          echo "Testing connection to local Proxy at 127.0.0.1:3306..."
+          for i in {1..10}; do
+            nc -zv 127.0.0.1 3306 && break
+            echo "Attempt $i failed, retrying in 2 seconds..."
+            sleep 2
+          done || {
+            echo "⚠️ Failed to connect to local Proxy after 10 attempts"
+            echo "Check proxy.log for details:"
+            cat proxy.log
+            exit 1
+          }
+          echo "✅ Cloud SQL Proxy is accessible on 127.0.0.1:3306"
+
+      - name: Install Docker (Buildx)
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t teamitaka-app -f Dockerfile.prod .
+        working-directory: .
 
       - name: Set Production Environment
         run: |
           echo "NODE_ENV=production" >> $GITHUB_ENV
+          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}" >> $GITHUB_ENV
           echo "Determined NODE_ENV: ${{ env.NODE_ENV }}"
+          echo "Determined DATABASE_URL: ${{ env.DATABASE_URL }}"
 
       - name: Debug - Print Environment
         run: |
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-          echo "DB_HOST=${{ secrets.DB_HOST }}"
+          echo "INSTANCE_CONNECTION_NAME=${{ secrets.INSTANCE_CONNECTION_NAME }}"
+          echo "DB_HOST=127.0.0.1"
+          echo "DB_PORT=3306"
           echo "DB_USER=${{ secrets.DB_USER }}"
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
           echo "DB_NAME=${{ secrets.DB_NAME }}"
-          echo "DB_PORT=${{ secrets.DB_PORT }}"
-          echo "RAW_DATABASE_URL=${{ secrets.DATABASE_URL }}"
-          echo "DECODED_URL=$(echo ${{ secrets.DATABASE_URL }} | base64 -d 2>/dev/null || echo ${{ secrets.DATABASE_URL }})"
-          echo "URL_ENCODED=$(echo -n "${{ secrets.DATABASE_URL }}" | xxd -p)"
-          echo "URL_DECODED=$(echo -n "${{ secrets.DATABASE_URL }}" | perl -pe 's/%([0-9a-fA-F]{2})/chr(hex($1))/ge')"
-          echo "URL_TEST=$(echo -n "${{ secrets.DATABASE_URL }}" | sed 's/%23/\#/g; s/%2D/-/g; s/%5F/_/g; s/%2E/./g; s/%7E/~/g')"
+          echo "DATABASE_URL=${{ env.DATABASE_URL }}"
 
-      - name: Test Cloud SQL Connection
+      - name: Test Cloud SQL Connection (docker)
         run: |
-          echo "Testing connection to Cloud SQL at 35.223.147.232:3306..."
-          nc -zv 35.223.147.232 3306 || {
-            echo "⚠️ Failed to connect to Cloud SQL at 35.223.147.232:3306"
-            echo "Check GCP Firewall and instance status for IP 172.200.199.211"
-            exit 1
-          }
-          echo "✅ Connection to Cloud SQL successful"
+          echo "Testing connection from container to Proxy at 127.0.0.1:3306..."
+          docker run --rm --network host \
+            teamitaka-app nc -zv 127.0.0.1 3306 || {
+              echo "⚠️ Failed to connect from container"
+              exit 1
+            }
+          echo "✅ Container -> Cloud SQL Proxy connection successful"
+
+      - name: Reset Database (Drop All Tables)
+        run: |
+          echo "Resetting database by dropping all tables..."
+          docker run --network host \
+            -e NODE_ENV=production \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            teamitaka-app \
+            bash -c "echo 'SET FOREIGN_KEY_CHECKS = 0;' > reset.sql && \
+                     echo 'DROP TABLE IF EXISTS VerifiedEmails, Searches, Keywords, Reviews, Notifications, Likes, Comments, Projects, Recruitments, Departments, Colleges, Universities, Admins, Users, SequelizeMeta;' >> reset.sql && \
+                     echo 'SET FOREIGN_KEY_CHECKS = 1;' >> reset.sql && \
+                     mysql -h 127.0.0.1 -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} ${{ secrets.DB_NAME }} < reset.sql"
+
+      - name: Run Sequelize migrations in Docker
+        run: |
+          echo "Running migration via container with Auth Proxy..."
+          docker run --network host \
+            -e NODE_ENV=production \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            teamitaka-app \
+            bash -c "npx sequelize-cli db:migrate --url ${{ env.DATABASE_URL }} --debug"
 
       - name: Check if Users table exists
-        run: node src/scripts/checkDB.js
-        env:
-          NODE_ENV: production
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Run Sequelize migrations
         run: |
-          echo "Running migration with DATABASE_URL: ${{ secrets.DATABASE_URL }}"
-          npx sequelize-cli db:migrate --url "${{ secrets.DATABASE_URL }}"
-        env:
-          NODE_ENV: production
+          docker run --network host \
+            -e NODE_ENV=production \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            teamitaka-app \
+            node src/scripts/checkDB.js
 
       - name: Insert data from CSV
         run: |
           echo "🔍 Inserting data into DB from CSV..."
-          node src/scripts/insertCSV.js
+          docker run --network host \
+            -e NODE_ENV=production \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            teamitaka-app \
+            node src/scripts/insertCSV.js
           echo "✅ CSV Insert Completed"
-        env:
-          NODE_ENV: production
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Deploy Application
         run: |
-          echo "🚀 Starting Application..."
-          npm run start
-        env:
-          NODE_ENV: production
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          echo "🚀 Starting Application (production)..."
+          docker run -d --network host \
+            --name teamitaka-prod \
+            -e NODE_ENV=production \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            teamitaka-app \
+            npm run start
+          echo "✅ App container started (port 3000 exposed on host)"
 
 env:
-  DB_HOST: ${{ secrets.DB_HOST }}
-  DB_NAME: ${{ secrets.DB_NAME }}
-  DB_USER: ${{ secrets.DB_USER }}
-  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  PORT: ${{ secrets.DB_PORT }}
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
   DB_CHARSET: "utf8mb4"
   DB_DIALECT: "mysql"
