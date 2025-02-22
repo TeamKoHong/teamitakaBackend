@@ -41,8 +41,8 @@ jobs:
           # 주의: 아래 구문은 secrets.GCP_SA_KEY에
           # { ... } 전체 JSON이 들어있어야 합니다.
           cat <<EOF > sa-key.json
-${{ secrets.GCP_SA_KEY }}
-EOF
+          ${{ secrets.GCP_SA_KEY }}
+          EOF
           echo "Service Account JSON saved to sa-key.json"
 
       # ---------------------------------------------------------
