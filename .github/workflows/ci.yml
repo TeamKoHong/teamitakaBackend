@@ -65,7 +65,8 @@ jobs:
       # ---------------------------------------------------------
       - name: Test Cloud SQL Connection (host)
         run: |
-          sudo apt-get update && sudo apt-get install -y netcat
+          sudo apt-get update
+          sudo apt-get install -y netcat-openbsd
           echo "Testing connection to local Proxy at 127.0.0.1:3306..."
           nc -zv 127.0.0.1 3306 || {
             echo "⚠️ Failed to connect to local Proxy"
@@ -104,7 +105,7 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
           echo "DB_NAME=${{ secrets.DB_NAME }}"
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}"
-          # (만약 secrets.DATABASE_URL가 실제 DSN 형식이라면 인코딩 확인
+          # (만약 secrets.DATABASE_URL가 실제 DSN 형식이라면 인코딩 여부 확인
           echo "URL_PARSED=$(echo -n "${{ secrets.DATABASE_URL }}" | python3 -c 'import urllib.parse; print(urllib.parse.unquote(input()))')"
 
       # ---------------------------------------------------------
@@ -140,7 +141,6 @@ jobs:
             teamitaka-app \
             npx sequelize-cli db:migrate --url "mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@host.docker.internal:3306/${{ secrets.DB_NAME }}"
         env:
-          # GitHub Action-level ENV (optional)
           NODE_ENV: production
 
       # ---------------------------------------------------------
