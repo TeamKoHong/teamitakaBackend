@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // 1. 독립 테이블 먼저 생성
+    // 1. 테이블 생성 (외래 키 없이)
     await queryInterface.createTable("Admins", {
       id: {
         type: Sequelize.INTEGER,
@@ -61,7 +61,6 @@ module.exports = {
       },
     });
 
-    // 2. Users (Recruitments, Projects, Comments, Likes 참조)
     await queryInterface.createTable("Users", {
       user_id: {
         type: Sequelize.INTEGER,
@@ -112,7 +111,6 @@ module.exports = {
       },
     });
 
-    // 3. Recruitments (Users 참조, Projects, Comments, Likes에서 참조)
     await queryInterface.createTable("Recruitments", {
       recruitment_id: {
         type: Sequelize.UUID,
@@ -134,11 +132,6 @@ module.exports = {
       user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: "Users",
-          key: "user_id",
-        },
-        onDelete: "CASCADE",
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -152,7 +145,6 @@ module.exports = {
       },
     });
 
-    // 4. Projects (Users, Recruitments 참조)
     await queryInterface.createTable("Projects", {
       project_id: {
         type: Sequelize.UUID,
@@ -170,21 +162,11 @@ module.exports = {
       user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: "Users",
-          key: "user_id",
-        },
-        onDelete: "CASCADE",
       },
       recruitment_id: {
         type: Sequelize.UUID,
         allowNull: false,
         unique: true,
-        references: {
-          model: "Recruitments",
-          key: "recruitment_id",
-        },
-        onDelete: "CASCADE",
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -198,7 +180,6 @@ module.exports = {
       },
     });
 
-    // 5. Comments (Users, Recruitments 참조)
     await queryInterface.createTable("Comments", {
       id: {
         type: Sequelize.UUID,
@@ -212,20 +193,10 @@ module.exports = {
       user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: "Users",
-          key: "user_id",
-        },
-        onDelete: "CASCADE",
       },
       recruitment_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: {
-          model: "Recruitments",
-          key: "recruitment_id",
-        },
-        onDelete: "CASCADE",
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -239,7 +210,6 @@ module.exports = {
       },
     });
 
-    // 6. Likes (Users, Recruitments 참조)
     await queryInterface.createTable("Likes", {
       id: {
         type: Sequelize.UUID,
@@ -249,20 +219,10 @@ module.exports = {
       user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: "Users",
-          key: "user_id",
-        },
-        onDelete: "CASCADE",
       },
       recruitment_id: {
         type: Sequelize.UUID,
         allowNull: false,
-        references: {
-          model: "Recruitments",
-          key: "recruitment_id",
-        },
-        onDelete: "CASCADE",
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -276,7 +236,6 @@ module.exports = {
       },
     });
 
-    // 7. Colleges (Universities 참조)
     await queryInterface.createTable("Colleges", {
       ID: {
         type: Sequelize.INTEGER,
@@ -286,11 +245,6 @@ module.exports = {
       UniversityID: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: "Universities",
-          key: "ID",
-        },
-        onDelete: "CASCADE",
       },
       Name: {
         type: Sequelize.STRING(255),
@@ -308,7 +262,6 @@ module.exports = {
       },
     });
 
-    // 8. Departments (Colleges 참조)
     await queryInterface.createTable("Departments", {
       ID: {
         type: Sequelize.INTEGER,
@@ -318,11 +271,6 @@ module.exports = {
       CollegeID: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: "Colleges",
-          key: "ID",
-        },
-        onDelete: "CASCADE",
       },
       Name: {
         type: Sequelize.STRING(255),
@@ -340,7 +288,6 @@ module.exports = {
       },
     });
 
-    // 9. 독립 테이블들
     await queryInterface.createTable("Notifications", {
       id: {
         type: Sequelize.UUID,
@@ -476,9 +423,121 @@ module.exports = {
         defaultValue: Sequelize.NOW,
       },
     });
+
+    // 2. 외래 키 제약 추가
+    await queryInterface.addConstraint("Recruitments", {
+      fields: ["user_id"],
+      type: "foreign key",
+      name: "fk_recruitments_user_id",
+      references: {
+        table: "Users",
+        field: "user_id",
+      },
+      onDelete: "CASCADE",
+    });
+
+    await queryInterface.addConstraint("Projects", {
+      fields: ["user_id"],
+      type: "foreign key",
+      name: "fk_projects_user_id",
+      references: {
+        table: "Users",
+        field: "user_id",
+      },
+      onDelete: "CASCADE",
+    });
+
+    await queryInterface.addConstraint("Projects", {
+      fields: ["recruitment_id"],
+      type: "foreign key",
+      name: "fk_projects_recruitment_id",
+      references: {
+        table: "Recruitments",
+        field: "recruitment_id",
+      },
+      onDelete: "CASCADE",
+    });
+
+    await queryInterface.addConstraint("Comments", {
+      fields: ["user_id"],
+      type: "foreign key",
+      name: "fk_comments_user_id",
+      references: {
+        table: "Users",
+        field: "user_id",
+      },
+      onDelete: "CASCADE",
+    });
+
+    await queryInterface.addConstraint("Comments", {
+      fields: ["recruitment_id"],
+      type: "foreign key",
+      name: "fk_comments_recruitment_id",
+      references: {
+        table: "Recruitments",
+        field: "recruitment_id",
+      },
+      onDelete: "CASCADE",
+    });
+
+    await queryInterface.addConstraint("Likes", {
+      fields: ["user_id"],
+      type: "foreign key",
+      name: "fk_likes_user_id",
+      references: {
+        table: "Users",
+        field: "user_id",
+      },
+      onDelete: "CASCADE",
+    });
+
+    await queryInterface.addConstraint("Likes", {
+      fields: ["recruitment_id"],
+      type: "foreign key",
+      name: "fk_likes_recruitment_id",
+      references: {
+        table: "Recruitments",
+        field: "recruitment_id",
+      },
+      onDelete: "CASCADE",
+    });
+
+    await queryInterface.addConstraint("Colleges", {
+      fields: ["UniversityID"],
+      type: "foreign key",
+      name: "fk_colleges_university_id",
+      references: {
+        table: "Universities",
+        field: "ID",
+      },
+      onDelete: "CASCADE",
+    });
+
+    await queryInterface.addConstraint("Departments", {
+      fields: ["CollegeID"],
+      type: "foreign key",
+      name: "fk_departments_college_id",
+      references: {
+        table: "Colleges",
+        field: "ID",
+      },
+      onDelete: "CASCADE",
+    });
   },
 
   down: async (queryInterface) => {
+    // 외래 키 제거
+    await queryInterface.removeConstraint("Departments", "fk_departments_college_id");
+    await queryInterface.removeConstraint("Colleges", "fk_colleges_university_id");
+    await queryInterface.removeConstraint("Likes", "fk_likes_recruitment_id");
+    await queryInterface.removeConstraint("Likes", "fk_likes_user_id");
+    await queryInterface.removeConstraint("Comments", "fk_comments_recruitment_id");
+    await queryInterface.removeConstraint("Comments", "fk_comments_user_id");
+    await queryInterface.removeConstraint("Projects", "fk_projects_recruitment_id");
+    await queryInterface.removeConstraint("Projects", "fk_projects_user_id");
+    await queryInterface.removeConstraint("Recruitments", "fk_recruitments_user_id");
+
+    // 테이블 삭제
     await queryInterface.dropTable("VerifiedEmails");
     await queryInterface.dropTable("Searches");
     await queryInterface.dropTable("Keywords");
