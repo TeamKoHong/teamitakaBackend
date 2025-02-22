@@ -101,6 +101,15 @@ jobs:
             }
           echo "✅ Container -> Cloud SQL Proxy connection successful"
 
+      - name: Reset Database (Drop All Tables)
+        run: |
+          echo "Resetting database by dropping all tables..."
+          docker run --network host \
+            -e NODE_ENV=production \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            teamitaka-app \
+            bash -c "npx sequelize-cli db:migrate:undo:all --url ${{ env.DATABASE_URL }}"
+
       - name: Run Sequelize migrations in Docker
         run: |
           echo "Running migration via container with Auth Proxy..."
@@ -109,8 +118,6 @@ jobs:
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate --url ${{ env.DATABASE_URL }} --debug"
-        env:
-          NODE_ENV: production
 
       - name: Check if Users table exists
         run: |
