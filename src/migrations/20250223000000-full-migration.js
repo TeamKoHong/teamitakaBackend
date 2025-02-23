@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // 1. 테이블 생성 (외래 키 없이)
+    // 1. 테이블 생성 (외래 키 없이 먼저 생성)
     await queryInterface.createTable("Admins", {
       id: {
         type: Sequelize.INTEGER,
@@ -130,6 +130,39 @@ module.exports = {
         defaultValue: "OPEN",
       },
       user_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
+    });
+
+    // Applications 테이블 추가
+    await queryInterface.createTable("Applications", {
+      application_id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true,
+        allowNull: false,
+      },
+      status: {
+        type: Sequelize.ENUM("PENDING", "APPROVED", "REJECTED"),
+        defaultValue: "PENDING",
+        allowNull: false,
+      },
+      user_id: {
+        type: Sequelize.UUID,
+        allowNull: false,
+      },
+      recruitment_id: {
         type: Sequelize.UUID,
         allowNull: false,
       },
@@ -436,6 +469,28 @@ module.exports = {
       onDelete: "CASCADE",
     });
 
+    await queryInterface.addConstraint("Applications", {
+      fields: ["user_id"],
+      type: "foreign key",
+      name: "fk_applications_user_id",
+      references: {
+        table: "Users",
+        field: "user_id",
+      },
+      onDelete: "CASCADE",
+    });
+
+    await queryInterface.addConstraint("Applications", {
+      fields: ["recruitment_id"],
+      type: "foreign key",
+      name: "fk_applications_recruitment_id",
+      references: {
+        table: "Recruitments",
+        field: "recruitment_id",
+      },
+      onDelete: "CASCADE",
+    });
+
     await queryInterface.addConstraint("Projects", {
       fields: ["user_id"],
       type: "foreign key",
@@ -535,6 +590,8 @@ module.exports = {
     await queryInterface.removeConstraint("Comments", "fk_comments_user_id");
     await queryInterface.removeConstraint("Projects", "fk_projects_recruitment_id");
     await queryInterface.removeConstraint("Projects", "fk_projects_user_id");
+    await queryInterface.removeConstraint("Applications", "fk_applications_recruitment_id");
+    await queryInterface.removeConstraint("Applications", "fk_applications_user_id");
     await queryInterface.removeConstraint("Recruitments", "fk_recruitments_user_id");
 
     // 테이블 삭제
@@ -548,6 +605,7 @@ module.exports = {
     await queryInterface.dropTable("Likes");
     await queryInterface.dropTable("Comments");
     await queryInterface.dropTable("Projects");
+    await queryInterface.dropTable("Applications");
     await queryInterface.dropTable("Recruitments");
     await queryInterface.dropTable("Users");
     await queryInterface.dropTable("Universities");
