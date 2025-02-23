@@ -12,6 +12,7 @@ router.get("/projects", async (req, res) => {
     const projects = await Project.findAll({
       order: [["created_at", "DESC"]],
       include: [{ model: User, attributes: ["username"] }],
+      attributes: ["role"], // ✅ 역할 추가
     });
     res.status(200).send(projects);
   } catch (error) {
