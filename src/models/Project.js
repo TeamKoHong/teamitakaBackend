@@ -49,6 +49,11 @@ module.exports = (sequelize) => {
         defaultValue: "예정",
         allowNull: false,
       },
+      // ✅ 역할 필드 추가
+      role: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
     },
     {
       freezeTableName: true,
