@@ -5,6 +5,7 @@ const { Recruitment, Project, Comment, Scrap, Hashtag } = require("../models");
 
 const { Op } = require("sequelize");
 const authMiddleware = require("../middlewares/authMiddleware"); // 수정된 경로
+const upload = require("../middlewares/uploadMiddleware"); // 추가: 파일 업로드 미들웨어
 
 const app = express();
 app.use(cookieParser());
