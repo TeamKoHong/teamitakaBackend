@@ -34,12 +34,12 @@ router.post("/", authMiddleware, async (req, res) => {
       university,
       major1,
       major2,
-      skills,
-      link,
-      awards,
-      ability_graph,
-      strengths,
-      weaknesses,
+      skills, //'["Java", "Python", "SQL"]', 삽입 예시. json 배열열
+      link, //'["https://github.com", "https://linkedin.com"]'
+      awards,//json 배열
+      ability_graph, //평가기능 테이블 완료 후 수정예정
+      strengths,//json 배열
+      weaknesses,//json 배열
     } = req.body;
 
     const profile = await Profile.create({
