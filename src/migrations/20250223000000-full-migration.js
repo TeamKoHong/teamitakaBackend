@@ -442,7 +442,7 @@ module.exports = {
       expires_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 24 HOUR)'),
+        // 모델에서 JavaScript로 처리하므로 여기서는 기본값 제거
       },
       createdAt: {
         type: Sequelize.DATE,
