@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // 1. 테이블 생성 (외래 키 없이 먼저 생성)
+    // 1. 테이블 생성 (외래 키 없이)
     await queryInterface.createTable("Admins", {
       id: {
         type: Sequelize.INTEGER,
@@ -145,7 +145,6 @@ module.exports = {
       },
     });
 
-    // Applications 테이블 추가
     await queryInterface.createTable("Applications", {
       application_id: {
         type: Sequelize.UUID,
@@ -443,7 +442,7 @@ module.exports = {
       expires_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.fn("DATE_ADD", Sequelize.literal('CURRENT_TIMESTAMP'), Sequelize.literal("INTERVAL 24 HOUR")),
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP + INTERVAL '24 hours'"),
       },
       createdAt: {
         type: Sequelize.DATE,
