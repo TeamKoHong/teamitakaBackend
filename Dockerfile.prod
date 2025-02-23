@@ -1,0 +1,16 @@
+# Dockerfile.prod
+
+FROM node:18-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y netcat-openbsd default-mysql-client
+
+COPY package.json ./
+RUN npm install --production && npm install sequelize-cli
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "run", "start"]
