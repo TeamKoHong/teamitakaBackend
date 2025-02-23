@@ -74,17 +74,20 @@ jobs:
           docker build -t teamitaka-app -f Dockerfile.prod .
         working-directory: .
 
-      - name: Set Production Environment
+      - name: Set Database Environment
         run: |
-          echo "NODE_ENV=production" >> $GITHUB_ENV
           echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}" >> $GITHUB_ENV
-          echo "Determined NODE_ENV: ${{ env.NODE_ENV }}"
+          echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
+          echo "DB_HOST=127.0.0.1" >> $GITHUB_ENV
+          echo "DB_DIALECT=mysql" >> $GITHUB_ENV
           echo "Determined DATABASE_URL: ${{ env.DATABASE_URL }}"
 
       - name: Debug - Print Environment
         run: |
           echo "INSTANCE_CONNECTION_NAME=${{ secrets.INSTANCE_CONNECTION_NAME }}"
-          echo "DB_HOST=127.0.0.1"
+          echo "DB_HOST=${{ env.DB_HOST }}"
           echo "DB_PORT=3306"
           echo "DB_USER=${{ secrets.DB_USER }}"
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
@@ -105,20 +108,28 @@ jobs:
         run: |
           echo "Resetting database by dropping all tables..."
           docker run --network host \
-            -e NODE_ENV=production \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_DIALECT=${{ env.DB_DIALECT }} \
             teamitaka-app \
             bash -c "echo 'SET FOREIGN_KEY_CHECKS = 0;' > reset.sql && \
                      echo 'DROP TABLE IF EXISTS Applications, VerifiedEmails, Searches, Keywords, Reviews, Notifications, Likes, Comments, Projects, Recruitments, Departments, Colleges, Universities, Admins, Users, SequelizeMeta;' >> reset.sql && \
                      echo 'SET FOREIGN_KEY_CHECKS = 1;' >> reset.sql && \
-                     mysql -h 127.0.0.1 -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} ${{ secrets.DB_NAME }} < reset.sql"
+                     mysql -h ${{ env.DB_HOST }} -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} ${{ secrets.DB_NAME }} < reset.sql"
 
       - name: Run Sequelize migrations in Docker
         run: |
           echo "Running migration via container with Auth Proxy..."
           docker run --network host \
-            -e NODE_ENV=production \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_DIALECT=${{ env.DB_DIALECT }} \
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate --url ${{ env.DATABASE_URL }} --debug"
 
@@ -126,16 +137,24 @@ jobs:
         run: |
           echo "Checking migration status..."
           docker run --network host \
-            -e NODE_ENV=production \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_DIALECT=${{ env.DB_DIALECT }} \
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate:status"
 
       - name: Check if Users table exists
         run: |
           docker run --network host \
-            -e NODE_ENV=production \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_DIALECT=${{ env.DB_DIALECT }} \
             teamitaka-app \
             node src/scripts/checkDB.js
 
@@ -143,8 +162,12 @@ jobs:
         run: |
           echo "🔍 Inserting data into DB from CSV..."
           docker run --network host \
-            -e NODE_ENV=production \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_DIALECT=${{ env.DB_DIALECT }} \
             teamitaka-app \
             node src/scripts/insertCSV.js
           echo "✅ CSV Insert Completed"
@@ -154,8 +177,12 @@ jobs:
           echo "🚀 Starting Application (production)..."
           docker run -d --network host \
             --name teamitaka-prod \
-            -e NODE_ENV=production \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_DIALECT=${{ env.DB_DIALECT }} \
             teamitaka-app \
             npm run start
           echo "✅ App container started (port 3000 exposed on host)"
