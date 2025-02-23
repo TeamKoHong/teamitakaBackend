@@ -442,7 +442,7 @@ module.exports = {
       expires_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP + INTERVAL '24 hours'"),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP + INTERVAL 24 HOUR'),
       },
       createdAt: {
         type: Sequelize.DATE,
