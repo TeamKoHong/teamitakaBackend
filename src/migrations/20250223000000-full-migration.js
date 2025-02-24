@@ -12,16 +12,16 @@ module.exports = {
           primaryKey: true,
         },
         email: {
-          type: Sequelize.STRING,
+          type: Sequelize.STRING(255),
           allowNull: false,
           unique: true,
         },
         password: {
-          type: Sequelize.STRING,
+          type: Sequelize.STRING(255),
           allowNull: false,
         },
         role: {
-          type: Sequelize.STRING,
+          type: Sequelize.ENUM("ADMIN", "MEMBER"),
           defaultValue: "ADMIN",
         },
         createdAt: {
@@ -76,25 +76,60 @@ module.exports = {
       }
     );
 
-    await queryInterface.sequelize.query(`
-      CREATE TABLE Users (
-        user_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-        username VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
-        email VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
-        password VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-        createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (user_id)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-    `);
-
+    // Users 테이블 생성 (모델과 일치)
+    await queryInterface.createTable(
+      "Users",
+      {
+        user_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        username: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+          unique: true,
+        },
+        email: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+          unique: true,
+        },
+        password: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+        },
+        userType: {
+          type: Sequelize.ENUM("ADMIN", "MEMBER"),
+          defaultValue: "MEMBER",
+        },
+        role: {
+          type: Sequelize.ENUM("ADMIN", "MEMBER"),
+          defaultValue: "MEMBER",
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+      },
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Recruitments 테이블 생성
     await queryInterface.createTable(
       "Recruitments",
       {
         recruitment_id: {
-          type: Sequelize.CHAR(36).BINARY, // UUID를 CHAR(36) BINARY로
+          type: Sequelize.CHAR(36).BINARY,
           defaultValue: Sequelize.UUIDV4,
           primaryKey: true,
         },
@@ -111,8 +146,12 @@ module.exports = {
           defaultValue: "OPEN",
         },
         user_id: {
-          type: Sequelize.CHAR(36).BINARY, // Users.user_id와 동일
+          type: Sequelize.CHAR(36).BINARY,
           allowNull: false,
+        },
+        photo: {
+          type: Sequelize.STRING,
+          allowNull: true,
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -392,16 +431,70 @@ module.exports = {
     );
 
     // Profiles 테이블 생성
-    await queryInterface.sequelize.query(`
-      CREATE TABLE Profiles (
-        profile_id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-        nickname VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-        createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-    `);
+    await queryInterface.createTable(
+      "Profiles",
+      {
+        profile_id: {
+          type: Sequelize.INTEGER,
+          autoIncrement: true,
+          primaryKey: true,
+        },
+        user_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        nickname: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+        },
+        profileImageUrl: {
+          type: Sequelize.STRING(255),
+          allowNull: true,
+        },
+        university: {
+          type: Sequelize.STRING,
+        },
+        major1: {
+          type: Sequelize.STRING,
+        },
+        major2: {
+          type: Sequelize.STRING,
+        },
+        skills: {
+          type: Sequelize.STRING,
+        },
+        link: {
+          type: Sequelize.STRING,
+        },
+        awards: {
+          type: Sequelize.INTEGER,
+          defaultValue: 0,
+        },
+        ability_graph: {
+          type: Sequelize.JSON,
+        },
+        strengths: {
+          type: Sequelize.TEXT,
+        },
+        weaknesses: {
+          type: Sequelize.TEXT,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+      },
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Reviews 테이블 생성
     await queryInterface.createTable(
@@ -573,7 +666,38 @@ module.exports = {
       }
     );
 
-    // 외래 키 제약 추가
+    // Hashtags 테이블 생성 (모델과 일치)
+    await queryInterface.createTable(
+      "Hashtags",
+      {
+        id: {
+          type: Sequelize.CHAR(36).BINARY,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        content: {
+          type: Sequelize.STRING,
+          allowNull: false,
+          unique: true,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+      },
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
+
+    // 외래 키 제약 추가 (모델 관계 반영)
     await queryInterface.addConstraint("Recruitments", {
       fields: ["user_id"],
       type: "foreign key",
@@ -697,7 +821,7 @@ module.exports = {
   },
 
   down: async (queryInterface) => {
-    // 외래 키 제거
+    // 외래 키 제거 (모델 관계 반영)
     await queryInterface.removeConstraint("Reviews", "fk_reviews_reviewee_id");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_reviewer_id");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_project_id");
@@ -714,7 +838,7 @@ module.exports = {
     await queryInterface.removeConstraint("Applications", "fk_applications_user_id");
     await queryInterface.removeConstraint("Recruitments", "fk_recruitments_user_id");
 
-    // 테이블 삭제
+    // 테이블 삭제 (모델 순서 반대)
     await queryInterface.dropTable("VerifiedEmails");
     await queryInterface.dropTable("Searches");
     await queryInterface.dropTable("Keywords");
