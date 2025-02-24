@@ -5,7 +5,7 @@ module.exports = (sequelize) => {
     "User",
     {
       user_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         autoIncrement: true, // ✅ 유일한 AUTO_INCREMENT 필드 유지
         primaryKey: true, // ✅ PRIMARY KEY 설정
       },
