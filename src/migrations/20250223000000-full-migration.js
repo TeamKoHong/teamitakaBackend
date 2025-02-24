@@ -368,7 +368,7 @@ module.exports = {
         autoIncrement: true,
       },
       user_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
       },
       nickname: {
@@ -636,6 +636,7 @@ module.exports = {
       name: "fk_profiles_user_id",
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
+      onUpdate: "CASCADE"
     });
 
     await queryInterface.addConstraint("Reviews", {
