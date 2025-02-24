@@ -1,0 +1,4 @@
+project_id,title,description,user_id,recruitment_id,role,createdAt,updatedAt
+"proj1","Project A","A cool project","user1","rec1","Leader","2025-02-23 10:00:00","2025-02-23 10:00:00"
+"proj2","Project B","An innovative idea","user3","rec2","Developer","2025-02-23 11:00:00","2025-02-23 11:00:00"
+"proj3","Project C","Something big","user5","rec3","Designer","2025-02-23 12:00:00","2025-02-23 12:00:00"
