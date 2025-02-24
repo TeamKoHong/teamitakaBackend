@@ -3,27 +3,37 @@ const { DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
   const Scrap = sequelize.define("Scrap", {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.CHAR(36).BINARY,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
     user_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.CHAR(36).BINARY,
       allowNull: false,
       references: {
-        model: "Users",  // 유저 테이블 참조
-        key: "id",
+        model: "Users",
+        key: "user_id",
       },
       onDelete: "CASCADE",
     },
     recruitment_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.CHAR(36).BINARY,
       allowNull: false,
       references: {
-        model: "Recruitments",  // 모집공고 테이블 참조
-        key: "id",
+        model: "Recruitments",
+        key: "recruitment_id",
       },
       onDelete: "CASCADE",
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
   });
 

@@ -1,0 +1,6 @@
+username,email,password,profileImageUrl,userType,role,createdAt,updatedAt
+"john_doe","john@example.com","hashed_pass1","/images/john.jpg","MEMBER","MEMBER","2025-02-23 09:00:00","2025-02-23 09:00:00"
+"jane_smith","jane@example.com","hashed_pass2","/images/jane.jpg","MEMBER","MEMBER","2025-02-23 09:15:00","2025-02-23 09:15:00"
+"alice_wong","alice@example.com","hashed_pass3","/images/alice.jpg","MEMBER","MEMBER","2025-02-23 09:30:00","2025-02-23 09:30:00"
+"bob_lee","bob@example.com","hashed_pass4","/images/bob.jpg","MEMBER","MEMBER","2025-02-23 09:45:00","2025-02-23 09:45:00"
+"emma_kim","emma@example.com","hashed_pass5","/images/emma.jpg","MEMBER","MEMBER","2025-02-23 10:00:00","2025-02-23 10:00:00"

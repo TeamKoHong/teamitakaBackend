@@ -116,7 +116,7 @@ jobs:
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
             teamitaka-app \
             bash -c "echo 'SET FOREIGN_KEY_CHECKS = 0;' > reset.sql && \
-                     echo 'DROP TABLE IF EXISTS Applications, VerifiedEmails, Searches, Keywords, Reviews, Notifications, Likes, Comments, Projects, Recruitments, Departments, Colleges, Universities, Admins, Users, SequelizeMeta;' >> reset.sql && \
+                     echo 'DROP TABLE IF EXISTS Applications, VerifiedEmails, Searches, Keywords, Reviews, Notifications, Likes, Comments, Projects, Recruitments, Departments, Colleges, Universities, Admins, Users, Profiles, SequelizeMeta;' >> reset.sql && \
                      echo 'SET FOREIGN_KEY_CHECKS = 1;' >> reset.sql && \
                      mysql -h ${{ env.DB_HOST }} -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} ${{ secrets.DB_NAME }} < reset.sql"
 

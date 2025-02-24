@@ -3,7 +3,7 @@ const { DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
   const VerifiedEmail = sequelize.define("VerifiedEmail", {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.CHAR(36).BINARY,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
@@ -24,6 +24,16 @@ module.exports = (sequelize) => {
         now.setHours(now.getHours() + 24); // 24시간 후 만료
         return now;
       },
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
   });
 

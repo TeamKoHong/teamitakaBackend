@@ -5,15 +5,9 @@ module.exports = (sequelize) => {
     "User",
     {
       user_id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true, // ✅ 유일한 AUTO_INCREMENT 필드 유지
-        primaryKey: true, // ✅ PRIMARY KEY 설정
-      },
-      uuid: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        defaultValue: DataTypes.UUIDV4, // ✅ UUID 자동 생성
-        unique: true, // ✅ Unique Key 유지
+        type: DataTypes.CHAR(36).BINARY,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
       },
       username: {
         type: DataTypes.STRING(255),
@@ -28,10 +22,6 @@ module.exports = (sequelize) => {
       password: {
         type: DataTypes.STRING(255),
         allowNull: false,
-      },
-      profileImageUrl: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
       },
       userType: {
         type: DataTypes.ENUM("ADMIN", "MEMBER"),
