@@ -21,6 +21,8 @@ db.College = require("./College")(sequelize, Sequelize.DataTypes);
 db.Department = require("./Department")(sequelize, Sequelize.DataTypes);
 db.Application = require("./Application")(sequelize, Sequelize.DataTypes);
 db.Hashtag = require("./Hashtag")(sequelize, Sequelize.DataTypes);
+db.Todo = require("./Todo")(sequelize, Sequelize.DataTypes);
+db.Timeline = require("./Timeline")(sequelize, Sequelize.DataTypes);
 
 // 모델 간 관계 설정
 Object.values(db).forEach((model) => {
