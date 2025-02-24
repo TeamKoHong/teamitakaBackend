@@ -3,543 +3,655 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     // Admins 테이블 생성
-    await queryInterface.createTable("Admins", {
-      id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Admins",
+      {
+        id: {
+          type: Sequelize.INTEGER,
+          autoIncrement: true,
+          primaryKey: true,
+        },
+        email: {
+          type: Sequelize.STRING,
+          allowNull: false,
+          unique: true,
+        },
+        password: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+        role: {
+          type: Sequelize.STRING,
+          defaultValue: "ADMIN",
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      email: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true,
-      },
-      password: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      role: {
-        type: Sequelize.STRING,
-        defaultValue: "ADMIN",
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Universities 테이블 생성
-    await queryInterface.createTable("Universities", {
-      ID: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Universities",
+      {
+        ID: {
+          type: Sequelize.INTEGER,
+          autoIncrement: true,
+          primaryKey: true,
+        },
+        Name: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+          unique: true,
+        },
+        Country: {
+          type: Sequelize.STRING(100),
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      Name: {
-        type: Sequelize.STRING(255),
-        allowNull: false,
-        unique: true,
-      },
-      Country: {
-        type: Sequelize.STRING(100),
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Users 테이블 생성
-    await queryInterface.createTable("Users", {
-      user_id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
-        allowNull: false,
+    await queryInterface.createTable(
+      "Users",
+      {
+        user_id: {
+          type: Sequelize.CHAR(36).BINARY, // UUID를 명시적으로 CHAR(36) BINARY로
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+          allowNull: false,
+        },
+        uuid: {
+          type: Sequelize.CHAR(36).BINARY, // 일관성 유지
+          defaultValue: Sequelize.UUIDV4,
+          allowNull: false,
+          unique: true,
+        },
+        username: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+          unique: true,
+        },
+        email: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+          unique: true,
+        },
+        password: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+        },
+        profileImageUrl: {
+          type: Sequelize.STRING(255),
+          allowNull: true,
+        },
+        userType: {
+          type: Sequelize.ENUM("ADMIN", "MEMBER"),
+          defaultValue: "MEMBER",
+        },
+        role: {
+          type: Sequelize.ENUM("ADMIN", "MEMBER"),
+          defaultValue: "MEMBER",
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      uuid: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        allowNull: false,
-        unique: true,
-      },
-      username: {
-        type: Sequelize.STRING(255),
-        allowNull: false,
-        unique: true,
-      },
-      email: {
-        type: Sequelize.STRING(255),
-        allowNull: false,
-        unique: true,
-      },
-      password: {
-        type: Sequelize.STRING(255),
-        allowNull: false,
-      },
-      profileImageUrl: {
-        type: Sequelize.STRING(255),
-        allowNull: true,
-      },
-      userType: {
-        type: Sequelize.ENUM("ADMIN", "MEMBER"),
-        defaultValue: "MEMBER",
-      },
-      role: {
-        type: Sequelize.ENUM("ADMIN", "MEMBER"),
-        defaultValue: "MEMBER",
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Recruitments 테이블 생성
-    await queryInterface.createTable("Recruitments", {
-      recruitment_id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Recruitments",
+      {
+        recruitment_id: {
+          type: Sequelize.CHAR(36).BINARY, // UUID를 CHAR(36) BINARY로
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        title: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+        description: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        status: {
+          type: Sequelize.ENUM("OPEN", "CLOSED"),
+          defaultValue: "OPEN",
+        },
+        user_id: {
+          type: Sequelize.CHAR(36).BINARY, // Users.user_id와 동일
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      title: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      description: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-      },
-      status: {
-        type: Sequelize.ENUM("OPEN", "CLOSED"),
-        defaultValue: "OPEN",
-      },
-      user_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Applications 테이블 생성
-    await queryInterface.createTable("Applications", {
-      application_id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Applications",
+      {
+        application_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        status: {
+          type: Sequelize.ENUM("PENDING", "APPROVED", "REJECTED"),
+          defaultValue: "PENDING",
+          allowNull: false,
+        },
+        user_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        recruitment_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      status: {
-        type: Sequelize.ENUM("PENDING", "APPROVED", "REJECTED"),
-        defaultValue: "PENDING",
-        allowNull: false,
-      },
-      user_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      recruitment_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Projects 테이블 생성
-    await queryInterface.createTable("Projects", {
-      project_id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Projects",
+      {
+        project_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        title: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+        description: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        user_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        recruitment_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+          unique: true,
+        },
+        role: {
+          type: Sequelize.STRING,
+          allowNull: true,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      title: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      description: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-      },
-      user_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      recruitment_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-        unique: true,
-      },
-      role: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Comments 테이블 생성
-    await queryInterface.createTable("Comments", {
-      id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Comments",
+      {
+        id: {
+          type: Sequelize.CHAR(36).BINARY,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        content: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        user_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        recruitment_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      content: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-      },
-      user_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      recruitment_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Likes 테이블 생성
-    await queryInterface.createTable("Likes", {
-      id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Likes",
+      {
+        id: {
+          type: Sequelize.CHAR(36).BINARY,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        user_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        recruitment_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      user_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      recruitment_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Colleges 테이블 생성
-    await queryInterface.createTable("Colleges", {
-      ID: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Colleges",
+      {
+        ID: {
+          type: Sequelize.INTEGER,
+          autoIncrement: true,
+          primaryKey: true,
+        },
+        UniversityID: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        },
+        Name: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      UniversityID: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      Name: {
-        type: Sequelize.STRING(255),
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Departments 테이블 생성
-    await queryInterface.createTable("Departments", {
-      ID: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Departments",
+      {
+        ID: {
+          type: Sequelize.INTEGER,
+          autoIncrement: true,
+          primaryKey: true,
+        },
+        CollegeID: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        },
+        Name: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      CollegeID: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      Name: {
-        type: Sequelize.STRING(255),
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Notifications 테이블 생성
-    await queryInterface.createTable("Notifications", {
-      id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Notifications",
+      {
+        id: {
+          type: Sequelize.CHAR(36).BINARY,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        message: {
+          type: Sequelize.TEXT,
+          allowNull: false,
+        },
+        isRead: {
+          type: Sequelize.BOOLEAN,
+          defaultValue: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      message: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-      },
-      isRead: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
-    // Profiles 테이블 생성 (createdAt, updatedAt 기본값 추가)
-    await queryInterface.createTable("Profiles", {
-      profile_id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
+    // Profiles 테이블 생성
+    await queryInterface.createTable(
+      "Profiles",
+      {
+        profile_id: {
+          type: Sequelize.INTEGER,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        user_id: {
+          type: Sequelize.CHAR(36).BINARY, // Users.user_id와 동일
+          allowNull: false,
+        },
+        nickname: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+        university: Sequelize.STRING,
+        major1: Sequelize.STRING,
+        major2: Sequelize.STRING,
+        skills: Sequelize.STRING,
+        link: Sequelize.STRING,
+        awards: {
+          type: Sequelize.INTEGER,
+          defaultValue: 0,
+        },
+        ability_graph: Sequelize.JSON,
+        strengths: Sequelize.TEXT,
+        weaknesses: Sequelize.TEXT,
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      user_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      nickname: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      university: Sequelize.STRING,
-      major1: Sequelize.STRING,
-      major2: Sequelize.STRING,
-      skills: Sequelize.STRING,
-      link: Sequelize.STRING,
-      awards: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0,
-      },
-      ability_graph: Sequelize.JSON,
-      strengths: Sequelize.TEXT,
-      weaknesses: Sequelize.TEXT,
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Reviews 테이블 생성
-    await queryInterface.createTable("Reviews", {
-      review_id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Reviews",
+      {
+        review_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        project_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        reviewer_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        reviewee_id: {
+          type: Sequelize.CHAR(36).BINARY,
+          allowNull: false,
+        },
+        multiple_choice: {
+          type: Sequelize.JSON,
+          allowNull: true,
+        },
+        rating: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          defaultValue: 0,
+        },
+        subjective: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        advice: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        secret: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        feedback: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      project_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      reviewer_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      reviewee_id: {
-        type: Sequelize.UUID,
-        allowNull: false,
-      },
-      multiple_choice: {
-        type: Sequelize.JSON,
-        allowNull: true,
-      },
-      rating: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      subjective: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      advice: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      secret: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      feedback: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Keywords 테이블 생성
-    await queryInterface.createTable("Keywords", {
-      id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Keywords",
+      {
+        id: {
+          type: Sequelize.INTEGER,
+          autoIncrement: true,
+          primaryKey: true,
+        },
+        keyword: {
+          type: Sequelize.STRING,
+          unique: true,
+        },
+        count: {
+          type: Sequelize.INTEGER,
+          defaultValue: 0,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      keyword: {
-        type: Sequelize.STRING,
-        unique: true,
-      },
-      count: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // Searches 테이블 생성
-    await queryInterface.createTable("Searches", {
-      id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "Searches",
+      {
+        id: {
+          type: Sequelize.INTEGER,
+          autoIncrement: true,
+          primaryKey: true,
+        },
+        keyword: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+        searchTime: {
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      keyword: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      searchTime: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // VerifiedEmails 테이블 생성
-    await queryInterface.createTable("VerifiedEmails", {
-      id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true,
+    await queryInterface.createTable(
+      "VerifiedEmails",
+      {
+        id: {
+          type: Sequelize.CHAR(36).BINARY,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        email: {
+          type: Sequelize.STRING,
+          allowNull: false,
+          unique: true,
+        },
+        certified_date: {
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        expires_at: {
+          type: Sequelize.DATE,
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
       },
-      email: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true,
-      },
-      certified_date: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      expires_at: {
-        type: Sequelize.DATE,
-        allowNull: false,
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-    });
+      {
+        charset: "utf8mb4",
+        collate: "utf8mb4_bin",
+      }
+    );
 
     // 외래 키 제약 추가
     await queryInterface.addConstraint("Recruitments", {
@@ -636,7 +748,7 @@ module.exports = {
       name: "fk_profiles_user_id",
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
-      onUpdate: "CASCADE"
+      onUpdate: "CASCADE",
     });
 
     await queryInterface.addConstraint("Reviews", {
