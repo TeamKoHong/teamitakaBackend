@@ -20,11 +20,6 @@ module.exports = (sequelize) => {
       user_id: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-          model: "Users",
-          key: "user_id",
-        },
-        onDelete: "CASCADE",
       },
       recruitment_id: {
         type: DataTypes.UUID,
@@ -49,14 +44,15 @@ module.exports = (sequelize) => {
         defaultValue: "예정",
         allowNull: false,
       },
-      role: { // 역할 필드
+      role: { // ✅ 역할 필드
         type: DataTypes.STRING,
         allowNull: true,
       },
     },
     {
+      tableName: "Projects",
       freezeTableName: true,
-      timestamps: true, // createdAt, updatedAt 자동 추가
+      timestamps: true, // createdAt, updatedAt 자동 생성
     }
   );
 
@@ -76,7 +72,7 @@ module.exports = (sequelize) => {
 
     // 팀원 (N:M) 관계 - through 옵션에 문자열 사용
     Project.belongsToMany(models.User, {
-      through: "ProjectMember", // 수정된 부분: 문자열을 사용하여 join 테이블 지정
+      through: "ProjectMember",
       foreignKey: "project_id",
       otherKey: "user_id",
     });
