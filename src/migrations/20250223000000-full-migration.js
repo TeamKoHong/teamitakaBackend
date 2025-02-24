@@ -66,7 +66,7 @@ module.exports = {
     await queryInterface.createTable("Users", {
       user_id: {
         type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
+        autoIncrement: true,
         primaryKey: true,
         allowNull: false,
       },
@@ -134,7 +134,7 @@ module.exports = {
         defaultValue: "OPEN",
       },
       user_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
       },
       createdAt: {
@@ -162,7 +162,7 @@ module.exports = {
         allowNull: false,
       },
       user_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
       },
       recruitment_id: {
@@ -197,7 +197,7 @@ module.exports = {
         allowNull: false,
       },
       user_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
       },
       recruitment_id: {
@@ -233,7 +233,7 @@ module.exports = {
         allowNull: false,
       },
       user_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
       },
       recruitment_id: {
@@ -260,7 +260,7 @@ module.exports = {
         primaryKey: true,
       },
       user_id: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
       },
       recruitment_id: {
