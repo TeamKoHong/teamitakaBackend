@@ -5,12 +5,12 @@ module.exports = (sequelize) => {
     "ProjectMember",
     {
       id: {
-        type: DataTypes.UUID,
+        type: DataTypes.CHAR(36).BINARY,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
       project_id: {
-        type: DataTypes.UUID,
+        type: DataTypes.CHAR(36).BINARY,
         allowNull: false,
         references: {
           model: "Projects",
@@ -19,7 +19,7 @@ module.exports = (sequelize) => {
         onDelete: "CASCADE",
       },
       user_id: {
-        type: DataTypes.UUID,
+        type: DataTypes.CHAR(36).BINARY,
         allowNull: false,
         references: {
           model: "Users",
