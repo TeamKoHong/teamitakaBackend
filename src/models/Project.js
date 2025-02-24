@@ -20,11 +20,6 @@ module.exports = (sequelize) => {
       user_id: {
         type: DataTypes.UUID,
         allowNull: false,
-        references: {
-          model: "Users",
-          key: "user_id",
-        },
-        onDelete: "CASCADE",
       },
       recruitment_id: {
         type: DataTypes.UUID,
@@ -36,27 +31,15 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE",
       },
-      start_date: { // ✅ 시작일 추가
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-      end_date: { // ✅ 종료일 추가
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
-      status: { // ✅ 상태 관리
-        type: DataTypes.ENUM("예정", "진행 중", "완료"),
-        defaultValue: "예정",
-        allowNull: false,
-      },
       role: { // ✅ 역할 필드
         type: DataTypes.STRING,
         allowNull: true,
       },
     },
     {
+      tableName: "Projects",
       freezeTableName: true,
-      timestamps: true, // createdAt, updatedAt 자동 추가
+      timestamps: true, // createdAt, updatedAt 자동 생성
     }
   );
 
