@@ -5,7 +5,7 @@ module.exports = (sequelize) => {
     "Recruitment",
     {
       recruitment_id: {
-        type: DataTypes.UUID,
+        type: DataTypes.CHAR(36).BINARY,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
@@ -22,7 +22,7 @@ module.exports = (sequelize) => {
         defaultValue: "OPEN",
       },
       user_id: {
-        type: DataTypes.UUID,
+        type: DataTypes.CHAR(36).BINARY,
         allowNull: false,
         references: {
           model: "Users",
@@ -30,13 +30,23 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE",
       },
-      photo: {  // 새 필드
+      photo: {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
-      timestamps: true, // createdAt, updatedAt 자동 추가
+      timestamps: true,
     }
   );
 
@@ -46,10 +56,9 @@ module.exports = (sequelize) => {
       onDelete: "CASCADE",
     });
 
-    // ✅ 모집공고가 프로젝트와 1:1 관계를 가지도록 수정
     Recruitment.hasOne(models.Project, {
-      foreignKey: "recruitment_id", // ✅ 수정: Projects 테이블에서 recruitment_id를 참조
-      onDelete: "CASCADE", // 모집공고가 삭제되면 프로젝트도 삭제
+      foreignKey: "recruitment_id",
+      onDelete: "CASCADE",
     });
   };
 

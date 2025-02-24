@@ -1,54 +1,73 @@
-// models/Profile.js
+const { DataTypes } = require("sequelize");
 
-module.exports = (sequelize, DataTypes) => {
-    const Profile = sequelize.define("Profile", {
-      profile_id: {
-        type: DataTypes.INTEGER,
+module.exports = (sequelize) => {
+  const Project = sequelize.define(
+    "Project",
+    {
+      project_id: {
+        type: DataTypes.CHAR(36).BINARY,
+        defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
-        autoIncrement: true,
+      },
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: false,
       },
       user_id: {
-        type: DataTypes.UUID,
+        type: DataTypes.CHAR(36).BINARY,
         allowNull: false,
+        references: {
+          model: "User",
+          key: "user_id",
+        },
+        onDelete: "CASCADE",
       },
-      nickname: {
-        type: DataTypes.STRING,
+      recruitment_id: {
+        type: DataTypes.CHAR(36).BINARY,
         allowNull: false,
+        unique: true,
+        references: {
+          model: "Recruitment",
+          key: "recruitment_id",
+        },
+        onDelete: "CASCADE",
       },
-      university: {
+      role: {
         type: DataTypes.STRING,
+        allowNull: true,
       },
-      major1: {
-        type: DataTypes.STRING,
+      createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
       },
-      major2: {
-        type: DataTypes.STRING,
+      updatedAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
       },
-      skills: {
-        type: DataTypes.STRING, // Comma-separated values (e.g., "JavaScript,React,Node.js")
-      },
-      link: {
-        type: DataTypes.STRING,
-      },
-      awards: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-      },
-      ability_graph: {
-        type: DataTypes.JSON, // Stores abilities like 업무능력, 소통, 성장, 노력, 의지
-      },
-      strengths: {
-        type: DataTypes.TEXT, // Good points
-      },
-      weaknesses: {
-        type: DataTypes.TEXT, // Points to improve
-      },
+    },
+    {
+      tableName: "Projects",
+      freezeTableName: true,
+      timestamps: true,
+    }
+  );
+
+  Project.associate = (models) => {
+    Project.belongsTo(models.Recruitment, {
+      foreignKey: "recruitment_id",
+      onDelete: "CASCADE",
     });
-  
-    Profile.associate = (models) => {
-      Profile.belongsTo(models.User, { foreignKey: "user_id", as: "user" });
-    };
-  
-    return Profile;
+    Project.belongsTo(models.User, {
+      foreignKey: "user_id",
+      onDelete: "CASCADE",
+    });
   };
-  
+
+  return Project;
+};
