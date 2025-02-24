@@ -11,6 +11,7 @@ const recruitmentRoutes = require("./routes/recruitmentRoutes"); // ← ✅ 추�
 const commentRoutes = require("./routes/commentRoutes");
 const projectRoutes = require("./routes/projectRoutes"); // ✅ 프로젝트 라우트 추가
 const searchRoutes = require("./routes/searchRoutes");
+const profileRoutes = require("./routes/profileRoutes");//프로필
 
 console.log("✅ recruitmentRoutes: ", recruitmentRoutes); // ✅ recruitmentRoutes 확인
 
@@ -32,6 +33,7 @@ app.use("/api/recruitment", recruitmentRoutes); // ✅ 개별 등록 방식
 app.use("/api/comment", commentRoutes);
 app.use("/api/project", projectRoutes);       // ✅ 프로젝트 라우트 추가
 app.use("/api/search", searchRoutes);
+app.use("/api/profiles", profileRoutes);
 
 // 기본 라우트
 app.get("/", (req, res) => {
