@@ -72,7 +72,7 @@ module.exports = {
       },
       uuid: {
         type: Sequelize.UUID,
-        defaultValue: Sequelize.leteral('UUID()'),
+        defaultValue: Sequelize.literal('UUID()'),
         allowNull: false,
         unique: true,
       },
