@@ -76,64 +76,18 @@ module.exports = {
       }
     );
 
-    // Users 테이블 생성
-    await queryInterface.createTable(
-      "Users",
-      {
-        user_id: {
-          type: Sequelize.CHAR(36).BINARY, // UUID를 명시적으로 CHAR(36) BINARY로
-          defaultValue: Sequelize.UUIDV4,
-          primaryKey: true,
-          allowNull: false,
-        },
-        uuid: {
-          type: Sequelize.CHAR(36).BINARY, // 일관성 유지
-          defaultValue: Sequelize.UUIDV4,
-          allowNull: false,
-          unique: true,
-        },
-        username: {
-          type: Sequelize.STRING(255),
-          allowNull: false,
-          unique: true,
-        },
-        email: {
-          type: Sequelize.STRING(255),
-          allowNull: false,
-          unique: true,
-        },
-        password: {
-          type: Sequelize.STRING(255),
-          allowNull: false,
-        },
-        profileImageUrl: {
-          type: Sequelize.STRING(255),
-          allowNull: true,
-        },
-        userType: {
-          type: Sequelize.ENUM("ADMIN", "MEMBER"),
-          defaultValue: "MEMBER",
-        },
-        role: {
-          type: Sequelize.ENUM("ADMIN", "MEMBER"),
-          defaultValue: "MEMBER",
-        },
-        createdAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-        },
-        updatedAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-        },
-      },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
-    );
+    await queryInterface.sequelize.query(`
+      CREATE TABLE Users (
+        user_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+        username VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
+        email VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL UNIQUE,
+        password VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+        createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+    `);
+
 
     // Recruitments 테이블 생성
     await queryInterface.createTable(
@@ -438,50 +392,16 @@ module.exports = {
     );
 
     // Profiles 테이블 생성
-    await queryInterface.createTable(
-      "Profiles",
-      {
-        profile_id: {
-          type: Sequelize.INTEGER,
-          primaryKey: true,
-          autoIncrement: true,
-        },
-        user_id: {
-          type: Sequelize.CHAR(36).BINARY, // Users.user_id와 동일
-          allowNull: false,
-        },
-        nickname: {
-          type: Sequelize.STRING,
-          allowNull: false,
-        },
-        university: Sequelize.STRING,
-        major1: Sequelize.STRING,
-        major2: Sequelize.STRING,
-        skills: Sequelize.STRING,
-        link: Sequelize.STRING,
-        awards: {
-          type: Sequelize.INTEGER,
-          defaultValue: 0,
-        },
-        ability_graph: Sequelize.JSON,
-        strengths: Sequelize.TEXT,
-        weaknesses: Sequelize.TEXT,
-        createdAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-        },
-        updatedAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-        },
-      },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
-    );
+    await queryInterface.sequelize.query(`
+      CREATE TABLE Profiles (
+        profile_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+        nickname VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+        createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+    `);
 
     // Reviews 테이블 생성
     await queryInterface.createTable(
