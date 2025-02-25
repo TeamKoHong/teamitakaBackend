@@ -21,16 +21,16 @@ async function loadMockupData() {
 
     // Users 데이터 준비
     await new Promise((resolve, reject) => {
-      fs.createReadStream("/src/data/users_mockup.csv")
+      fs.createReadStream("/app/data/users_mockup.csv") // 경로 수정
         .pipe(csv())
         .on("data", (row) => {
           users.push({
-            user_id: uuidv4(), // Sequelize.UUID와 호환되는 UUID 생성
+            user_id: uuidv4(),
             username: row.username,
             email: row.email,
             password: row.password,
-            userType: row.userType || "MEMBER", // 기본값 추가
-            role: row.role || "MEMBER", // 기본값 추가
+            userType: row.userType || "MEMBER",
+            role: row.role || "MEMBER",
             createdAt: new Date(row.createdAt),
             updatedAt: new Date(row.updatedAt),
           });
@@ -44,15 +44,15 @@ async function loadMockupData() {
 
     // Profiles 데이터 준비
     await new Promise((resolve, reject) => {
-      fs.createReadStream("/src/data/users_mockup.csv")
+      fs.createReadStream("/app/data/users_mockup.csv") // 경로 수정
         .pipe(csv())
         .on("data", (row) => {
           const user = users.find(u => u.username === row.username);
           if (user) {
             profiles.push({
-              user_id: user.user_id, // UUID로 매핑
+              user_id: user.user_id,
               nickname: row.username,
-              profileImageUrl: row.profileImageUrl || "", // 기본값 추가
+              profileImageUrl: row.profileImageUrl || "",
               createdAt: new Date(row.createdAt),
               updatedAt: new Date(row.updatedAt),
             });
@@ -69,18 +69,18 @@ async function loadMockupData() {
 
     // Projects 데이터 준비
     await new Promise((resolve, reject) => {
-      fs.createReadStream("/src/data/projects_mockup.csv")
+      fs.createReadStream("/app/data/projects_mockup.csv") // 경로 수정
         .pipe(csv())
         .on("data", (row) => {
           const user = users.find(u => u.username === row.username);
           if (user) {
             projects.push({
-              project_id: uuidv4(), // Sequelize.UUID와 호환되는 UUID 생성
+              project_id: uuidv4(),
               title: row.title,
-              description: row.description || "", // 기본값 추가
-              user_id: user.user_id, // UUID로 매핑
-              recruitment_id: uuidv4(), // Sequelize.UUID와 호환
-              role: row.role || "Developer", // 기본값 추가
+              description: row.description || "",
+              user_id: user.user_id,
+              recruitment_id: uuidv4(),
+              role: row.role || "Developer",
               createdAt: new Date(row.createdAt),
               updatedAt: new Date(row.updatedAt),
             });
