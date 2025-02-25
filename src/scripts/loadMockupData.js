@@ -96,35 +96,34 @@ async function loadMockupData() {
     }
 
     if (argv.projects) {
+      const projects = [];
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/projects_mockup.csv")
           .pipe(csv())
           .on("data", (row) => {
             const user = users.find(u => u.username === row.username);
             if (user) {
-              const project = {
+              projects.push({
                 project_id: uuidv4(),
-                title: row.title || "Default Project",
+                title: row.title ? row.title.trim() : "Default Project", // Ensure title is included
                 description: row.description || "No description",
                 user_id: user.user_id,
                 recruitment_id: row.recruitment_id || uuidv4(),
                 role: row.role || null,
-                createdAt: new Date(row.createdAt || new Date()),
-                updatedAt: new Date(row.updatedAt || new Date()),
-              };
-              projects.push(project);
+                createdAt: new Date(row.createdAt || Date.now()),
+                updatedAt: new Date(row.updatedAt || Date.now())
+              });
             }
           })
-          .on("end", resolve)
-          .on("error", (error) => {
-            console.error("🚨 Error reading projects_mockup.csv:", error);
-            reject(error);
-          });
+          .on("end", () => {
+            console.log("Projects prepared:", projects);
+            resolve();
+          })
+          .on("error", reject);
       });
-    
       if (projects.length > 0) {
-        await Project.bulkCreate(projects, { transaction });
-        console.log("✅ Projects mockup data inserted for deployment.");
+        await Project.bulkCreate(projects);
+        console.log("✅ Projects inserted successfully.");
       }
     }
 
