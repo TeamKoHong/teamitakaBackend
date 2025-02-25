@@ -163,8 +163,7 @@ async function loadMockupData() {
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             console.log("Parsed projects CSV row:", row);
-            // 필수 필드 확인
-            if (!row.title || !row.description || !row.recruitment_id) {
+            if (!row.title || !row.description) {
               throw new Error(`Missing required fields in projects CSV: ${JSON.stringify(row)}`);
             }
             const user = users.find((u) => u.username === row.username);
@@ -174,7 +173,7 @@ async function loadMockupData() {
               title: row.title,
               description: row.description,
               user_id: user.user_id,
-              recruitment_id: row.recruitment_id,
+              recruitment_id: row.recruitment_id || null,
               role: row.role || null,
               createdAt: new Date(row.createdAt || Date.now()),
               updatedAt: new Date(row.updatedAt || Date.now()),
