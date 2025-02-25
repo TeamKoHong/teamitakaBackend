@@ -101,19 +101,21 @@ async function loadMockupData() {
         fs.createReadStream("/app/data/projects_mockup.csv")
           .pipe(csv())
           .on("data", (row) => {
-            console.log("Processing row from projects_mockup.csv:", row); // 디버깅 추가
+            console.log("Raw CSV row:", row); // 디버깅 추가
             const user = users.find(u => u.username === row.username);
             if (user) {
-              projects.push({
+              const project = {
                 project_id: uuidv4(),
-                title: row.title || "Default Project", // 기본값 추가
-                description: row.description || "",    // 기본값 추가
+                title: row.title || "Default Project", // 필수, 기본값 추가
+                description: row.description || "",    // 필수, 기본값 추가
                 user_id: user.user_id,
-                recruitment_id: row.recruitment_id || uuidv4(), // CSV 또는 UUID
-                role: row.role || "Developer",         // 기본값 추가
+                recruitment_id: row.recruitment_id || uuidv4(), // UUID 또는 CSV 값
+                role: row.role || null,                 // 선택적, null 허용
                 createdAt: new Date(row.createdAt || new Date()), // 기본값 추가
                 updatedAt: new Date(row.updatedAt || new Date()), // 기본값 추가
-              });
+              };
+              console.log("Project object before insertion:", project); // 디버깅 추가
+              projects.push(project);
             } else {
               console.warn(`🚨 No user found for username: ${row.username} in projects_mockup.csv`);
             }
@@ -125,10 +127,16 @@ async function loadMockupData() {
           });
       });
     
-      // Projects 삽입
+      // Projects 삽입 (디버깅 추가)
       if (projects.length > 0) {
-        await Project.bulkCreate(projects, { transaction });
-        console.log("✅ Projects mockup data inserted for deployment.");
+        console.log("Projects to insert:", JSON.stringify(projects, null, 2)); // 상세 디버깅 추가
+        try {
+          await Project.bulkCreate(projects, { transaction });
+          console.log("✅ Projects mockup data inserted for deployment.");
+        } catch (error) {
+          console.error("🚨 Error in bulkCreate:", error);
+          throw error;
+        }
       }
     }
 
