@@ -30,8 +30,10 @@ router.post("/projects/:project_id/timeline", authMiddleware, timelineController
 router.put("/projects/:project_id/timeline/:event_id", authMiddleware, timelineController.updateTimelineEvent);
 router.delete("/projects/:project_id/timeline/:event_id", authMiddleware, timelineController.deleteTimelineEvent);
 
-// ✅ 팀원 관리
-router.get("/projects/:project_id/members", memberController.getProjectMembers);
-router.post("/projects/:project_id/members", authMiddleware, memberController.addProjectMember);
+// ✅ 팀원 조회/추가
+router.get("/projects/:project_id/members", memberController.getMembers);
+router.post("/projects/:project_id/members", authMiddleware, memberController.addMember);
+router.put("/projects/:project_id/members", authMiddleware, memberController.updateMemberRole);
+router.post("/projects/:project_id/members", authMiddleware, memberController.removeMember);
 
 module.exports = router;

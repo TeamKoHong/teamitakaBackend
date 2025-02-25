@@ -3,7 +3,7 @@
 const express = require("express");
 const router = express.Router();
 const applicationController = require("../controllers/applicationController");
-const authMiddleware = require("../middlewares/auth-middleware");
+const authMiddleware = require("../middlewares/authMiddleware");
 
 // ✅ 모집공고 지원하기
 router.post("/applications/:recruitment_id", authMiddleware, applicationController.applyToRecruitment);

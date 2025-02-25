@@ -3,7 +3,7 @@
 const express = require("express");
 const router = express.Router();
 const scrapController = require("../controllers/scrapController");
-const authMiddleWare = require("../middlewares/auth-middleware");
+const authMiddleWare = require("../middlewares/authMiddleware");
 
 // ✅ 사용자가 스크랩한 모집공고 목록 조회
 router.get("/scraps/recruitments", authMiddleWare, scrapController.getUserScraps);
