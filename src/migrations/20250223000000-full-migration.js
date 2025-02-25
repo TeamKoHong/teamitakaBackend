@@ -221,6 +221,7 @@ module.exports = {
         title: {
           type: Sequelize.STRING,
           allowNull: false,
+          defaultValue: "Default Project",
         },
         description: {
           type: Sequelize.TEXT,
