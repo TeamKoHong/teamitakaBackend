@@ -108,15 +108,6 @@ jobs:
             }
           echo "✅ Container -> Cloud SQL Proxy connection successful"
 
-      - name: Debug - Before Reset Database
-        run: |
-          echo "Environment before resetting database:"
-          echo "DB_USER=${{ env.DB_USER }}"
-          echo "DB_PASSWORD=${{ env.DB_PASSWORD }}"
-          echo "DB_NAME=${{ env.DB_NAME }}"
-          echo "DB_HOST=${{ env.DB_HOST }}"
-          echo "DB_PORT=${{ env.DB_PORT }}"
-
       - name: Reset Database (Drop All Tables)
         run: |
           echo "Resetting database by dropping all tables for deployment..."
@@ -150,6 +141,13 @@ jobs:
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate --url ${{ env.DATABASE_URL }} --debug"
 
+      - name: Debug - Before Check Migration Status
+        run: |
+          echo "Environment before checking migration status:"
+          echo "DB_HOST=${{ env.DB_HOST }}"
+          echo "DB_PORT=${{ env.DB_PORT }}"
+          echo "DATABASE_URL=${{ env.DATABASE_URL }}"
+
       - name: Check Migration Status
         run: |
           echo "Checking migration status for deployment..."
@@ -158,12 +156,12 @@ jobs:
             -e DB_USER=${{ env.DB_USER }} \
             -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
             -e DB_NAME=${{ env.DB_NAME }} \
-            -e DB_HOST=${{ env.DB_HOST }} \
-            -e DB_PORT=${{ env.DB_PORT }} \
+            -e DB_HOST=127.0.0.1 \
+            -e DB_PORT=3306 \
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
             -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
-            bash -c "npx sequelize-cli db:migrate:status"
+            bash -c "npx sequelize-cli db:migrate:status --url ${{ env.DATABASE_URL }}"
 
       - name: Check if Users table exists
         run: |
