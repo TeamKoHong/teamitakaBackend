@@ -3,7 +3,7 @@ const fs = require("fs");
 const csv = require("csv-parser");
 const { v4: uuidv4 } = require("uuid");
 const { User, Profile, Project, sequelize } = require("../models");
-const yargs = require("yargs/yargs"); // yargs 설치 필요: npm install yargs
+const yargs = require("yargs/yargs");
 
 const argv = yargs(process.argv.slice(2))
   .option("users", {
@@ -24,7 +24,7 @@ async function loadMockupData() {
   try {
     console.log("✅ Starting mockup data insertion for deployment...");
 
-    // 기존 목업 데이터 삭제 (배포 환경에서도 초기화)
+    // 기존 데이터 초기화
     await User.destroy({ where: {}, transaction });
     await Profile.destroy({ where: {}, transaction });
     await Project.destroy({ where: {}, transaction });
@@ -38,8 +38,9 @@ async function loadMockupData() {
       // Users 데이터 준비
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/users_mockup.csv")
-          .pipe(csv())
+          .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
+            console.log("Parsed users CSV row:", row);
             const user = {
               user_id: uuidv4(),
               username: row.username,
@@ -62,8 +63,9 @@ async function loadMockupData() {
       // Profiles 데이터 준비
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/users_mockup.csv")
-          .pipe(csv())
+          .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
+            console.log("Parsed profiles CSV row:", row);
             const user = users.find(u => u.username === row.username);
             if (user) {
               profiles.push({
@@ -96,33 +98,40 @@ async function loadMockupData() {
     }
 
     if (argv.projects) {
-      const projects = [];
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/projects_mockup.csv")
-          .pipe(csv())
-          .on("data", (row) => {
-            const user = users.find(u => u.username === row.username);
-            if (user) {
-              projects.push({
-                project_id: uuidv4(),
-                title: row.title ? row.title.trim() : "Default Project", // Ensure title is included
-                description: row.description || "No description",
-                user_id: user.user_id,
-                recruitment_id: row.recruitment_id || uuidv4(),
-                role: row.role || null,
-                createdAt: new Date(row.createdAt || Date.now()),
-                updatedAt: new Date(row.updatedAt || Date.now())
-              });
+          .pipe(csv({ skipEmptyLines: true, trim: true }))
+          .on("data", (row, index) => {
+            console.log(`Parsed projects CSV row (line ${index + 1}):`, row);
+            if (!row.title) {
+              throw new Error(`Missing 'title' in CSV row (line ${index + 1}): ${JSON.stringify(row)}`);
             }
+            if (!row.description) {
+              throw new Error(`Missing 'description' in CSV row (line ${index + 1}): ${JSON.stringify(row)}`);
+            }
+            projects.push({
+              project_id: row.project_id || uuidv4(),
+              title: row.title.trim(),
+              description: row.description.trim(),
+              user_id: row.user_id || users[0]?.user_id || uuidv4(),
+              recruitment_id: row.recruitment_id || uuidv4(),
+              role: row.role || null,
+              createdAt: new Date(row.createdAt || Date.now()),
+              updatedAt: new Date(row.updatedAt || Date.now()),
+            });
           })
           .on("end", () => {
             console.log("Projects prepared:", projects);
             resolve();
           })
-          .on("error", reject);
+          .on("error", (error) => {
+            console.error("🚨 Error reading projects_mockup.csv:", error);
+            reject(error);
+          });
       });
+
       if (projects.length > 0) {
-        await Project.bulkCreate(projects);
+        await Project.bulkCreate(projects, { transaction });
         console.log("✅ Projects inserted successfully.");
       }
     }
@@ -152,4 +161,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = loadMockupData;
+module.exports = { loadMockupData };
