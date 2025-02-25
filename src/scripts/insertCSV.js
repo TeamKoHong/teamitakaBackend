@@ -1,18 +1,19 @@
 require("dotenv").config();
 const fs = require("fs");
 const csv = require("csv-parser");
+const { v4: uuidv4 } = require("uuid");
 const { University, College, Department, sequelize } = require("../models");
 
-async function insertDataFromCSV(filePath) {
+async function insertDataFromCSV() {
   const transaction = await sequelize.transaction();
   try {
-    console.log("✅ Starting CSV data insertion...");
+    console.log("✅ Starting production CSV data insertion for deployment...");
 
-    // 기존 데이터 삭제
+    // 기존 실제 데이터 삭제 (배포 환경에서도 초기화)
     await Department.destroy({ where: {}, transaction });
     await College.destroy({ where: {}, transaction });
     await University.destroy({ where: {}, transaction });
-    console.log("✅ Cleared existing data.");
+    console.log("✅ Cleared existing production data for deployment.");
 
     const universitySet = new Set();
     const collegeSet = new Set();
@@ -20,30 +21,41 @@ async function insertDataFromCSV(filePath) {
 
     // CSV 파일 읽기
     await new Promise((resolve, reject) => {
-      fs.createReadStream(filePath)
+      fs.createReadStream("/seeders/universities_colleges_departments.csv")
         .pipe(csv())
         .on("data", (row) => {
           const { University: uniName, College: collegeName, Department: deptName } = row;
+          if (!uniName || !collegeName || !deptName) {
+            console.warn(`🚨 Skipping row with missing data: ${JSON.stringify(row)}`);
+            return;
+          }
           universitySet.add(uniName);
           collegeSet.add(`${uniName}-${collegeName}`);
           departmentList.push({ uniName, collegeName, deptName });
         })
         .on("end", resolve)
-        .on("error", reject);
+        .on("error", (error) => {
+          console.error("🚨 Error reading universities_colleges_departments.csv:", error);
+          reject(error);
+        });
     });
     console.log("✅ CSV data loaded into memory.");
 
     // Universities 삽입
     const universityMap = new Map();
     for (const uniName of universitySet) {
-      const [university] = await University.findOrCreate({
+      const [university, created] = await University.findOrCreate({
         where: { Name: uniName },
-        defaults: { Country: "대한민국" },
+        defaults: {
+          ID: uuidv4(), // UUID로 기본 키 생성
+          Country: "대한민국",
+        },
         transaction,
       });
       universityMap.set(uniName, university.ID);
+      if (created) console.log(`✅ Created new University: ${uniName} with ID ${university.ID}`);
     }
-    console.log("✅ Inserted Universities.");
+    console.log("✅ Inserted Universities for deployment.");
 
     // Colleges 삽입
     const collegeMap = new Map();
@@ -55,34 +67,38 @@ async function insertDataFromCSV(filePath) {
         throw new Error(`🚨 UniversityID not found for ${uniName}`);
       }
 
-      const [college] = await College.findOrCreate({
+      const [college, created] = await College.findOrCreate({
         where: { Name: collegeName, UniversityID: universityID },
+        defaults: { ID: uuidv4() }, // UUID로 기본 키 생성
         transaction,
       });
       collegeMap.set(collegeKey, college.ID);
+      if (created) console.log(`✅ Created new College: ${collegeName} under ${uniName} with ID ${college.ID}`);
     }
-    console.log("✅ Inserted Colleges.");
+    console.log("✅ Inserted Colleges for deployment.");
 
     // Departments 삽입
     for (const { uniName, collegeName, deptName } of departmentList) {
       const collegeID = collegeMap.get(`${uniName}-${collegeName}`);
 
       if (!collegeID) {
-        throw new Error(`🚨 CollegeID not found for ${collegeName}`);
+        throw new Error(`🚨 CollegeID not found for ${collegeName} under ${uniName}`);
       }
 
-      await Department.findOrCreate({
+      const [department, created] = await Department.findOrCreate({
         where: { Name: deptName, CollegeID: collegeID },
+        defaults: { ID: uuidv4() }, // UUID로 기본 키 생성
         transaction,
       });
+      if (created) console.log(`✅ Created new Department: ${deptName} under ${collegeName} with ID ${department.ID}`);
     }
-    console.log("✅ Inserted Departments.");
+    console.log("✅ Inserted Departments for deployment.");
 
     await transaction.commit();
-    console.log("✅ Data insertion completed successfully!");
+    console.log("✅ Data insertion completed successfully for deployment!");
   } catch (error) {
     await transaction.rollback();
-    console.error("🚨 Error inserting data:", error);
+    console.error("🚨 Error in production data insertion:", error);
     process.exit(1);
   } finally {
     await sequelize.close();
@@ -92,8 +108,8 @@ async function insertDataFromCSV(filePath) {
 
 // 실행
 if (require.main === module) {
-  insertDataFromCSV("/app/seeders/universities_colleges_departments.csv").catch((err) => {
-    console.error(err);
+  insertDataFromCSV().catch((err) => {
+    console.error("🚨 Final error in insertDataFromCSV:", err);
     process.exit(1);
   });
 }
