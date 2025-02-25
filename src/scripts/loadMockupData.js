@@ -115,11 +115,15 @@ async function loadMockupData() {
             }
             const project = {
               project_id: row.project_id || uuidv4(),
-              title: row.title.trim(), // Required field, sourced from CSV
-              user_id: row.user_id || (users[0]?.user_id) || uuidv4(), // Fallback to first user or new UUID
+              title: row.title ? row.title.trim() : "Default Project",
+              description: row.description ? row.description.trim() : "Default Description",
+              recruitment_id: row.recruitment_id,
+              role: row.role,
+              // user_id를 CSV의 username을 이용해 찾거나, 적절히 할당
+              user_id: users.find(u => u.username === row.username)?.user_id || uuidv4(),
               createdAt: new Date(row.createdAt || Date.now()),
               updatedAt: new Date(row.updatedAt || Date.now()),
-            };
+            };            
             projects.push(project);
           })
           .on("end", () => {
