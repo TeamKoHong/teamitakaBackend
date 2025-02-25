@@ -201,6 +201,31 @@ jobs:
             node src/scripts/loadMockupData.js --users
           echo "✅ Users and Profiles Mockup Data Insert Completed"
 
+      # 새로운 스텝: Recruitment Mockup Data 삽입 (사용자 요청 반영)
+      - name: Insert Recruitments Mockup Data
+        run: |
+          echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for recruitments..."
+          ls -l ${GITHUB_WORKSPACE}/src/data/ || echo "No files found in GITHUB_WORKSPACE/src/data"
+          echo "🔍 Checking mounted data directory for recruitments..."
+          docker run --network host \
+            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
+            teamitaka-app \
+            bash -c "ls -l /app/data && stat -c '%a %n' /app/data/recruitment_mockup.csv || echo 'No recruitment_mockup.csv found or permission issue in /app/data'"
+          echo "🔍 Inserting recruitments mockup data into DB from CSV for deployment..."
+          docker run --network host \
+            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_PORT=${{ env.DB_PORT }} \
+            -e DB_DIALECT=${{ env.DB_DIALECT }} \
+            -e NODE_ENV=${{ env.NODE_ENV }} \
+            teamitaka-app \
+            node src/scripts/loadMockupData.js --recruitments
+          echo "✅ Recruitments Mockup Data Insert Completed"
+
       - name: Insert Projects Mockup Data
         run: |
           echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for projects..."
