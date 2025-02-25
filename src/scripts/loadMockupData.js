@@ -20,11 +20,14 @@ const argv = yargs(process.argv.slice(2))
   .argv;
 
 async function loadMockupData() {
+  console.log("argv.users:", argv.users); // 디버깅: 플래그 값 확인
+  console.log("argv.projects:", argv.projects);
+
   const transaction = await sequelize.transaction();
   try {
     console.log("✅ Starting mockup data insertion for deployment...");
 
-    // Clear existing data
+    // 기존 데이터 삭제
     await User.destroy({ where: {}, transaction });
     await Profile.destroy({ where: {}, transaction });
     await Project.destroy({ where: {}, transaction });
@@ -34,23 +37,22 @@ async function loadMockupData() {
     const profiles = [];
     const projects = [];
 
-    // Process Users and Profiles if --users flag is provided
+    // --users 플래그가 있을 때 사용자와 프로필 데이터 처리
     if (argv.users) {
-      // Prepare Users data from CSV
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/users_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             console.log("Parsed users CSV row:", row);
             const user = {
-              user_id: uuidv4(),
+              user_id: uuidv4(), // char(36) UUID
               username: row.username,
               email: row.email,
               password: row.password,
               userType: row.userType || "MEMBER",
               role: row.role || "MEMBER",
-              createdAt: new Date(row.createdAt),
-              updatedAt: new Date(row.updatedAt),
+              createdAt: new Date(row.createdAt || Date.now()), // NOT NULL
+              updatedAt: new Date(row.updatedAt || Date.now()), // NOT NULL
             };
             users.push(user);
           })
@@ -61,7 +63,6 @@ async function loadMockupData() {
           });
       });
 
-      // Prepare Profiles data from CSV
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/users_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
@@ -70,11 +71,11 @@ async function loadMockupData() {
             const user = users.find((u) => u.username === row.username);
             if (user) {
               profiles.push({
-                user_id: user.user_id,
+                user_id: user.user_id, // NOT NULL
                 nickname: row.username,
                 profileImageUrl: row.profileImageUrl || "",
-                createdAt: new Date(row.createdAt),
-                updatedAt: new Date(row.updatedAt),
+                createdAt: new Date(row.createdAt || Date.now()), // NOT NULL
+                updatedAt: new Date(row.updatedAt || Date.now()), // NOT NULL
               });
             } else {
               console.warn(
@@ -89,7 +90,6 @@ async function loadMockupData() {
           });
       });
 
-      // Insert Users and Profiles into the database
       if (users.length > 0) {
         await User.bulkCreate(users, { transaction });
         console.log("✅ Users mockup data inserted for deployment.");
@@ -100,16 +100,15 @@ async function loadMockupData() {
       }
     }
 
-    // Process Projects if --projects flag is provided
-    // 기존의 프로젝트 CSV 처리 로직을 수정하여 누락된 필드를 포함시키기
+    // --projects 플래그가 있을 때 프로젝트 데이터 처리
     if (argv.projects) {
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/projects_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row, index) => {
             console.log(`Parsed projects CSV row (line ${index + 2}):`, row);
-            
-            // 필수 필드 검증: title, description, recruitment_id가 있는지 확인
+
+            // 필수 필드 검증
             if (!row.title) {
               throw new Error(`Missing 'title' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
             }
@@ -119,17 +118,21 @@ async function loadMockupData() {
             if (!row.recruitment_id) {
               throw new Error(`Missing 'recruitment_id' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
             }
-            
+            // user_id는 CSV에서 username으로 제공되며, users 배열에서 매핑
+            const user = users.find((u) => u.username === row.username);
+            if (!user && argv.users) {
+              throw new Error(`Missing valid 'username' for user_id in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
+            }
+
             const project = {
-              project_id: row.project_id || uuidv4(),
-              title: row.title.trim(),
-              description: row.description.trim(),
-              recruitment_id: row.recruitment_id.trim(),
-              role: row.role ? row.role.trim() : null,
-              // CSV의 username을 기반으로 해당 사용자의 user_id를 할당합니다.
-              user_id: users.find(u => u.username === row.username)?.user_id || uuidv4(),
-              createdAt: new Date(row.createdAt || Date.now()),
-              updatedAt: new Date(row.updatedAt || Date.now()),
+              project_id: row.project_id || uuidv4(), // char(36), NOT NULL
+              title: row.title.trim(), // varchar(255), NOT NULL
+              description: row.description.trim(), // text, NOT NULL
+              user_id: user ? user.user_id : uuidv4(), // char(36), NOT NULL, 외부 키 참조
+              recruitment_id: row.recruitment_id.trim(), // char(36), NOT NULL, Unique
+              role: row.role ? row.role.trim() : null, // varchar(255), NULL 허용
+              createdAt: new Date(row.createdAt || Date.now()), // datetime, NOT NULL
+              updatedAt: new Date(row.updatedAt || Date.now()), // datetime, NOT NULL
             };
             projects.push(project);
           })
@@ -142,37 +145,35 @@ async function loadMockupData() {
             reject(error);
           });
       });
-    
+
       if (projects.length > 0) {
         await Project.bulkCreate(projects, { transaction });
-        console.log("✅ Projects inserted successfully.");
+        console.log("✅ Projects mockup data inserted for deployment.");
       }
     }
-    
-    
 
-    // Check if at least one flag is provided
+    // 최소 하나의 플래그가 제공되었는지 확인
     if (!argv.users && !argv.projects) {
       console.error("🚨 Please specify --users or --projects to process data");
       process.exit(1);
     }
 
-    // Commit the transaction if all operations succeed
+    // 모든 작업이 성공하면 트랜잭션 커밋
     await transaction.commit();
     console.log("✅ Mockup data insertion completed successfully for deployment!");
   } catch (error) {
-    // Rollback the transaction on error
+    // 에러 발생 시 트랜잭션 롤백
     await transaction.rollback();
     console.error("🚨 Error in mockup data insertion:", error);
     process.exit(1);
   } finally {
-    // Close the database connection
+    // 데이터베이스 연결 종료
     await sequelize.close();
     console.log("✅ Database connection closed.");
   }
 }
 
-// Execute the function if run directly
+// 직접 실행 시 함수 호출
 if (require.main === module) {
   loadMockupData().catch((err) => {
     console.error("🚨 Final error in loadMockupData:", err);
