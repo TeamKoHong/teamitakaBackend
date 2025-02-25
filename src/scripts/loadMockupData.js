@@ -9,12 +9,12 @@ const argv = yargs(process.argv.slice(2))
   .option("users", {
     type: "boolean",
     default: false,
-    description: "Process users and profiles from users_mockup.csv"
+    description: "Process users and profiles from users_mockup.csv",
   })
   .option("projects", {
     type: "boolean",
     default: false,
-    description: "Process projects from projects_mockup.csv"
+    description: "Process projects from projects_mockup.csv",
   })
   .help()
   .argv;
@@ -24,7 +24,7 @@ async function loadMockupData() {
   try {
     console.log("✅ Starting mockup data insertion for deployment...");
 
-    // 기존 데이터 초기화
+    // Clear existing data
     await User.destroy({ where: {}, transaction });
     await Profile.destroy({ where: {}, transaction });
     await Project.destroy({ where: {}, transaction });
@@ -34,8 +34,9 @@ async function loadMockupData() {
     const profiles = [];
     const projects = [];
 
+    // Process Users and Profiles if --users flag is provided
     if (argv.users) {
-      // Users 데이터 준비
+      // Prepare Users data from CSV
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/users_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
@@ -60,13 +61,13 @@ async function loadMockupData() {
           });
       });
 
-      // Profiles 데이터 준비
+      // Prepare Profiles data from CSV
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/users_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             console.log("Parsed profiles CSV row:", row);
-            const user = users.find(u => u.username === row.username);
+            const user = users.find((u) => u.username === row.username);
             if (user) {
               profiles.push({
                 user_id: user.user_id,
@@ -76,7 +77,9 @@ async function loadMockupData() {
                 updatedAt: new Date(row.updatedAt),
               });
             } else {
-              console.warn(`🚨 No user found for username: ${row.username} in users_mockup.csv for profiles`);
+              console.warn(
+                `🚨 No user found for username: ${row.username} in users_mockup.csv for profiles`
+              );
             }
           })
           .on("end", resolve)
@@ -86,7 +89,7 @@ async function loadMockupData() {
           });
       });
 
-      // Users와 Profiles 삽입
+      // Insert Users and Profiles into the database
       if (users.length > 0) {
         await User.bulkCreate(users, { transaction });
         console.log("✅ Users mockup data inserted for deployment.");
@@ -97,28 +100,27 @@ async function loadMockupData() {
       }
     }
 
+    // Process Projects if --projects flag is provided
     if (argv.projects) {
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/projects_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row, index) => {
-            console.log(`Parsed projects CSV row (line ${index + 1}):`, row);
+            console.log(`Parsed projects CSV row (line ${index + 2}):`, row); // +2 accounts for header and 1-based line numbering
+            // Validate required fields
             if (!row.title) {
-              throw new Error(`Missing 'title' in CSV row (line ${index + 1}): ${JSON.stringify(row)}`);
+              throw new Error(
+                `Missing 'title' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`
+              );
             }
-            if (!row.description) {
-              throw new Error(`Missing 'description' in CSV row (line ${index + 1}): ${JSON.stringify(row)}`);
-            }
-            projects.push({
+            const project = {
               project_id: row.project_id || uuidv4(),
-              title: row.title.trim(),
-              description: row.description.trim(),
-              user_id: row.user_id || users[0]?.user_id || uuidv4(),
-              recruitment_id: row.recruitment_id || uuidv4(),
-              role: row.role || null,
+              title: row.title.trim(), // Required field, sourced from CSV
+              user_id: row.user_id || (users[0]?.user_id) || uuidv4(), // Fallback to first user or new UUID
               createdAt: new Date(row.createdAt || Date.now()),
               updatedAt: new Date(row.updatedAt || Date.now()),
-            });
+            };
+            projects.push(project);
           })
           .on("end", () => {
             console.log("Projects prepared:", projects);
@@ -130,30 +132,35 @@ async function loadMockupData() {
           });
       });
 
+      // Insert Projects into the database
       if (projects.length > 0) {
         await Project.bulkCreate(projects, { transaction });
         console.log("✅ Projects inserted successfully.");
       }
     }
 
+    // Check if at least one flag is provided
     if (!argv.users && !argv.projects) {
       console.error("🚨 Please specify --users or --projects to process data");
       process.exit(1);
     }
 
+    // Commit the transaction if all operations succeed
     await transaction.commit();
     console.log("✅ Mockup data insertion completed successfully for deployment!");
   } catch (error) {
+    // Rollback the transaction on error
     await transaction.rollback();
     console.error("🚨 Error in mockup data insertion:", error);
     process.exit(1);
   } finally {
+    // Close the database connection
     await sequelize.close();
     console.log("✅ Database connection closed.");
   }
 }
 
-// 실행
+// Execute the function if run directly
 if (require.main === module) {
   loadMockupData().catch((err) => {
     console.error("🚨 Final error in loadMockupData:", err);
