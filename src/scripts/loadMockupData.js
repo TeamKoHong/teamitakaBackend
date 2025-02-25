@@ -101,47 +101,55 @@ async function loadMockupData() {
     }
 
     // Process Projects if --projects flag is provided
-    if (argv.projects) {
-      await new Promise((resolve, reject) => {
-        fs.createReadStream("/app/data/projects_mockup.csv")
-          .pipe(csv({ skipEmptyLines: true, trim: true }))
-          .on("data", (row, index) => {
-            console.log(`Parsed projects CSV row (line ${index + 2}):`, row); // +2 accounts for header and 1-based line numbering
-            // Validate required fields
-            if (!row.title) {
-              throw new Error(
-                `Missing 'title' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`
-              );
-            }
-            const project = {
-              project_id: row.project_id || uuidv4(),
-              title: row.title ? row.title.trim() : "Default Project",
-              description: row.description ? row.description.trim() : "Default Description",
-              recruitment_id: row.recruitment_id,
-              role: row.role,
-              // user_id를 CSV의 username을 이용해 찾거나, 적절히 할당
-              user_id: users.find(u => u.username === row.username)?.user_id || uuidv4(),
-              createdAt: new Date(row.createdAt || Date.now()),
-              updatedAt: new Date(row.updatedAt || Date.now()),
-            };            
-            projects.push(project);
-          })
-          .on("end", () => {
-            console.log("Projects prepared:", projects);
-            resolve();
-          })
-          .on("error", (error) => {
-            console.error("🚨 Error reading projects_mockup.csv:", error);
-            reject(error);
-          });
+    // 기존의 프로젝트 CSV 처리 로직을 수정하여 누락된 필드를 포함시키기
+if (argv.projects) {
+  await new Promise((resolve, reject) => {
+    fs.createReadStream("/app/data/projects_mockup.csv")
+      .pipe(csv({ skipEmptyLines: true, trim: true }))
+      .on("data", (row, index) => {
+        console.log(`Parsed projects CSV row (line ${index + 2}):`, row);
+        
+        // 필수 필드 검증
+        if (!row.title) {
+          throw new Error(`Missing 'title' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
+        }
+        if (!row.description) {
+          throw new Error(`Missing 'description' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
+        }
+        if (!row.recruitment_id) {
+          throw new Error(`Missing 'recruitment_id' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
+        }
+        
+        // 각 필드의 값을 CSV에서 받아서 객체 생성
+        const project = {
+          project_id: row.project_id || uuidv4(),
+          title: row.title.trim(),
+          description: row.description.trim(),
+          recruitment_id: row.recruitment_id.trim(),
+          role: row.role ? row.role.trim() : null,
+          // CSV의 username 필드를 이용해 user_id를 매핑하거나, 미리 생성된 users 배열에서 찾아 할당
+          user_id: users.find(u => u.username === row.username)?.user_id || uuidv4(),
+          createdAt: new Date(row.createdAt || Date.now()),
+          updatedAt: new Date(row.updatedAt || Date.now()),
+        };
+        projects.push(project);
+      })
+      .on("end", () => {
+        console.log("Projects prepared:", projects);
+        resolve();
+      })
+      .on("error", (error) => {
+        console.error("🚨 Error reading projects_mockup.csv:", error);
+        reject(error);
       });
+  });
 
-      // Insert Projects into the database
-      if (projects.length > 0) {
-        await Project.bulkCreate(projects, { transaction });
-        console.log("✅ Projects inserted successfully.");
-      }
-    }
+  if (projects.length > 0) {
+    await Project.bulkCreate(projects, { transaction });
+    console.log("✅ Projects inserted successfully.");
+  }
+}
+
 
     // Check if at least one flag is provided
     if (!argv.users && !argv.projects) {
