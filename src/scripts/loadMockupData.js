@@ -25,7 +25,7 @@ const argv = yargs(process.argv.slice(2))
   .argv;
 
 async function loadMockupData() {
-  console.log("Script version: Latest #391"); // 디버깅: 스크립트 버전 확인
+  console.log("Script version: Latest #392"); // 디버깅: 스크립트 버전 확인
   console.log("argv.users:", argv.users); // 디버깅: 플래그 값 확인
   console.log("argv.recruitments:", argv.recruitments);
   console.log("argv.projects:", argv.projects);
@@ -152,7 +152,7 @@ async function loadMockupData() {
       }
     }
 
-    // --projects 플래그가 있을 때 프로젝트 데이터 처리
+    // --projects 플래그가 있을 때만 프로젝트 데이터 처리
     if (argv.projects) {
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/projects_mockup.csv")
