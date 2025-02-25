@@ -101,16 +101,16 @@ async function loadMockupData() {
         fs.createReadStream("/app/data/projects_mockup.csv")
           .pipe(csv())
           .on("data", (row) => {
-            console.log("Raw CSV row:", row); // 디버깅 추가
+            console.log("Raw CSV row from projects_mockup.csv:", row); // 디버깅 추가
             const user = users.find(u => u.username === row.username);
             if (user) {
               const project = {
                 project_id: uuidv4(),
                 title: row.title || "Default Project", // 필수, 기본값 추가
-                description: row.description || "",    // 필수, 기본값 추가
+                description: row.description || "No description", // 필수, 기본값 추가
                 user_id: user.user_id,
                 recruitment_id: row.recruitment_id || uuidv4(), // UUID 또는 CSV 값
-                role: row.role || null,                 // 선택적, null 허용
+                role: row.role || null, // 선택적, null 허용
                 createdAt: new Date(row.createdAt || new Date()), // 기본값 추가
                 updatedAt: new Date(row.updatedAt || new Date()), // 기본값 추가
               };
