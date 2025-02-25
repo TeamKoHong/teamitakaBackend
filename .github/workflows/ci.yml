@@ -177,16 +177,16 @@ jobs:
             teamitaka-app \
             node src/scripts/checkDB.js
 
-      - name: Insert Mockup Data (Users, Profiles, Projects)
+      - name: Insert Users Mockup Data (Users, Profiles)
         run: |
-          echo "🔍 Checking GITHUB_WORKSPACE/src/data directory..."
+          echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for users..."
           ls -l ${GITHUB_WORKSPACE}/src/data/ || echo "No files found in GITHUB_WORKSPACE/src/data"
-          echo "🔍 Checking mounted data directory..."
+          echo "🔍 Checking mounted data directory for users..."
           docker run --network host \
             -v ${GITHUB_WORKSPACE}/src/data:/app/data \
             teamitaka-app \
-            bash -c "ls -l /app/data && stat -c '%a %n' /app/data/* || echo 'No files found or permission issue in /app/data'"
-          echo "🔍 Inserting mockup data into DB from CSV for deployment..."
+            bash -c "ls -l /app/data && stat -c '%a %n' /app/data/users_mockup.csv || echo 'No users_mockup.csv found or permission issue in /app/data'"
+          echo "🔍 Inserting users mockup data into DB from CSV for deployment..."
           docker run --network host \
             -v ${GITHUB_WORKSPACE}/src/data:/app/data \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
@@ -198,8 +198,32 @@ jobs:
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
             -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
-            node src/scripts/loadMockupData.js
-          echo "✅ Mockup Data Insert Completed"
+            node src/scripts/loadMockupData.js --users
+          echo "✅ Users and Profiles Mockup Data Insert Completed"
+          
+      - name: Insert Projects Mockup Data
+        run: |
+          echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for projects..."
+          ls -l ${GITHUB_WORKSPACE}/src/data/ || echo "No files found in GITHUB_WORKSPACE/src/data"
+          echo "🔍 Checking mounted data directory for projects..."
+          docker run --network host \
+            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
+            teamitaka-app \
+            bash -c "ls -l /app/data && stat -c '%a %n' /app/data/projects_mockup.csv || echo 'No projects_mockup.csv found or permission issue in /app/data'"
+          echo "🔍 Inserting projects mockup data into DB from CSV for deployment..."
+          docker run --network host \
+            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_PORT=${{ env.DB_PORT }} \
+            -e DB_DIALECT=${{ env.DB_DIALECT }} \
+            -e NODE_ENV=${{ env.NODE_ENV }} \
+            teamitaka-app \
+            node src/scripts/loadMockupData.js --projects
+          echo "✅ Projects Mockup Data Insert Completed"
 
       - name: Insert Universities, Colleges, Departments Data
         run: |
