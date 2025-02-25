@@ -154,16 +154,18 @@ async function loadMockupData() {
 
     // --projects 플래그가 있을 때만 프로젝트 데이터 처리
     if (argv.projects) {
+      const projects = [];
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/projects_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             const user = users.find((u) => u.username === row.username);
             if (!user) throw new Error(`No user found for username '${row.username}'`);
+            if (!row.title || !row.description) throw new Error(`Missing title or description for project`);
             projects.push({
               project_id: uuidv4(),
-              title: row.title, // 필수 필드
-              description: row.description, // 필수 필드
+              title: row.title, // 필수 필드 추가
+              description: row.description, // 필수 필드 추가
               user_id: user.user_id,
               createdAt: new Date(row.createdAt || Date.now()),
               updatedAt: new Date(row.updatedAt || Date.now()),
