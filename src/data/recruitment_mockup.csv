@@ -1,0 +1,6 @@
+username,title,description,status,photo,createdAt,updatedAt
+john_doe,Recruitment A,"Recruitment for Project A","OPEN",/photos/rec1.jpg,2025-02-23 09:00:00,2025-02-23 09:00:00
+jane_smith,Recruitment B,"Recruitment for Project B","OPEN",,2025-02-23 09:15:00,2025-02-23 09:15:00
+alice_wong,Recruitment C,"Recruitment for Project C","OPEN",/photos/rec3.jpg,2025-02-23 09:30:00,2025-02-23 09:30:00
+bob_lee,Recruitment D,"Recruitment for Project D","OPEN",,2025-02-23 09:45:00,2025-02-23 09:45:00
+emma_kim,Recruitment E,"Recruitment for Project E","OPEN",/photos/rec5.jpg,2025-02-23 10:00:00,2025-02-23 10:00:00
