@@ -163,7 +163,6 @@ async function loadMockupData() {
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             console.log("Parsed projects CSV row:", row);
-            // 필수 필드 확인
             if (!row.title || !row.description || !row.recruitment_id) {
               throw new Error(`Missing required fields in projects CSV: ${JSON.stringify(row)}`);
             }

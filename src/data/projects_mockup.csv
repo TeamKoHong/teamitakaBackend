@@ -1,6 +1,6 @@
-username,title,description,recruitment_id,role,createdAt,updatedAt
-john_doe,Project A,Sample project by John,rec1,developer,2025-02-23 09:00:00,2025-02-23 09:00:00
-jane_smith,Project B,Innovative project by Jane,rec2,,2025-02-23 09:15:00,2025-02-23 09:15:00
-alice_wong,Project C,Big project for Alice,rec3,designer,2025-02-23 09:30:00,2025-02-23 09:30:00
-bob_lee,Project D,Team collaboration project,rec4,manager,2025-02-23 09:45:00,2025-02-23 09:45:00
-emma_kim,Project E,Tech solution project,rec5,engineer,2025-02-23 10:00:00,2025-02-23 10:00:00
+project_id,user_id,title,description,recruitment_id,role,createdAt,updatedAt
+"550e8400-e29b-41d4-a716-446655440010","550e8400-e29b-41d4-a716-446655440000","Project A","Sample project by John","550e8400-e29b-41d4-a716-446655440005","developer","2025-02-23 09:00:00","2025-02-23 09:00:00"
+"550e8400-e29b-41d4-a716-446655440011","550e8400-e29b-41d4-a716-446655440001","Project B","Sample project by Jane","550e8400-e29b-41d4-a716-446655440006","manager","2025-02-23 09:15:00","2025-02-23 09:15:00"
+"550e8400-e29b-41d4-a716-446655440012","550e8400-e29b-41d4-a716-446655440002","Project C","Sample project by Alice","550e8400-e29b-41d4-a716-446655440007","designer","2025-02-23 09:30:00","2025-02-23 09:30:00"
+"550e8400-e29b-41d4-a716-446655440013","550e8400-e29b-41d4-a716-446655440003","Project D","Sample project by Bob","550e8400-e29b-41d4-a716-446655440008","developer","2025-02-23 09:45:00","2025-02-23 09:45:00"
+"550e8400-e29b-41d4-a716-446655440014","550e8400-e29b-41d4-a716-446655440004","Project E","Sample project by Emma","550e8400-e29b-41d4-a716-446655440009","manager","2025-02-23 10:00:00","2025-02-23 10:00:00"

@@ -123,7 +123,7 @@ jobs:
             teamitaka-app \
             bash -c "echo 'SET FOREIGN_KEY_CHECKS = 0;' > reset.sql && \
                      echo 'DROP TABLE IF EXISTS Applications, VerifiedEmails, Searches, Keywords, Reviews, Notifications, Likes, Comments, Projects, Recruitments, Departments, Colleges, Universities, Admins, Users, Profiles, SequelizeMeta;' >> reset.sql && \
-                     echo 'SET FOREIGN_KEY_CHECKS = 1;' >> reset.sql && \
+                     echo 'SET FOREIGN_KEY_CHECKS = 1;' > reset.sql && \
                      mysql -h ${{ env.DB_HOST }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} ${{ env.DB_NAME }} < reset.sql"
 
       - name: Run Sequelize migrations in Docker
@@ -177,7 +177,7 @@ jobs:
             teamitaka-app \
             node src/scripts/checkDB.js
 
-      - name: Insert Users Mockup Data (Users, Profiles)
+      - name: Insert Users Mockup Data
         run: |
           echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for users..."
           ls -l ${GITHUB_WORKSPACE}/src/data/ || echo "No files found in GITHUB_WORKSPACE/src/data"
@@ -198,8 +198,8 @@ jobs:
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
             -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
-            node src/scripts/loadMockupData.js --users --recruitments --projects
-          echo "✅ Users and Profiles Mockup Data Insert Completed"
+            node src/scripts/loadMockupData.js --users
+          echo "✅ Users Mockup Data Insert Completed"
 
       - name: Insert Recruitments Mockup Data
         run: |
@@ -246,7 +246,7 @@ jobs:
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
             -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
-            node src/scripts/loadMockupData.js --users --recruitments --projects
+            node src/scripts/loadMockupData.js --projects
           echo "✅ Projects Mockup Data Insert Completed"
 
       - name: Insert Universities, Colleges, Departments Data
