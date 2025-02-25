@@ -1,6 +1,6 @@
 username,title,description,recruitment_id,role,createdAt,updatedAt
-"john_doe","Project A","A cool project","6e3f56bc-4f8a-45b4-ae4a-3a1febac9e99","Leader","2025-02-23 09:00:00","2025-02-23 09:00:00"
-"jane_smith","Project B","An innovative idea","9b2b6b50-234a-4aef-a15f-661b24b582bf","Developer","2025-02-23 09:15:00","2025-02-23 09:15:00"
-"alice_wong","Project C","Something big","b17d14d3-5eca-41ab-8ba9-4826ee191557","Designer","2025-02-23 09:30:00","2025-02-23 09:30:00"
-"bob_lee","Project D","Team collaboration","823bd829-853a-4354-bf62-87e1a833052a","Manager","2025-02-23 09:45:00","2025-02-23 09:45:00"
-"emma_kim","Project E","Tech solution","846fc634-ad9d-4c72-9639-6994bb26e4b2","Engineer","2025-02-23 10:00:00","2025-02-23 10:00:00"
+john_doe,Project A,"A cool project","6e3f56bc-4f8a-45b4-ae4a-3a1febac9e99",Leader,"2025-02-23 09:00:00","2025-02-23 09:00:00"
+jane_smith,Project B,"An innovative idea","9b2b6b50-234a-4aef-a15f-661b24b582bf",Developer,"2025-02-23 09:15:00","2025-02-23 09:15:00"
+alice_wong,Project C,"Something big","b17d14d3-5eca-41ab-8ba9-4826ee191557",Designer,"2025-02-23 09:30:00","2025-02-23 09:30:00"
+bob_lee,Project D,"Team collaboration","823bd829-853a-4354-bf62-87e1a833052a",Manager,"2025-02-23 09:45:00","2025-02-23 09:45:00"
+emma_kim,Project E,"Tech solution","846fc634-ad9d-4c72-9639-6994bb26e4b2",Engineer,"2025-02-23 10:00:00","2025-02-23 10:00:00"
