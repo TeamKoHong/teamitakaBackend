@@ -1,6 +1,6 @@
-username,title,description,recruitment_id,role,createdAt,updatedAt
-john_doe,Project A,"Sample project by John","rec1",developer,2025-02-23 09:00:00,2025-02-23 09:00:00
-jane_smith,Project B,"Innovative project by Jane","rec2",,2025-02-23 09:15:00,2025-02-23 09:15:00
-alice_wong,Project C,"Big project for Alice","rec3",designer,2025-02-23 09:30:00,2025-02-23 09:30:00
-bob_lee,Project D,"Team collaboration project","rec4",manager,2025-02-23 09:45:00,2025-02-23 09:45:00
-emma_kim,Project E,"Tech solution project","rec5",engineer,2025-02-23 10:00:00,2025-02-23 10:00:00
+username,title,description,createdAt,updatedAt
+john_doe,Project A,Sample project by John,2025-02-23 09:00:00,2025-02-23 09:00:00
+jane_smith,Project B,Innovative project by Jane,2025-02-23 09:15:00,2025-02-23 09:15:00
+alice_wong,Project C,Big project for Alice,2025-02-23 09:30:00,2025-02-23 09:30:00
+bob_lee,Project D,Team collaboration project,2025-02-23 09:45:00,2025-02-23 09:45:00
+emma_kim,Project E,Tech solution project,2025-02-23 10:00:00,2025-02-23 10:00:00
