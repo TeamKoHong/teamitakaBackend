@@ -3,6 +3,21 @@ const fs = require("fs");
 const csv = require("csv-parser");
 const { v4: uuidv4 } = require("uuid");
 const { User, Profile, Project, sequelize } = require("../models");
+const yargs = require("yargs/yargs"); // yargs 설치 필요: npm install yargs
+
+const argv = yargs(process.argv.slice(2))
+  .option("users", {
+    type: "boolean",
+    default: false,
+    description: "Process users and profiles from users_mockup.csv"
+  })
+  .option("projects", {
+    type: "boolean",
+    default: false,
+    description: "Process projects from projects_mockup.csv"
+  })
+  .help()
+  .argv;
 
 async function loadMockupData() {
   const transaction = await sequelize.transaction();
@@ -19,94 +34,106 @@ async function loadMockupData() {
     const profiles = [];
     const projects = [];
 
-    // Users 데이터 준비
-    await new Promise((resolve, reject) => {
-      fs.createReadStream("/app/data/users_mockup.csv") // 경로 수정
-        .pipe(csv())
-        .on("data", (row) => {
-          users.push({
-            user_id: uuidv4(),
-            username: row.username,
-            email: row.email,
-            password: row.password,
-            userType: row.userType || "MEMBER",
-            role: row.role || "MEMBER",
-            createdAt: new Date(row.createdAt),
-            updatedAt: new Date(row.updatedAt),
+    if (argv.users) {
+      // Users 데이터 준비
+      await new Promise((resolve, reject) => {
+        fs.createReadStream("/app/data/users_mockup.csv")
+          .pipe(csv())
+          .on("data", (row) => {
+            const user = {
+              user_id: uuidv4(),
+              username: row.username,
+              email: row.email,
+              password: row.password,
+              userType: row.userType || "MEMBER",
+              role: row.role || "MEMBER",
+              createdAt: new Date(row.createdAt),
+              updatedAt: new Date(row.updatedAt),
+            };
+            users.push(user);
+          })
+          .on("end", resolve)
+          .on("error", (error) => {
+            console.error("🚨 Error reading users_mockup.csv:", error);
+            reject(error);
           });
-        })
-        .on("end", resolve)
-        .on("error", (error) => {
-          console.error("🚨 Error reading users_mockup.csv:", error);
-          reject(error);
-        });
-    });
+      });
 
-    // Profiles 데이터 준비
-    await new Promise((resolve, reject) => {
-      fs.createReadStream("/app/data/users_mockup.csv") // 경로 수정
-        .pipe(csv())
-        .on("data", (row) => {
-          const user = users.find(u => u.username === row.username);
-          if (user) {
-            profiles.push({
-              user_id: user.user_id,
-              nickname: row.username,
-              profileImageUrl: row.profileImageUrl || "",
-              createdAt: new Date(row.createdAt),
-              updatedAt: new Date(row.updatedAt),
-            });
-          } else {
-            console.warn(`🚨 No user found for username: ${row.username} in users_mockup.csv for profiles`);
-          }
-        })
-        .on("end", resolve)
-        .on("error", (error) => {
-          console.error("🚨 Error reading users_mockup.csv for profiles:", error);
-          reject(error);
-        });
-    });
+      // Profiles 데이터 준비
+      await new Promise((resolve, reject) => {
+        fs.createReadStream("/app/data/users_mockup.csv")
+          .pipe(csv())
+          .on("data", (row) => {
+            const user = users.find(u => u.username === row.username);
+            if (user) {
+              profiles.push({
+                user_id: user.user_id,
+                nickname: row.username,
+                profileImageUrl: row.profileImageUrl || "",
+                createdAt: new Date(row.createdAt),
+                updatedAt: new Date(row.updatedAt),
+              });
+            } else {
+              console.warn(`🚨 No user found for username: ${row.username} in users_mockup.csv for profiles`);
+            }
+          })
+          .on("end", resolve)
+          .on("error", (error) => {
+            console.error("🚨 Error reading users_mockup.csv for profiles:", error);
+            reject(error);
+          });
+      });
 
-    // Projects 데이터 준비
-    await new Promise((resolve, reject) => {
-      fs.createReadStream("/app/data/projects_mockup.csv") // 경로 수정
-        .pipe(csv())
-        .on("data", (row) => {
-          const user = users.find(u => u.username === row.username);
-          if (user) {
-            projects.push({
-              project_id: uuidv4(),
-              title: row.title,
-              description: row.description || "",
-              user_id: user.user_id,
-              recruitment_id: uuidv4(),
-              role: row.role || "Developer",
-              createdAt: new Date(row.createdAt),
-              updatedAt: new Date(row.updatedAt),
-            });
-          } else {
-            console.warn(`🚨 No user found for username: ${row.username} in projects_mockup.csv`);
-          }
-        })
-        .on("end", resolve)
-        .on("error", (error) => {
-          console.error("🚨 Error reading projects_mockup.csv:", error);
-          reject(error);
-        });
-    });
-
-    // 데이터 삽입
-    if (users.length > 0) {
-      await User.bulkCreate(users, { transaction });
-      console.log("✅ Users mockup data inserted for deployment.");
+      // Users와 Profiles 삽입
+      if (users.length > 0) {
+        await User.bulkCreate(users, { transaction });
+        console.log("✅ Users mockup data inserted for deployment.");
+      }
+      if (profiles.length > 0) {
+        await Profile.bulkCreate(profiles, { transaction });
+        console.log("✅ Profiles mockup data inserted for deployment.");
+      }
     }
-    if (profiles.length > 0) {
-      await Profile.bulkCreate(profiles, { transaction });
-      console.log("✅ Profiles mockup data inserted for deployment.");
+
+    if (argv.projects) {
+      // Projects 데이터 준비 (Users 데이터 기반)
+      await new Promise((resolve, reject) => {
+        fs.createReadStream("/app/data/projects_mockup.csv")
+          .pipe(csv())
+          .on("data", (row) => {
+            const user = users.find(u => u.username === row.username);
+            if (user) {
+              projects.push({
+                project_id: uuidv4(),
+                title: row.title || "Default Project",
+                description: row.description || "",
+                user_id: user.user_id,
+                recruitment_id: row.recruitment_id || uuidv4(),
+                role: row.role || "Developer",
+                createdAt: new Date(row.createdAt),
+                updatedAt: new Date(row.updatedAt),
+              });
+            } else {
+              console.warn(`🚨 No user found for username: ${row.username} in projects_mockup.csv`);
+            }
+          })
+          .on("end", resolve)
+          .on("error", (error) => {
+            console.error("🚨 Error reading projects_mockup.csv:", error);
+            reject(error);
+          });
+      });
+
+      // Projects 삽입
+      if (projects.length > 0) {
+        await Project.bulkCreate(projects, { transaction });
+        console.log("✅ Projects mockup data inserted for deployment.");
+      }
     }
-    if (projects.length > 0) {
-      await Project.bulkCreate(projects, { transaction });
-      console.log("✅ Projects mockup data inserted for deployment.");
+
+    if (!argv.users && !argv.projects) {
+      console.error("🚨 Please specify --users or --projects to process data");
+      process.exit(1);
     }
 
     await transaction.commit();

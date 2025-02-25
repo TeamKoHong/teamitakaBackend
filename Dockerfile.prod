@@ -1,10 +1,12 @@
-# Dockerfile.prod
-
 FROM node:18-slim
 
 WORKDIR /app
 
+# netcat-openbsd와 mysql-client 설치
 RUN apt-get update && apt-get install -y netcat-openbsd default-mysql-client
+
+# /app/data 디렉토리 생성 및 읽기/쓰기 권한 설정
+RUN mkdir -p /app/data && chmod 755 /app/data
 
 COPY package.json ./
 RUN npm install --production && npm install sequelize-cli
