@@ -20,7 +20,7 @@ const argv = yargs(process.argv.slice(2))
   .argv;
 
 async function loadMockupData() {
-  console.log("Script version: Commit #386"); // 디버깅: 스크립트 버전 확인
+  console.log("Script version: Latest #389"); // 디버깅: 스크립트 버전 확인
   console.log("argv.users:", argv.users); // 디버깅: 플래그 값 확인
   console.log("argv.projects:", argv.projects);
 
@@ -109,7 +109,7 @@ async function loadMockupData() {
           .on("data", (row, index) => {
             console.log(`Parsed projects CSV row (line ${index + 2}):`, row);
 
-            // 필수 필드 검증
+            // 필수 필드 검증: title, description, recruitment_id, username
             if (!row.title) {
               throw new Error(`Missing 'title' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
             }
@@ -119,8 +119,13 @@ async function loadMockupData() {
             if (!row.recruitment_id) {
               throw new Error(`Missing 'recruitment_id' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
             }
+            if (!row.username) {
+              throw new Error(`Missing 'username' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
+            }
+
+            // username을 통해 user_id 매핑
             const user = users.find((u) => u.username === row.username);
-            if (!user && argv.users) {
+            if (!user) {
               throw new Error(`No user found for username '${row.username}' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
             }
 
@@ -128,7 +133,7 @@ async function loadMockupData() {
               project_id: row.project_id || uuidv4(), // char(36), NOT NULL
               title: row.title.trim(), // varchar(255), NOT NULL
               description: row.description.trim(), // text, NOT NULL
-              user_id: user ? user.user_id : uuidv4(), // char(36), NOT NULL, 외부 키 참조
+              user_id: user.user_id, // char(36), NOT NULL, 외래 키 참조
               recruitment_id: row.recruitment_id.trim(), // char(36), NOT NULL, Unique
               role: row.role ? row.role.trim() : null, // varchar(255), NULL 허용
               createdAt: new Date(row.createdAt || Date.now()), // datetime, NOT NULL
@@ -164,7 +169,7 @@ async function loadMockupData() {
   } catch (error) {
     // 에러 발생 시 트랜잭션 롤백
     await transaction.rollback();
-    console.error("🚨 Error in mockup data insertion:", error.stack); // 상세 에러 스택 출력
+    console.error("🚨 Error in mockup data insertion:", error.stack); // 상세 에러 출력
     process.exit(1);
   } finally {
     // 데이터베이스 연결 종료
