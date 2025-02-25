@@ -101,17 +101,18 @@ async function loadMockupData() {
         fs.createReadStream("/app/data/projects_mockup.csv")
           .pipe(csv())
           .on("data", (row) => {
+            console.log("Processing row from projects_mockup.csv:", row); // 디버깅 추가
             const user = users.find(u => u.username === row.username);
             if (user) {
               projects.push({
                 project_id: uuidv4(),
-                title: row.title || "Default Project",
-                description: row.description || "",
+                title: row.title || "Default Project", // 기본값 추가
+                description: row.description || "",    // 기본값 추가
                 user_id: user.user_id,
-                recruitment_id: row.recruitment_id || uuidv4(),
-                role: row.role || "Developer",
-                createdAt: new Date(row.createdAt),
-                updatedAt: new Date(row.updatedAt),
+                recruitment_id: row.recruitment_id || uuidv4(), // CSV 또는 UUID
+                role: row.role || "Developer",         // 기본값 추가
+                createdAt: new Date(row.createdAt || new Date()), // 기본값 추가
+                updatedAt: new Date(row.updatedAt || new Date()), // 기본값 추가
               });
             } else {
               console.warn(`🚨 No user found for username: ${row.username} in projects_mockup.csv`);
@@ -123,7 +124,7 @@ async function loadMockupData() {
             reject(error);
           });
       });
-
+    
       // Projects 삽입
       if (projects.length > 0) {
         await Project.bulkCreate(projects, { transaction });
