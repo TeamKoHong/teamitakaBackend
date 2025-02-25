@@ -157,49 +157,23 @@ async function loadMockupData() {
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/projects_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
-          .on("data", (row, index) => {
-            console.log(`Parsed projects CSV row (line ${index + 2}):`, row);
-
-            // 필수 필드 검증: title, description, recruitment_id, username
-            if (!row.title) throw new Error(`Missing 'title' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
-            if (!row.description) throw new Error(`Missing 'description' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
-            if (!row.recruitment_id) throw new Error(`Missing 'recruitment_id' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
-            if (!row.username) throw new Error(`Missing 'username' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
-
-            // username을 통해 user_id 매핑
+          .on("data", (row) => {
             const user = users.find((u) => u.username === row.username);
-            if (!user) throw new Error(`No user found for username '${row.username}' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
-
-            // recruitment_id가 유효한 Recruitment 레코드와 매핑되는지 확인
-            const recruitment = recruitments.find((r) => r.recruitment_id === row.recruitment_id);
-            if (!recruitment) throw new Error(`No recruitment found for recruitment_id '${row.recruitment_id}' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
-
-            const project = {
-              project_id: row.project_id || uuidv4(), // char(36), NOT NULL
-              title: row.title.trim(), // varchar(255), NOT NULL
-              description: row.description.trim(), // text, NOT NULL
-              user_id: user.user_id, // char(36), NOT NULL, 외래 키 참조
-              recruitment_id: row.recruitment_id.trim(), // char(36), NOT NULL, 외래 키 참조
-              role: row.role ? row.role.trim() : null, // varchar(255), NULL 허용
-              createdAt: new Date(row.createdAt || Date.now()), // datetime, NOT NULL
-              updatedAt: new Date(row.updatedAt || Date.now()), // datetime, NOT NULL
-            };
-            projects.push(project);
+            if (!user) throw new Error(`No user found for username '${row.username}'`);
+            projects.push({
+              project_id: uuidv4(),
+              title: row.title, // 필수 필드
+              description: row.description, // 필수 필드
+              user_id: user.user_id,
+              createdAt: new Date(row.createdAt || Date.now()),
+              updatedAt: new Date(row.updatedAt || Date.now()),
+            });
           })
-          .on("end", () => {
-            console.log("Projects prepared:", projects);
-            resolve();
-          })
-          .on("error", (error) => {
-            console.error("🚨 Error reading projects_mockup.csv:", error);
-            reject(error);
-          });
+          .on("end", resolve)
+          .on("error", reject);
       });
-
-      if (projects.length > 0) {
-        await Project.bulkCreate(projects, { transaction });
-        console.log("✅ Projects mockup data inserted for deployment.");
-      }
+      await Project.bulkCreate(projects, { transaction });
+      console.log("✅ Projects mockup data inserted for deployment.");
     }
 
     // 최소 하나의 플래그가 제공되었는지 확인
