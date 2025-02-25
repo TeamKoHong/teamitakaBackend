@@ -177,7 +177,7 @@ jobs:
             teamitaka-app \
             node src/scripts/checkDB.js
 
-      - name: Insert Users Mockup Data (Users, Profiles, Recruitments, Projects)
+      - name: Insert Users Mockup Data (Users, Profiles)
         run: |
           echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for users..."
           ls -l ${GITHUB_WORKSPACE}/src/data/ || echo "No files found in GITHUB_WORKSPACE/src/data"
@@ -201,7 +201,6 @@ jobs:
             node src/scripts/loadMockupData.js --users
           echo "✅ Users and Profiles Mockup Data Insert Completed"
 
-      # 새로운 스텝: Recruitment Mockup Data 삽입 (사용자 요청 반영)
       - name: Insert Recruitments Mockup Data
         run: |
           echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for recruitments..."
