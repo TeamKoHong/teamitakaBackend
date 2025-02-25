@@ -20,6 +20,7 @@ const argv = yargs(process.argv.slice(2))
   .argv;
 
 async function loadMockupData() {
+  console.log("Script version: Commit #386"); // 디버깅: 스크립트 버전 확인
   console.log("argv.users:", argv.users); // 디버깅: 플래그 값 확인
   console.log("argv.projects:", argv.projects);
 
@@ -45,7 +46,7 @@ async function loadMockupData() {
           .on("data", (row) => {
             console.log("Parsed users CSV row:", row);
             const user = {
-              user_id: uuidv4(), // char(36) UUID
+              user_id: uuidv4(), // char(36) UUID 생성
               username: row.username,
               email: row.email,
               password: row.password,
@@ -100,7 +101,7 @@ async function loadMockupData() {
       }
     }
 
-    // --projects 플래그가 있을 때 프로젝트 데이터 처리
+    // --projects 플래그가 있을 때만 프로젝트 데이터 처리
     if (argv.projects) {
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/projects_mockup.csv")
@@ -118,10 +119,9 @@ async function loadMockupData() {
             if (!row.recruitment_id) {
               throw new Error(`Missing 'recruitment_id' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
             }
-            // user_id는 CSV에서 username으로 제공되며, users 배열에서 매핑
             const user = users.find((u) => u.username === row.username);
             if (!user && argv.users) {
-              throw new Error(`Missing valid 'username' for user_id in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
+              throw new Error(`No user found for username '${row.username}' in CSV row (line ${index + 2}): ${JSON.stringify(row)}`);
             }
 
             const project = {
@@ -158,13 +158,13 @@ async function loadMockupData() {
       process.exit(1);
     }
 
-    // 모든 작업이 성공하면 트랜잭션 커밋
+    // 트랜잭션 커밋
     await transaction.commit();
     console.log("✅ Mockup data insertion completed successfully for deployment!");
   } catch (error) {
     // 에러 발생 시 트랜잭션 롤백
     await transaction.rollback();
-    console.error("🚨 Error in mockup data insertion:", error);
+    console.error("🚨 Error in mockup data insertion:", error.stack); // 상세 에러 스택 출력
     process.exit(1);
   } finally {
     // 데이터베이스 연결 종료
@@ -176,7 +176,7 @@ async function loadMockupData() {
 // 직접 실행 시 함수 호출
 if (require.main === module) {
   loadMockupData().catch((err) => {
-    console.error("🚨 Final error in loadMockupData:", err);
+    console.error("🚨 Final error in loadMockupData:", err.stack); // 상세 에러 출력
     process.exit(1);
   });
 }
