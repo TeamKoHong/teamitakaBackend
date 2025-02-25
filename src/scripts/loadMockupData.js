@@ -1,116 +1,132 @@
-const fs = require('fs');
-const csv = require('csv-parser');
-const { v4: uuidv4 } = require('uuid');
-const db = require('../models');
+require("dotenv").config();
+const fs = require("fs");
+const csv = require("csv-parser");
+const { v4: uuidv4 } = require("uuid");
+const { User, Profile, Project, sequelize } = require("../models");
 
 async function loadMockupData() {
-  const users = [];
-  const profiles = [];
-  const projects = [];
+  const transaction = await sequelize.transaction();
+  try {
+    console.log("✅ Starting mockup data insertion for deployment...");
 
-  // Users 데이터 준비 및 중복 체크
-  await new Promise((resolve, reject) => {
-    fs.createReadStream('src/data/users_mockup.csv')
-      .pipe(csv())
-      .on('data', async (row) => {
-        const existingUser = await db.User.findOne({ where: { username: row.username } });
-        if (!existingUser) { // 중복 없으면 추가
+    // 기존 목업 데이터 삭제 (배포 환경에서도 초기화)
+    await User.destroy({ where: {}, transaction });
+    await Profile.destroy({ where: {}, transaction });
+    await Project.destroy({ where: {}, transaction });
+    console.log("✅ Cleared existing mockup data for deployment.");
+
+    const users = [];
+    const profiles = [];
+    const projects = [];
+
+    // Users 데이터 준비
+    await new Promise((resolve, reject) => {
+      fs.createReadStream("/src/data/users_mockup.csv")
+        .pipe(csv())
+        .on("data", (row) => {
           users.push({
-            user_id: uuidv4(), // CHAR(36).BINARY로 UUID 생성
+            user_id: uuidv4(), // Sequelize.UUID와 호환되는 UUID 생성
             username: row.username,
             email: row.email,
             password: row.password,
-            userType: row.userType,
-            role: row.role,
+            userType: row.userType || "MEMBER", // 기본값 추가
+            role: row.role || "MEMBER", // 기본값 추가
             createdAt: new Date(row.createdAt),
             updatedAt: new Date(row.updatedAt),
           });
-        }
-      })
-      .on('end', resolve)
-      .on('error', reject);
-  });
-
-  // Profile 데이터 준비 (중복 체크 포함 가능)
-  await new Promise((resolve, reject) => {
-    fs.createReadStream('src/data/users_mockup.csv')
-      .pipe(csv())
-      .on('data', async (row) => {
-        const existingUser = await db.User.findOne({ where: { username: row.username } });
-        if (existingUser) {
-          profiles.push({
-            user_id: existingUser.user_id, // 기존 User의 user_id 사용
-            nickname: row.username,
-            profileImageUrl: row.profileImageUrl,
-            createdAt: new Date(row.createdAt),
-            updatedAt: new Date(row.updatedAt),
-          });
-        }
-      })
-      .on('end', resolve)
-      .on('error', reject);
-  });
-
-  // Projects 데이터 준비 (중복 체크 포함 가능)
-  await new Promise((resolve, reject) => {
-    fs.createReadStream('src/data/projects_mockup.csv')
-      .pipe(csv())
-      .on('data', async (row) => {
-        const existingUser = await db.User.findOne({ where: { username: row.user_id } });
-        if (existingUser) {
-          projects.push({
-            project_id: uuidv4(),
-            title: row.title,
-            description: row.description,
-            user_id: existingUser.user_id, // User의 user_id 사용
-            recruitment_id: uuidv4(),
-            role: row.role,
-            createdAt: new Date(row.createdAt),
-            updatedAt: new Date(row.updatedAt),
-          });
-        }
-      })
-      .on('end', resolve)
-      .on('error', reject);
-  });
-
-  // Users 삽입
-  if (users.length > 0) {
-    const createdUsers = await db.User.bulkCreate(users, {
-      fields: ['user_id', 'username', 'email', 'password', 'userType', 'role', 'createdAt', 'updatedAt'],
-      returning: true,
+        })
+        .on("end", resolve)
+        .on("error", (error) => {
+          console.error("🚨 Error reading users_mockup.csv:", error);
+          reject(error);
+        });
     });
-    console.log('Users loaded');
-  } else {
-    console.log('No new users to load');
-  }
 
-  // Profile 삽입
-  if (profiles.length > 0) {
-    const createdProfiles = await db.Profile.bulkCreate(profiles, {
-      fields: ['user_id', 'nickname', 'profileImageUrl', 'createdAt', 'updatedAt'],
-      returning: true,
+    // Profiles 데이터 준비
+    await new Promise((resolve, reject) => {
+      fs.createReadStream("/src/data/users_mockup.csv")
+        .pipe(csv())
+        .on("data", (row) => {
+          const user = users.find(u => u.username === row.username);
+          if (user) {
+            profiles.push({
+              user_id: user.user_id, // UUID로 매핑
+              nickname: row.username,
+              profileImageUrl: row.profileImageUrl || "", // 기본값 추가
+              createdAt: new Date(row.createdAt),
+              updatedAt: new Date(row.updatedAt),
+            });
+          } else {
+            console.warn(`🚨 No user found for username: ${row.username} in users_mockup.csv for profiles`);
+          }
+        })
+        .on("end", resolve)
+        .on("error", (error) => {
+          console.error("🚨 Error reading users_mockup.csv for profiles:", error);
+          reject(error);
+        });
     });
-    console.log('Profiles loaded');
-  } else {
-    console.log('No new profiles to load');
-  }
 
-  // Projects 삽입
-  if (projects.length > 0) {
-    const createdProjects = await db.Project.bulkCreate(projects, {
-      fields: ['project_id', 'title', 'description', 'user_id', 'recruitment_id', 'role', 'createdAt', 'updatedAt'],
-      returning: true,
+    // Projects 데이터 준비
+    await new Promise((resolve, reject) => {
+      fs.createReadStream("/src/data/projects_mockup.csv")
+        .pipe(csv())
+        .on("data", (row) => {
+          const user = users.find(u => u.username === row.username);
+          if (user) {
+            projects.push({
+              project_id: uuidv4(), // Sequelize.UUID와 호환되는 UUID 생성
+              title: row.title,
+              description: row.description || "", // 기본값 추가
+              user_id: user.user_id, // UUID로 매핑
+              recruitment_id: uuidv4(), // Sequelize.UUID와 호환
+              role: row.role || "Developer", // 기본값 추가
+              createdAt: new Date(row.createdAt),
+              updatedAt: new Date(row.updatedAt),
+            });
+          } else {
+            console.warn(`🚨 No user found for username: ${row.username} in projects_mockup.csv`);
+          }
+        })
+        .on("end", resolve)
+        .on("error", (error) => {
+          console.error("🚨 Error reading projects_mockup.csv:", error);
+          reject(error);
+        });
     });
-    console.log('Projects loaded');
-  } else {
-    console.log('No new projects to load');
-  }
 
-  process.exit(0);
+    // 데이터 삽입
+    if (users.length > 0) {
+      await User.bulkCreate(users, { transaction });
+      console.log("✅ Users mockup data inserted for deployment.");
+    }
+    if (profiles.length > 0) {
+      await Profile.bulkCreate(profiles, { transaction });
+      console.log("✅ Profiles mockup data inserted for deployment.");
+    }
+    if (projects.length > 0) {
+      await Project.bulkCreate(projects, { transaction });
+      console.log("✅ Projects mockup data inserted for deployment.");
+    }
+
+    await transaction.commit();
+    console.log("✅ Mockup data insertion completed successfully for deployment!");
+  } catch (error) {
+    await transaction.rollback();
+    console.error("🚨 Error in mockup data insertion:", error);
+    process.exit(1);
+  } finally {
+    await sequelize.close();
+    console.log("✅ Database connection closed.");
+  }
 }
 
-loadMockupData().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+// 실행
+if (require.main === module) {
+  loadMockupData().catch((err) => {
+    console.error("🚨 Final error in loadMockupData:", err);
+    process.exit(1);
+  });
+}
+
+module.exports = loadMockupData;

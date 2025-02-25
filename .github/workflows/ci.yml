@@ -10,7 +10,7 @@ on:
       - dev
 
 jobs:
-  build:
+  build-and-deploy-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -82,6 +82,7 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
           echo "DB_HOST=127.0.0.1" >> $GITHUB_ENV
           echo "DB_DIALECT=mysql" >> $GITHUB_ENV
+          echo "NODE_ENV=production" >> $GITHUB_ENV
           echo "Determined DATABASE_URL: ${{ env.DATABASE_URL }}"
 
       - name: Debug - Print Environment
@@ -93,6 +94,7 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
           echo "DB_NAME=${{ secrets.DB_NAME }}"
           echo "DATABASE_URL=${{ env.DATABASE_URL }}"
+          echo "NODE_ENV=${{ env.NODE_ENV }}"
 
       - name: Test Cloud SQL Connection (docker)
         run: |
@@ -106,7 +108,7 @@ jobs:
 
       - name: Reset Database (Drop All Tables)
         run: |
-          echo "Resetting database by dropping all tables..."
+          echo "Resetting database by dropping all tables for deployment..."
           docker run --network host \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
             -e DB_USER=${{ env.DB_USER }} \
@@ -114,6 +116,7 @@ jobs:
             -e DB_NAME=${{ env.DB_NAME }} \
             -e DB_HOST=${{ env.DB_HOST }} \
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
+            -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
             bash -c "echo 'SET FOREIGN_KEY_CHECKS = 0;' > reset.sql && \
                      echo 'DROP TABLE IF EXISTS Applications, VerifiedEmails, Searches, Keywords, Reviews, Notifications, Likes, Comments, Projects, Recruitments, Departments, Colleges, Universities, Admins, Users, Profiles, SequelizeMeta;' >> reset.sql && \
@@ -122,7 +125,7 @@ jobs:
 
       - name: Run Sequelize migrations in Docker
         run: |
-          echo "Running migration via container with Auth Proxy..."
+          echo "Running migration via container with Auth Proxy for deployment..."
           docker run --network host \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
             -e DB_USER=${{ env.DB_USER }} \
@@ -130,12 +133,13 @@ jobs:
             -e DB_NAME=${{ env.DB_NAME }} \
             -e DB_HOST=${{ env.DB_HOST }} \
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
+            -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate --url ${{ env.DATABASE_URL }} --debug"
 
       - name: Check Migration Status
         run: |
-          echo "Checking migration status..."
+          echo "Checking migration status for deployment..."
           docker run --network host \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
             -e DB_USER=${{ env.DB_USER }} \
@@ -143,6 +147,7 @@ jobs:
             -e DB_NAME=${{ env.DB_NAME }} \
             -e DB_HOST=${{ env.DB_HOST }} \
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
+            -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate:status"
 
@@ -155,26 +160,45 @@ jobs:
             -e DB_NAME=${{ env.DB_NAME }} \
             -e DB_HOST=${{ env.DB_HOST }} \
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
+            -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
             node src/scripts/checkDB.js
 
-      - name: Insert data from CSV
+      - name: Insert Mockup Data (Users, Profiles, Projects)
         run: |
-          echo "🔍 Inserting data into DB from CSV..."
+          echo "🔍 Inserting mockup data into DB from CSV for deployment..."
           docker run --network host \
+            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
             -e DB_USER=${{ env.DB_USER }} \
             -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
             -e DB_NAME=${{ env.DB_NAME }} \
             -e DB_HOST=${{ env.DB_HOST }} \
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
+            -e NODE_ENV=${{ env.NODE_ENV }} \
+            teamitaka-app \
+            node src/scripts/loadMockupData.js
+          echo "✅ Mockup Data Insert Completed"
+
+      - name: Insert Universities, Colleges, Departments Data
+        run: |
+          echo "🔍 Inserting Universities, Colleges, Departments data into DB from CSV for deployment..."
+          docker run --network host \
+            -v ${GITHUB_WORKSPACE}/seeders:/app/seeders \
+            -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_DIALECT=${{ env.DB_DIALECT }} \
+            -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
             node src/scripts/insertCSV.js
-          echo "✅ CSV Insert Completed"
+          echo "✅ Universities, Colleges, Departments CSV Insert Completed"
 
-      - name: Deploy Application
+      - name: Deploy and Test Application
         run: |
-          echo "🚀 Starting Application (production)..."
+          echo "🚀 Starting Application for deployment testing..."
           docker run -d --network host \
             --name teamitaka-prod \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
@@ -183,9 +207,17 @@ jobs:
             -e DB_NAME=${{ env.DB_NAME }} \
             -e DB_HOST=${{ env.DB_HOST }} \
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
+            -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
             npm run start
           echo "✅ App container started (port 3000 exposed on host)"
+          sleep 10  # 애플리케이션 시작 대기
+          echo "🔍 Testing application health..."
+          curl -s http://127.0.0.1:3000/health || {
+            echo "⚠️ Application health check failed"
+            exit 1
+          }
+          echo "✅ Application health check passed for deployment"
 
 env:
   DB_CHARSET: "utf8mb4"
