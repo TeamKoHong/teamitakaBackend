@@ -177,7 +177,7 @@ jobs:
             teamitaka-app \
             node src/scripts/checkDB.js
 
-      - name: Insert Users Mockup Data (Users, Profiles)
+      - name: Insert Users Mockup Data (Users, Profiles, Recruitments, Projects)
         run: |
           echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for users..."
           ls -l ${GITHUB_WORKSPACE}/src/data/ || echo "No files found in GITHUB_WORKSPACE/src/data"
