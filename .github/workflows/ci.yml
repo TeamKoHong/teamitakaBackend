@@ -200,7 +200,7 @@ jobs:
             teamitaka-app \
             node src/scripts/loadMockupData.js --users
           echo "✅ Users and Profiles Mockup Data Insert Completed"
-          
+
       - name: Insert Projects Mockup Data
         run: |
           echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for projects..."
