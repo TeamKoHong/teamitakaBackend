@@ -25,8 +25,8 @@ const argv = yargs(process.argv.slice(2))
   .argv;
 
 async function loadMockupData() {
-  console.log("Script version: Latest #394"); // 디버깅: 스크립트 버전 확인
-  console.log("argv.users:", argv.users); // 디버깅: 플래그 값 확인
+  console.log("Script version: Latest #394");
+  console.log("argv.users:", argv.users);
   console.log("argv.recruitments:", argv.recruitments);
   console.log("argv.projects:", argv.projects);
 
@@ -34,19 +34,12 @@ async function loadMockupData() {
   try {
     console.log("✅ Starting mockup data insertion for deployment...");
 
-    // 기존 데이터 삭제는 주석 처리 (CI에서 데이터 유지 필요)
-    // await User.destroy({ where: {}, transaction });
-    // await Profile.destroy({ where: {}, transaction });
-    // await Recruitment.destroy({ where: {}, transaction });
-    // await Project.destroy({ where: {}, transaction });
-    // console.log("✅ Cleared existing mockup data for deployment.");
-
     const users = [];
     const profiles = [];
     const recruitments = [];
     const projects = [];
 
-    // --users 플래그가 있을 때 사용자와 프로필 데이터 처리
+    // Process Users and Profiles (--users flag)
     if (argv.users) {
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/users_mockup.csv")
@@ -54,14 +47,14 @@ async function loadMockupData() {
           .on("data", (row) => {
             console.log("Parsed users CSV row:", row);
             const user = {
-              user_id: uuidv4(), // char(36) UUID 생성
+              user_id: row.user_id || uuidv4(),
               username: row.username,
               email: row.email,
               password: row.password,
               userType: row.userType || "MEMBER",
               role: row.role || "MEMBER",
-              createdAt: new Date(row.createdAt || Date.now()), // NOT NULL
-              updatedAt: new Date(row.updatedAt || Date.now()), // NOT NULL
+              createdAt: new Date(row.createdAt || Date.now()),
+              updatedAt: new Date(row.updatedAt || Date.now()),
             };
             users.push(user);
           })
@@ -80,16 +73,14 @@ async function loadMockupData() {
             const user = users.find((u) => u.username === row.username);
             if (user) {
               profiles.push({
-                user_id: user.user_id, // NOT NULL
+                user_id: user.user_id,
                 nickname: row.username,
                 profileImageUrl: row.profileImageUrl || "",
-                createdAt: new Date(row.createdAt || Date.now()), // NOT NULL
-                updatedAt: new Date(row.updatedAt || Date.now()), // NOT NULL
+                createdAt: new Date(row.createdAt || Date.now()),
+                updatedAt: new Date(row.updatedAt || Date.now()),
               });
             } else {
-              console.warn(
-                `🚨 No user found for username: ${row.username} in users_mockup.csv for profiles`
-              );
+              console.warn(`🚨 No user found for username: ${row.username}`);
             }
           })
           .on("end", resolve)
@@ -109,40 +100,33 @@ async function loadMockupData() {
       }
     }
 
-    // --recruitments 플래그가 있을 때 리크루트먼트 데이터 처리
+    // Process Recruitments (--recruitments flag)
     if (argv.recruitments) {
       if (!argv.users) {
-        throw new Error("🚨 Recruitments data insertion requires users data. Please use --users flag first.");
+        throw new Error("🚨 Recruitments require users data. Use --users flag first.");
       }
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/recruitment_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row, index) => {
             console.log(`Parsed recruitments CSV row (line ${index + 2}):`, row);
-
-            if (!row.title) throw new Error(`Missing 'title' in CSV row (line ${index + 2})`);
-            if (!row.description) throw new Error(`Missing 'description' in CSV row (line ${index + 2})`);
-            if (!row.username) throw new Error(`Missing 'username' in CSV row (line ${index + 2})`);
-
+            if (!row.title || !row.description || !row.username) {
+              throw new Error(`Missing required fields in recruitments CSV (line ${index + 2}): ${JSON.stringify(row)}`);
+            }
             const user = users.find((u) => u.username === row.username);
             if (!user) throw new Error(`No user found for username '${row.username}'`);
-
-            const recruitment = {
-              recruitment_id: row.recruitment_id || uuidv4(), // char(36), NOT NULL
-              title: row.title.trim(), // STRING, NOT NULL
-              description: row.description.trim(), // TEXT, NOT NULL
-              status: row.status || "OPEN", // ENUM, 기본값 OPEN
-              user_id: user.user_id, // char(36), NOT NULL, 외래 키 참조
-              photo: row.photo || null, // STRING, NULL 허용
-              createdAt: new Date(row.createdAt || Date.now()), // DATE, NOT NULL
-              updatedAt: new Date(row.updatedAt || Date.now()), // DATE, NOT NULL
-            };
-            recruitments.push(recruitment);
+            recruitments.push({
+              recruitment_id: row.recruitment_id || uuidv4(),
+              title: row.title.trim(),
+              description: row.description.trim(),
+              status: row.status || "OPEN",
+              user_id: user.user_id,
+              photo: row.photo || null,
+              createdAt: new Date(row.createdAt || Date.now()),
+              updatedAt: new Date(row.updatedAt || Date.now()),
+            });
           })
-          .on("end", () => {
-            console.log("Recruitments prepared:", recruitments);
-            resolve();
-          })
+          .on("end", resolve)
           .on("error", (error) => {
             console.error("🚨 Error reading recruitment_mockup.csv:", error);
             reject(error);
@@ -155,24 +139,29 @@ async function loadMockupData() {
       }
     }
 
-    // --projects 플래그가 있을 때 프로젝트 데이터 처리
+    // Process Projects (--projects flag)
     if (argv.projects) {
-      const projects = [];
+      if (!argv.users || !argv.recruitments) {
+        throw new Error("🚨 Projects require users and recruitments data. Use --users and --recruitments flags first.");
+      }
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/projects_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             console.log("Parsed projects CSV row:", row);
-            if (!row.title || !row.description || !row.recruitment_id) {
+            // Validate all required fields
+            if (!row.title || !row.description || !row.user_id || !row.recruitment_id) {
               throw new Error(`Missing required fields in projects CSV: ${JSON.stringify(row)}`);
             }
-            const user = users.find((u) => u.username === row.username);
-            if (!user) throw new Error(`No user found for username '${row.username}'`);
+            const user = users.find((u) => u.user_id === row.user_id);
+            const recruitment = recruitments.find((r) => r.recruitment_id === row.recruitment_id);
+            if (!user) throw new Error(`No user found for user_id '${row.user_id}'`);
+            if (!recruitment) throw new Error(`No recruitment found for recruitment_id '${row.recruitment_id}'`);
             projects.push({
-              project_id: uuidv4(),
+              project_id: row.project_id || uuidv4(),
               title: row.title,
               description: row.description,
-              user_id: user.user_id,
+              user_id: row.user_id,
               recruitment_id: row.recruitment_id,
               role: row.role || null,
               createdAt: new Date(row.createdAt || Date.now()),
@@ -180,37 +169,42 @@ async function loadMockupData() {
             });
           })
           .on("end", resolve)
-          .on("error", reject);
+          .on("error", (error) => {
+            console.error("🚨 Error reading projects_mockup.csv:", error);
+            reject(error);
+          });
       });
-      await Project.bulkCreate(projects, { transaction });
-      console.log("✅ Projects mockup data inserted for deployment.");
+
+      if (projects.length > 0) {
+        await Project.bulkCreate(projects, { transaction });
+        console.log("✅ Projects mockup data inserted for deployment.");
+      }
     }
 
-    // 최소 하나의 플래그가 제공되었는지 확인
+    // Ensure at least one flag is provided
     if (!argv.users && !argv.recruitments && !argv.projects) {
       console.error("🚨 Please specify --users, --recruitments, or --projects to process data");
       process.exit(1);
     }
 
-    // 트랜잭션 커밋
+    // Commit transaction
     await transaction.commit();
     console.log("✅ Mockup data insertion completed successfully for deployment!");
   } catch (error) {
-    // 에러 발생 시 트랜잭션 롤백
+    // Rollback transaction on error
     await transaction.rollback();
-    console.error("🚨 Error in mockup data insertion:", error.stack); // 상세 에러 출력
+    console.error("🚨 Error in mockup data insertion:", error.stack);
     process.exit(1);
   } finally {
-    // 데이터베이스 연결 종료
+    // Close database connection
     await sequelize.close();
     console.log("✅ Database connection closed.");
   }
 }
 
-// 직접 실행 시 함수 호출
 if (require.main === module) {
   loadMockupData().catch((err) => {
-    console.error("🚨 Final error in loadMockupData:", err.stack); // 상세 에러 출력
+    console.error("🚨 Final error in loadMockupData:", err.stack);
     process.exit(1);
   });
 }

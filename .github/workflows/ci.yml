@@ -179,13 +179,6 @@ jobs:
 
       - name: Insert Users Mockup Data
         run: |
-          echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for users..."
-          ls -l ${GITHUB_WORKSPACE}/src/data/ || echo "No files found in GITHUB_WORKSPACE/src/data"
-          echo "🔍 Checking mounted data directory for users..."
-          docker run --network host \
-            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
-            teamitaka-app \
-            bash -c "ls -l /app/data && stat -c '%a %n' /app/data/users_mockup.csv || echo 'No users_mockup.csv found or permission issue in /app/data'"
           echo "🔍 Inserting users mockup data into DB from CSV for deployment..."
           docker run --network host \
             -v ${GITHUB_WORKSPACE}/src/data:/app/data \
@@ -203,13 +196,6 @@ jobs:
 
       - name: Insert Recruitments Mockup Data
         run: |
-          echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for recruitments..."
-          ls -l ${GITHUB_WORKSPACE}/src/data/ || echo "No files found in GITHUB_WORKSPACE/src/data"
-          echo "🔍 Checking mounted data directory for recruitments..."
-          docker run --network host \
-            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
-            teamitaka-app \
-            bash -c "ls -l /app/data && stat -c '%a %n' /app/data/recruitment_mockup.csv || echo 'No recruitment_mockup.csv found or permission issue in /app/data'"
           echo "🔍 Inserting recruitments mockup data into DB from CSV for deployment..."
           docker run --network host \
             -v ${GITHUB_WORKSPACE}/src/data:/app/data \
@@ -227,13 +213,6 @@ jobs:
 
       - name: Insert Projects Mockup Data
         run: |
-          echo "🔍 Checking GITHUB_WORKSPACE/src/data directory for projects..."
-          ls -l ${GITHUB_WORKSPACE}/src/data/ || echo "No files found in GITHUB_WORKSPACE/src/data"
-          echo "🔍 Checking mounted data directory for projects..."
-          docker run --network host \
-            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
-            teamitaka-app \
-            bash -c "ls -l /app/data && stat -c '%a %n' /app/data/projects_mockup.csv || echo 'No projects_mockup.csv found or permission issue in /app/data'"
           echo "🔍 Inserting projects mockup data into DB from CSV for deployment..."
           docker run --network host \
             -v ${GITHUB_WORKSPACE}/src/data:/app/data \
