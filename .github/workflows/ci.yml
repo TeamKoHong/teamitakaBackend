@@ -179,6 +179,13 @@ jobs:
 
       - name: Insert Mockup Data (Users, Profiles, Projects)
         run: |
+          echo "🔍 Checking GITHUB_WORKSPACE/src/data directory..."
+          ls -l ${GITHUB_WORKSPACE}/src/data/ || echo "No files found in GITHUB_WORKSPACE/src/data"
+          echo "🔍 Checking mounted data directory..."
+          docker run --network host \
+            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
+            teamitaka-app \
+            bash -c "ls -l /app/data && stat -c '%a %n' /app/data/* || echo 'No files found or permission issue in /app/data'"
           echo "🔍 Inserting mockup data into DB from CSV for deployment..."
           docker run --network host \
             -v ${GITHUB_WORKSPACE}/src/data:/app/data \
