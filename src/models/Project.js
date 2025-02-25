@@ -12,6 +12,7 @@ module.exports = (sequelize) => {
       title: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: "Default Project",
       },
       description: {
         type: DataTypes.TEXT,
