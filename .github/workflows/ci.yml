@@ -246,7 +246,7 @@ jobs:
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
             -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
-            node src/scripts/loadMockupData.js --projects
+            node src/scripts/loadMockupData.js --users --recruitments --projects
           echo "✅ Projects Mockup Data Insert Completed"
 
       - name: Insert Universities, Colleges, Departments Data
