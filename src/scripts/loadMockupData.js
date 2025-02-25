@@ -99,15 +99,19 @@ async function loadMockupData() {
       // Projects 데이터 준비 (Users 데이터 기반)
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/projects_mockup.csv")
-          .pipe(csv())
+          .pipe(csv({
+            headers: ["username", "title", "description", "recruitment_id", "role", "createdAt", "updatedAt"],
+            skipEmptyLines: true,
+            trim: true,
+          }))
           .on("data", (row) => {
-            console.log("Raw CSV row from projects_mockup.csv:", row); // 디버깅 추가
+            console.log("Parsed CSV row from projects_mockup.csv:", row); // 디버깅 추가
             const user = users.find(u => u.username === row.username);
             if (user) {
               const project = {
                 project_id: uuidv4(),
-                title: row.title || "Default Project", // 필수, 기본값 추가
-                description: row.description || "No description", // 필수, 기본값 추가
+                title: row.title.trim() || "Default Project", // 필수, 공백 제거 및 기본값 추가
+                description: row.description.trim() || "No description", // 필수, 공백 제거 및 기본값 추가
                 user_id: user.user_id,
                 recruitment_id: row.recruitment_id || uuidv4(), // UUID 또는 CSV 값
                 role: row.role || null, // 선택적, null 허용
@@ -126,12 +130,12 @@ async function loadMockupData() {
             reject(error);
           });
       });
-    
+
       // Projects 삽입 (디버깅 추가)
       if (projects.length > 0) {
         console.log("Projects to insert:", JSON.stringify(projects, null, 2)); // 상세 디버깅 추가
         try {
-          await Project.bulkCreate(projects, { transaction });
+          await Project.bulkCreate(projects, { transaction, fields: Object.keys(projects[0]) }); // 명시적 필드 지정
           console.log("✅ Projects mockup data inserted for deployment.");
         } catch (error) {
           console.error("🚨 Error in bulkCreate:", error);
