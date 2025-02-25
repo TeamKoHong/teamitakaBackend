@@ -126,7 +126,7 @@ async function loadMockupData() {
               description: row.description.trim(),
               recruitment_id: row.recruitment_id.trim(),
               role: row.role ? row.role.trim() : null,
-              // CSV의 username을 기반으로 해당 user의 user_id 할당 (미리 생성된 users 배열에서 찾음)
+              // CSV의 username을 기반으로 해당 사용자의 user_id를 할당합니다.
               user_id: users.find(u => u.username === row.username)?.user_id || uuidv4(),
               createdAt: new Date(row.createdAt || Date.now()),
               updatedAt: new Date(row.updatedAt || Date.now()),
@@ -148,6 +148,7 @@ async function loadMockupData() {
         console.log("✅ Projects inserted successfully.");
       }
     }
+    
     
 
     // Check if at least one flag is provided
