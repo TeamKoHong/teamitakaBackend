@@ -5,7 +5,7 @@ module.exports = (sequelize) => {
     "Project",
     {
       project_id: {
-        type: DataTypes.CHAR(36).BINARY,
+        type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
@@ -19,43 +19,74 @@ module.exports = (sequelize) => {
         allowNull: false,
       },
       user_id: {
-        type: DataTypes.CHAR(36).BINARY,
+        type: DataTypes.UUID,
         allowNull: false,
       },
       recruitment_id: {
-        type: DataTypes.CHAR(36).BINARY,
-        allowNull: false,
-        unique: true,
+        type: DataTypes.UUID,
+        allowNull: false, // 프로젝트는 반드시 모집공고를 가져야 함
+        unique: true,     // 모집공고와 1:1 관계 유지
+        references: {
+          model: "Recruitments",
+          key: "recruitment_id",
+        },
+        onDelete: "CASCADE",
       },
-      role: {
-        type: DataTypes.STRING,
+      start_date: { // 시작일 추가
+        type: DataTypes.DATE,
         allowNull: true,
       },
-      createdAt: {
+      end_date: { // 종료일 추가
         type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
+        allowNull: true,
       },
-      updatedAt: {
-        type: DataTypes.DATE,
+      status: { // 상태 관리
+        type: DataTypes.ENUM("예정", "진행 중", "완료"),
+        defaultValue: "예정",
         allowNull: false,
-        defaultValue: DataTypes.NOW,
+      },
+      role: { // ✅ 역할 필드
+        type: DataTypes.STRING,
+        allowNull: true,
       },
     },
     {
       tableName: "Projects",
       freezeTableName: true,
-      timestamps: true,
+      timestamps: true, // createdAt, updatedAt 자동 생성
     }
   );
 
+  // 연관관계 정의
   Project.associate = (models) => {
+    // 모집공고와 1:1 관계
     Project.belongsTo(models.Recruitment, {
       foreignKey: "recruitment_id",
       onDelete: "CASCADE",
     });
+
+    // 사용자와 N:1 관계
     Project.belongsTo(models.User, {
       foreignKey: "user_id",
+      onDelete: "CASCADE",
+    });
+
+    // 팀원 (N:M) 관계 - through 옵션에 문자열 사용
+    Project.belongsToMany(models.User, {
+      through: "ProjectMember",
+      foreignKey: "project_id",
+      otherKey: "user_id",
+    });
+
+    // 할 일 (1:N)
+    Project.hasMany(models.Todo, {
+      foreignKey: "project_id",
+      onDelete: "CASCADE",
+    });
+
+    // 타임라인 (1:N)
+    Project.hasMany(models.Timeline, {
+      foreignKey: "project_id",
       onDelete: "CASCADE",
     });
   };
