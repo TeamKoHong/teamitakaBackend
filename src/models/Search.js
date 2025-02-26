@@ -1,10 +1,21 @@
-// routes/searchRoutes.js
+const { DataTypes } = require("sequelize");
 
-const express = require("express");
-const router = express.Router();
-const searchController = require("../controllers/searchController");
+module.exports = (sequelize) => {
+  const Search = sequelize.define("Search", {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    keyword: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    searchTime: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  });
 
-// ✅ 검색 API
-router.get("/", searchController.search);
-
-module.exports = router;
+  return Search;
+};
