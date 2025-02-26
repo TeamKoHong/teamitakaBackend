@@ -883,7 +883,7 @@ module.exports = {
     await queryInterface.addConstraint("Todos", {
       fields: ["project_id"],
       type: "foreign key",
-      name: "fk_todos_project_id_unique",
+      name: "fk_todos_project_id_unique_v2",
       references: { table: "Projects", field: "project_id" },
       onDelete: "CASCADE",
     });
@@ -914,7 +914,7 @@ module.exports = {
     await queryInterface.removeConstraint("Timelines", "fk_timelines_project_id_unique");
     await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_user_id_unique");
     await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_project_id_unique");
-    await queryInterface.removeConstraint("Todos", "fk_todos_project_id_unique");
+    await queryInterface.removeConstraint("Todos", "fk_todos_project_id_unique_v2");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_reviewee_id");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_reviewer_id");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_project_id");
