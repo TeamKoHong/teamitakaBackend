@@ -8,7 +8,7 @@ const yargs = require("yargs/yargs");
 const argv = yargs(process.argv.slice(2))
   .option("users", {
     type: "boolean",
-    default: false,
+    default: true,
     description: "Process users and profiles from users_mockup.csv",
   })
   .option("recruitments", {
