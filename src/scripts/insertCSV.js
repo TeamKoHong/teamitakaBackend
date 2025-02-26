@@ -1,5 +1,6 @@
 require("dotenv").config();
 const fs = require("fs");
+const path = require("path"); // path 모듈 추가
 const csv = require("csv-parser");
 const { v4: uuidv4 } = require("uuid");
 const { University, College, Department, sequelize } = require("../models");
@@ -19,9 +20,19 @@ async function insertDataFromCSV() {
     const collegeSet = new Set();
     const departmentList = [];
 
+    // CSV 파일 경로 설정 (프로젝트 루트의 seeders 폴더 기준)
+    const filePath = path.join(process.cwd(), "seeders", "universities_colleges_departments.csv");
+
+    // 파일 존재 여부 확인
+    if (!fs.existsSync(filePath)) {
+      console.error(`🚨 CSV file not found at: ${filePath}`);
+      throw new Error("CSV file not found");
+    }
+    console.log(`✅ CSV file found at: ${filePath}`);
+
     // CSV 파일 읽기
     await new Promise((resolve, reject) => {
-      fs.createReadStream("/seeders/universities_colleges_departments.csv")
+      fs.createReadStream(filePath, { encoding: "utf8" }) // 인코딩 추가
         .pipe(csv())
         .on("data", (row) => {
           const { University: uniName, College: collegeName, Department: deptName } = row;
