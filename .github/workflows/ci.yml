@@ -178,13 +178,33 @@ jobs:
             teamitaka-app \
             npm run start
           echo "✅ App container started (port 3000 exposed on host)"
-          sleep 10
+            
+          # DB 준비될 때까지 대기
+          echo "⏳ Waiting for DB to be ready..."
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3307 --silent; then
+              echo "✅ DB is ready"
+              break
+            fi
+            echo "DB not ready, retrying in 5 seconds..."
+            sleep 5
+          done
+            
+          # 헬스체크 여러 번 시도
           echo "🔍 Testing application health..."
-          curl -s http://127.0.0.1:3000/health || {
-            echo "⚠️ Application health check failed"
-            exit 1
-          }
-          echo "✅ Application health check passed for deployment"
-
+          for i in {1..5}; do
+            if curl -s http://127.0.0.1:3000/health; then
+              echo "✅ Application health check passed for deployment"
+              break
+            else
+              echo "⚠️ Health check failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+            if [ $i -eq 5 ]; then
+              echo "⚠️ Application health check failed after 5 attempts"
+              exit 1
+            fi
+          done
+        
       - name: Stop Cloud SQL Proxy
         run: pkill cloud_sql_proxy || true
