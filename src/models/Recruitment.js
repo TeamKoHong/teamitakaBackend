@@ -12,10 +12,12 @@ module.exports = (sequelize) => {
       title: {
         type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: "Untitled Recruitment",
       },
       description: {
         type: DataTypes.TEXT,
         allowNull: false,
+        defaultValue: "No description provided",
       },
       status: {
         type: DataTypes.ENUM("OPEN", "CLOSED"),
@@ -55,7 +57,6 @@ module.exports = (sequelize) => {
       foreignKey: "user_id",
       onDelete: "CASCADE",
     });
-
     Recruitment.hasOne(models.Project, {
       foreignKey: "recruitment_id",
       onDelete: "CASCADE",
