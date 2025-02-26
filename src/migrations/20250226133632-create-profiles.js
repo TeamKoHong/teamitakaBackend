@@ -60,7 +60,7 @@ module.exports = {
         await queryInterface.removeConstraint("Profiles", "fk_profiles_user_id", { transaction });
       }
 
-      // ✅ 4. 외래 키 다시 추가
+      // ✅ 4. 외래 키 다시 추가 (Profiles.user_id → Users.user_id)
       await queryInterface.addConstraint(
         "Profiles",
         {
