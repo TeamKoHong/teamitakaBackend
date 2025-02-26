@@ -1,43 +1,29 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-  const Project = sequelize.define(
-    "Project",
+  const Profile = sequelize.define(
+    "Profile",
     {
-      project_id: {
-        type: DataTypes.CHAR(36).BINARY,
-        defaultValue: DataTypes.UUIDV4,
+      profile_id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
         primaryKey: true,
-      },
-      title: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      description: {
-        type: DataTypes.TEXT,
-        allowNull: false,
       },
       user_id: {
         type: DataTypes.CHAR(36).BINARY,
         allowNull: false,
         references: {
-          model: "User",
+          model: "Users", // ✅ 정확한 테이블명으로 설정
           key: "user_id",
         },
         onDelete: "CASCADE",
       },
-      recruitment_id: {
-        type: DataTypes.CHAR(36).BINARY,
+      nickname: {
+        type: DataTypes.STRING(255),
         allowNull: false,
-        unique: true,
-        references: {
-          model: "Recruitment",
-          key: "recruitment_id",
-        },
-        onDelete: "CASCADE",
       },
-      role: {
-        type: DataTypes.STRING,
+      profileImageUrl: {
+        type: DataTypes.STRING(255),
         allowNull: true,
       },
       createdAt: {
@@ -52,22 +38,25 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "Projects",
+      tableName: "Profiles",
       freezeTableName: true,
       timestamps: true,
     }
   );
 
-  Project.associate = (models) => {
-    Project.belongsTo(models.Recruitment, {
-      foreignKey: "recruitment_id",
+  Profile.associate = (models) => {
+    // ✅ Profiles 테이블과 Users 테이블 연결
+    Profile.belongsTo(models.User, {
+      foreignKey: "user_id",
       onDelete: "CASCADE",
     });
-    Project.belongsTo(models.User, {
-      foreignKey: "user_id",
+
+    // ✅ Profiles 테이블과 Projects 테이블 연결 (1:N 관계)
+    Profile.hasMany(models.Project, {
+      foreignKey: "user_id", // ✅ 한 명의 사용자가 여러 개의 프로젝트를 가질 수 있음
       onDelete: "CASCADE",
     });
   };
 
-  return Project;
+  return Profile;
 };
