@@ -79,10 +79,15 @@ jobs:
 
       - name: Set Database Environment
         run: |
-          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3307/${{ secrets.DB_NAME }}" >> $GITHUB_ENV
+          DB_NAME_VALUE=${{ secrets.DB_NAME }}
+          if [ -z "$DB_NAME_VALUE" ]; then
+            echo "Warning: DB_NAME not found in secrets, using default 'teamitaka_db'"
+            DB_NAME_VALUE="teamitaka_db"
+          fi
+          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3307/${DB_NAME_VALUE}" >> $GITHUB_ENV
           echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
-          echo "DB_NAME=${{ env.DB_NAME }}" >> $GITHUB_ENV
+          echo "DB_NAME=${DB_NAME_VALUE}" >> $GITHUB_ENV
           echo "DB_HOST=127.0.0.1" >> $GITHUB_ENV
           echo "DB_PORT=3307" >> $GITHUB_ENV
           echo "DB_DIALECT=mysql" >> $GITHUB_ENV
