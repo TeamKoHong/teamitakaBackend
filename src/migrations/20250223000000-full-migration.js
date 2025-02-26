@@ -702,7 +702,7 @@ module.exports = {
     await queryInterface.addConstraint("Recruitments", {
       fields: ["user_id"],
       type: "foreign key",
-      name: "fk_projects_user_id",
+      name: "fk_recruitments_user_id",
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
     });
