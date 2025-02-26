@@ -11,11 +11,11 @@ module.exports = (sequelize) => {
       },
       title: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true, // 모의 데이터에 없으므로 임시로 허용
       },
       description: {
         type: DataTypes.TEXT,
-        allowNull: false,
+        allowNull: true, // 모의 데이터에 없으므로 임시로 허용
       },
       user_id: {
         type: DataTypes.UUID,
@@ -23,28 +23,28 @@ module.exports = (sequelize) => {
       },
       recruitment_id: {
         type: DataTypes.UUID,
-        allowNull: false, // 프로젝트는 반드시 모집공고를 가져야 함
-        unique: true,     // 모집공고와 1:1 관계 유지
+        allowNull: true, // 모의 데이터에 없으므로 임시로 허용, Recruitment 데이터 삽입 후 조정 가능
+        unique: true,    // 모집공고와 1:1 관계 유지
         references: {
           model: "Recruitments",
           key: "recruitment_id",
         },
         onDelete: "CASCADE",
       },
-      start_date: { // 시작일 추가
+      start_date: {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      end_date: { // 종료일 추가
+      end_date: {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      status: { // 상태 관리
+      status: {
         type: DataTypes.ENUM("예정", "진행 중", "완료"),
         defaultValue: "예정",
         allowNull: false,
       },
-      role: { // ✅ 역할 필드
+      role: {
         type: DataTypes.STRING,
         allowNull: true,
       },
