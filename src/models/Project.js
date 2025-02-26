@@ -17,6 +17,7 @@ module.exports = (sequelize) => {
       description: {
         type: DataTypes.TEXT,
         allowNull: false,
+        defaultValue: "Default Description",
       },
       user_id: {
         type: DataTypes.UUID,

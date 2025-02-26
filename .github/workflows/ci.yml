@@ -141,13 +141,6 @@ jobs:
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate --url ${{ env.DATABASE_URL }} --debug"
 
-      - name: Debug - Before Check Migration Status
-        run: |
-          echo "Environment before checking migration status:"
-          echo "DB_HOST=${{ env.DB_HOST }}"
-          echo "DB_PORT=${{ env.DB_PORT }}"
-          echo "DATABASE_URL=${{ env.DATABASE_URL }}"
-
       - name: Check Migration Status
         run: |
           echo "Checking migration status for deployment..."
