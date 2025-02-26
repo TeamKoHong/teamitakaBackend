@@ -106,17 +106,22 @@ async function loadMockupData() {
       if (!argv.users || !argv.recruitments) throw new Error("🚨 Projects require users and recruitments.");
       await new Promise((resolve, reject) => {
         fs.createReadStream(path.join(dataPath, "projects_mockup.csv"))
-          .pipe(csv({ skipEmptyLines: true, trim: true }))
+          .pipe(csv({ 
+            headers: ["project_id", "title", "description", "user_id", "recruitment_id", "createdAt", "updatedAt"], 
+            skipEmptyLines: true, 
+            trim: true 
+          }))
           .on("data", (row) => {
             console.log("Parsed projects CSV row:", row);
             if (!row.title || !row.description || !row.user_id || !row.recruitment_id) {
+              console.error("Missing fields in row:", row);
               reject(new Error(`Missing required fields in projects CSV: ${JSON.stringify(row)}`));
               return;
             }
             projects.push({
               project_id: row.project_id || uuidv4(),
               title: row.title,
-              description: row.description,
+              description: row.description || "Default description",
               user_id: row.user_id,
               recruitment_id: row.recruitment_id,
               createdAt: new Date(row.createdAt || Date.now()),
@@ -127,7 +132,12 @@ async function loadMockupData() {
           .on("error", reject);
       });
 
-      if (projects.length > 0) await Project.bulkCreate(projects, { transaction });
+      if (projects.length > 0) {
+        await Project.bulkCreate(projects, {
+          fields: ["project_id", "title", "description", "user_id", "recruitment_id", "createdAt", "updatedAt"],
+          transaction
+        });
+      }
       console.log("✅ Projects inserted.");
     }
 
