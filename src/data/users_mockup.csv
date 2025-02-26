@@ -1,6 +1,6 @@
-user_id,username,email,password,createdAt,updatedAt
-550e8400-e29b-41d4-a716-446655440000,john_doe,john@example.com,hashed_pass1,2023-01-01 00:00:00,2023-01-01 00:00:00
-550e8400-e29b-41d4-a716-446655440001,jane_smith,jane@example.com,hashed_pass2,2023-01-02 00:00:00,2023-01-02 00:00:00
-550e8400-e29b-41d4-a716-446655440002,alice_wong,alice@example.com,hashed_pass3,2023-01-03 00:00:00,2023-01-03 00:00:00
-550e8400-e29b-41d4-a716-446655440003,bob_lee,bob@example.com,hashed_pass4,2023-01-04 00:00:00,2023-01-04 00:00:00
-550e8400-e29b-41d4-a716-446655440004,emma_kim,emma@example.com,hashed_pass5,2023-01-05 00:00:00,2023-01-05 00:00:00
+user_id,username,email,password,userType,role,createdAt,updatedAt
+550e8400-e29b-41d4-a716-446655440000,john_doe,john@example.com,hashed_pass1,MEMBER,MEMBER,2023-01-01 00:00:00,2023-01-01 00:00:00
+550e8400-e29b-41d4-a716-446655440001,jane_smith,jane@example.com,hashed_pass2,MEMBER,MEMBER,2023-01-02 00:00:00,2023-01-02 00:00:00
+550e8400-e29b-41d4-a716-446655440002,alice_wong,alice@example.com,hashed_pass3,MEMBER,MEMBER,2023-01-03 00:00:00,2023-01-03 00:00:00
+550e8400-e29b-41d4-a716-446655440003,bob_lee,bob@example.com,hashed_pass4,MEMBER,MEMBER,2023-01-04 00:00:00,2023-01-04 00:00:00
+550e8400-e29b-41d4-a716-446655440004,emma_kim,emma@example.com,hashed_pass5,ADMIN,ADMIN,2023-01-05 00:00:00,2023-01-05 00:00:00
