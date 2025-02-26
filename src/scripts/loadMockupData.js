@@ -74,7 +74,7 @@ async function createProject(data, users, recruitments, transaction) {
   if (argv.verbose) console.log("Creating project:", data);
   const user = users.find((u) => u.user_id === data.user_id);
   const recruitment = recruitments.find((r) => r.recruitment_id === data.recruitment_id);
-  
+
   // 필수 필드 검사
   if (!user) throw new Error(`No user found for user_id: ${data.user_id}`);
   if (!recruitment) throw new Error(`No recruitment found for recruitment_id: ${data.recruitment_id}`);
@@ -112,11 +112,20 @@ async function loadMockupData() {
 
     // Step 1: Process Users
     if (argv.users) {
+      const userFilePath = path.join(dataPath, "users_mockup.csv");
+      if (!fs.existsSync(userFilePath)) {
+        throw new Error(`users_mockup.csv not found at: ${userFilePath}`);
+      }
       await new Promise((resolve, reject) => {
-        fs.createReadStream(path.join(dataPath, "users_mockup.csv"))
+        fs.createReadStream(userFilePath)
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             if (argv.verbose) console.log("Parsed users CSV row:", row);
+            if (!row.username || !row.email || !row.password) {
+              console.error("Missing required fields in user row:", row);
+              reject(new Error("Missing required fields in user data"));
+              return;
+            }
             users.push(row);
           })
           .on("end", resolve)
@@ -135,11 +144,20 @@ async function loadMockupData() {
     // Step 2: Process Recruitments
     if (argv.recruitments) {
       if (!argv.users) throw new Error("🚨 Recruitments require users data.");
+      const recruitmentFilePath = path.join(dataPath, "recruitment_mockup.csv");
+      if (!fs.existsSync(recruitmentFilePath)) {
+        throw new Error(`recruitment_mockup.csv not found at: ${recruitmentFilePath}`);
+      }
       await new Promise((resolve, reject) => {
-        fs.createReadStream(path.join(dataPath, "recruitment_mockup.csv"))
+        fs.createReadStream(recruitmentFilePath)
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             if (argv.verbose) console.log("Parsed recruitments CSV row:", row);
+            if (!row.user_id) {
+              console.error("Missing required fields in recruitment row:", row);
+              reject(new Error("Missing required fields in recruitment data"));
+              return;
+            }
             recruitments.push(row);
           })
           .on("end", resolve)
@@ -158,20 +176,24 @@ async function loadMockupData() {
     // Step 3: Process Projects
     if (argv.projects) {
       if (!argv.users || !argv.recruitments) throw new Error("🚨 Projects require users and recruitments.");
+      const projectFilePath = path.join(dataPath, "projects_mockup.csv");
+      if (!fs.existsSync(projectFilePath)) {
+        throw new Error(`projects_mockup.csv not found at: ${projectFilePath}`);
+      }
       await new Promise((resolve, reject) => {
-        if (!fs.existsSync(path.join(dataPath, "projects_mockup.csv"))) {
-          console.error("projects_mockup.csv not found at:", path.join(dataPath, "projects_mockup.csv"));
-          reject(new Error("projects_mockup.csv file missing"));
-          return;
-        }
-        fs.createReadStream(path.join(dataPath, "projects_mockup.csv"))
-          .pipe(csv({ 
-            headers: ["project_id", "title", "description", "user_id", "recruitment_id", "createdAt", "updatedAt"], 
-            skipEmptyLines: true, 
-            trim: true 
+        fs.createReadStream(projectFilePath)
+          .pipe(csv({
+            headers: ["project_id", "title", "description", "user_id", "recruitment_id", "createdAt", "updatedAt"],
+            skipEmptyLines: true,
+            trim: true
           }))
           .on("data", (row) => {
             if (argv.verbose) console.log("Parsed projects CSV row:", row);
+            if (!row.title || !row.description || !row.user_id || !row.recruitment_id) {
+              console.error("Missing required fields in project row:", row);
+              reject(new Error("Missing required fields in project data"));
+              return;
+            }
             projects.push(row);
           })
           .on("end", resolve)
