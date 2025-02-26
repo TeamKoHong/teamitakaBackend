@@ -1,9 +1,13 @@
-require("dotenv").config();
+require("dotenv").config(); // 환경 변수 사용을 위한 모듈 추가
 const fs = require("fs");
+const path = require("path"); // 경로 생성을 위한 모듈 추가
 const csv = require("csv-parser");
 const { v4: uuidv4 } = require("uuid");
 const { User, Profile, Recruitment, Project, sequelize } = require("../models");
 const yargs = require("yargs/yargs");
+
+// 환경 변수 DATA_PATH가 없으면 기본 경로 '/app/data' 사용
+const dataPath = process.env.DATA_PATH || "/app/data";
 
 const argv = yargs(process.argv.slice(2))
   .option("users", {
@@ -29,6 +33,7 @@ async function loadMockupData() {
   console.log("argv.users:", argv.users);
   console.log("argv.recruitments:", argv.recruitments);
   console.log("argv.projects:", argv.projects);
+  console.log("Using data path:", dataPath); // 사용 중인 경로 로그 추가
 
   const transaction = await sequelize.transaction();
   try {
@@ -42,7 +47,7 @@ async function loadMockupData() {
     // Process Users and Profiles (--users flag)
     if (argv.users) {
       await new Promise((resolve, reject) => {
-        fs.createReadStream("/app/data/users_mockup.csv")
+        fs.createReadStream(path.join(dataPath, "users_mockup.csv")) // 동적 경로 적용
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             console.log("Parsed users CSV row:", row);
@@ -66,7 +71,7 @@ async function loadMockupData() {
       });
 
       await new Promise((resolve, reject) => {
-        fs.createReadStream("/app/data/users_mockup.csv")
+        fs.createReadStream(path.join(dataPath, "users_mockup.csv")) // 동적 경로 적용
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             console.log("Parsed profiles CSV row:", row);
@@ -106,7 +111,7 @@ async function loadMockupData() {
         throw new Error("🚨 Recruitments require users data. Use --users flag first.");
       }
       await new Promise((resolve, reject) => {
-        fs.createReadStream("/app/data/recruitment_mockup.csv")
+        fs.createReadStream(path.join(dataPath, "recruitment_mockup.csv")) // 동적 경로 적용
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row, index) => {
             console.log(`Parsed recruitments CSV row (line ${index + 2}):`, row);
@@ -145,11 +150,10 @@ async function loadMockupData() {
         throw new Error("🚨 Projects require users and recruitments data. Use --users and --recruitments flags first.");
       }
       await new Promise((resolve, reject) => {
-        fs.createReadStream("/app/data/projects_mockup.csv")
+        fs.createReadStream(path.join(dataPath, "projects_mockup.csv")) // 동적 경로 적용
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             console.log("Parsed projects CSV row:", row);
-            // Validate all required fields
             if (!row.title || !row.description || !row.user_id || !row.recruitment_id) {
               throw new Error(`Missing required fields in projects CSV: ${JSON.stringify(row)}`);
             }
