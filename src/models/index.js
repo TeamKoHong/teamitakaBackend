@@ -10,7 +10,7 @@ db.sequelize = sequelize;
 try {
   // ✅ 모델 불러오기
   db.User = require("./User")(sequelize, Sequelize.DataTypes);
-  db.Profile = require("./Profile")(sequelize, Sequelize.DataTypes);
+  //db.Profile = require("./Profile")(sequelize, Sequelize.DataTypes);
   db.Project = require("./Project")(sequelize, Sequelize.DataTypes);
   db.Recruitment = require("./Recruitment")(sequelize, Sequelize.DataTypes);
   db.Review = require("./Review")(sequelize, Sequelize.DataTypes);

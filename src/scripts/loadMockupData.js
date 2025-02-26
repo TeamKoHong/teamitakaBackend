@@ -2,14 +2,14 @@ require("dotenv").config();
 const fs = require("fs");
 const csv = require("csv-parser");
 const { v4: uuidv4 } = require("uuid");
-const { User, Profile, Recruitment, Project, sequelize } = require("../models");
+const { User, Recruitment, Project, sequelize } = require("../models");
 const yargs = require("yargs/yargs");
 
 const argv = yargs(process.argv.slice(2))
   .option("users", {
     type: "boolean",
     default: true,
-    description: "Process users and profiles from users_mockup.csv",
+    description: "Process users from users_mockup.csv",
   })
   .option("recruitments", {
     type: "boolean",
@@ -35,18 +35,17 @@ async function loadMockupData() {
     console.log("✅ Starting mockup data insertion for deployment...");
 
     const users = [];
-    const profiles = [];
     const recruitments = [];
     const projects = [];
 
-    // Process Users and Profiles (--users flag)
+    // Process Users (--users flag)
     if (argv.users) {
       await new Promise((resolve, reject) => {
         fs.createReadStream("/app/data/users_mockup.csv")
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
             console.log("Parsed users CSV row:", row);
-            const user = {
+            users.push({
               user_id: row.user_id || uuidv4(),
               username: row.username,
               email: row.email,
@@ -55,8 +54,7 @@ async function loadMockupData() {
               role: row.role || "MEMBER",
               createdAt: new Date(row.createdAt || Date.now()),
               updatedAt: new Date(row.updatedAt || Date.now()),
-            };
-            users.push(user);
+            });
           })
           .on("end", resolve)
           .on("error", (error) => {
@@ -65,38 +63,9 @@ async function loadMockupData() {
           });
       });
 
-      await new Promise((resolve, reject) => {
-        fs.createReadStream("/app/data/users_mockup.csv")
-          .pipe(csv({ skipEmptyLines: true, trim: true }))
-          .on("data", (row) => {
-            console.log("Parsed profiles CSV row:", row);
-            const user = users.find((u) => u.username === row.username);
-            if (user) {
-              profiles.push({
-                user_id: user.user_id,
-                nickname: row.username,
-                profileImageUrl: row.profileImageUrl || "",
-                createdAt: new Date(row.createdAt || Date.now()),
-                updatedAt: new Date(row.updatedAt || Date.now()),
-              });
-            } else {
-              console.warn(`🚨 No user found for username: ${row.username}`);
-            }
-          })
-          .on("end", resolve)
-          .on("error", (error) => {
-            console.error("🚨 Error reading users_mockup.csv for profiles:", error);
-            reject(error);
-          });
-      });
-
       if (users.length > 0) {
         await User.bulkCreate(users, { transaction });
         console.log("✅ Users mockup data inserted for deployment.");
-      }
-      if (profiles.length > 0) {
-        await Profile.bulkCreate(profiles, { transaction });
-        console.log("✅ Profiles mockup data inserted for deployment.");
       }
     }
 
