@@ -53,9 +53,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y netcat-openbsd
-          echo "Testing connection to local Proxy at 127.0.0.1:3306..."
+          echo "Testing connection to local Proxy at 127.0.0.1:3307..."
           for i in {1..10}; do
-            nc -zv 127.0.0.1 3306 && break
+            nc -zv 127.0.0.1 3307 && break
             echo "Attempt $i failed, retrying in 2 seconds..."
             sleep 2
           done || {
@@ -64,7 +64,7 @@ jobs:
             cat proxy.log
             exit 1
           }
-          echo "✅ Cloud SQL Proxy is accessible on 127.0.0.1:3306"
+          echo "✅ Cloud SQL Proxy is accessible on 127.0.0.1:3307"
 
       - name: Install Docker (Buildx)
         uses: docker/setup-buildx-action@v3
@@ -81,7 +81,7 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
           echo "DB_HOST=127.0.0.1" >> $GITHUB_ENV
-          echo "DB_PORT=3306" >> $GITHUB_ENV
+          echo "DB_PORT=3307" >> $GITHUB_ENV
           echo "DB_DIALECT=mysql" >> $GITHUB_ENV
           echo "DB_CHARSET=utf8mb4" >> $GITHUB_ENV
           echo "NODE_ENV=production" >> $GITHUB_ENV
@@ -100,9 +100,9 @@ jobs:
 
       - name: Test Cloud SQL Connection (docker)
         run: |
-          echo "Testing connection from container to Proxy at 127.0.0.1:3306..."
+          echo "Testing connection from container to Proxy at 127.0.0.1:3307..."
           docker run --rm --network host \
-            teamitaka-app nc -zv 127.0.0.1 3306 || {
+            teamitaka-app nc -zv 127.0.0.1 3307 || {
               echo "⚠️ Failed to connect from container"
               exit 1
             }
@@ -150,7 +150,7 @@ jobs:
             -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
             -e DB_NAME=${{ env.DB_NAME }} \
             -e DB_HOST=127.0.0.1 \
-            -e DB_PORT=3306 \
+            -e DB_PORT=3307 \
             -e DB_DIALECT=${{ env.DB_DIALECT }} \
             -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
