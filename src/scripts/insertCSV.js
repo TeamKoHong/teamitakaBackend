@@ -1,5 +1,6 @@
 require("dotenv").config();
 const fs = require("fs");
+const path = require("path"); // path 모듈 추가
 const csv = require("csv-parser");
 const { v4: uuidv4 } = require("uuid");
 const { University, College, Department, sequelize } = require("../models");
@@ -19,9 +20,19 @@ async function insertDataFromCSV() {
     const collegeSet = new Set();
     const departmentList = [];
 
+    // CSV 파일 경로 설정 (프로젝트 루트의 seeders 폴더 기준)
+    const filePath = path.join(process.cwd(), "seeders", "universities_colleges_departments.csv");
+
+    // 파일 존재 여부 확인
+    if (!fs.existsSync(filePath)) {
+      console.error(`🚨 CSV file not found at: ${filePath}`);
+      throw new Error("CSV file not found");
+    }
+    console.log(`✅ CSV file found at: ${filePath}`);
+
     // CSV 파일 읽기
     await new Promise((resolve, reject) => {
-      fs.createReadStream("/seeders/universities_colleges_departments.csv")
+      fs.createReadStream(filePath, { encoding: "utf8" }) // 인코딩 추가
         .pipe(csv())
         .on("data", (row) => {
           const { University: uniName, College: collegeName, Department: deptName } = row;
@@ -47,7 +58,6 @@ async function insertDataFromCSV() {
       const [university, created] = await University.findOrCreate({
         where: { Name: uniName },
         defaults: {
-          ID: uuidv4(), // UUID로 기본 키 생성
           Country: "대한민국",
         },
         transaction,
@@ -69,7 +79,7 @@ async function insertDataFromCSV() {
 
       const [college, created] = await College.findOrCreate({
         where: { Name: collegeName, UniversityID: universityID },
-        defaults: { ID: uuidv4() }, // UUID로 기본 키 생성
+        defaults: { Name: collegeName }, // UUID로 기본 키 생성
         transaction,
       });
       collegeMap.set(collegeKey, college.ID);
@@ -87,7 +97,7 @@ async function insertDataFromCSV() {
 
       const [department, created] = await Department.findOrCreate({
         where: { Name: deptName, CollegeID: collegeID },
-        defaults: { ID: uuidv4() }, // UUID로 기본 키 생성
+        defaults: { CollegeID: collegeID, Name: deptName },
         transaction,
       });
       if (created) console.log(`✅ Created new Department: ${deptName} under ${collegeName} with ID ${department.ID}`);

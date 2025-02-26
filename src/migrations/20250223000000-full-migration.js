@@ -2,7 +2,6 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Admins 테이블 생성
     await queryInterface.createTable(
       "Admins",
       {
@@ -35,13 +34,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Universities 테이블 생성
     await queryInterface.createTable(
       "Universities",
       {
@@ -70,13 +65,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Users 테이블 생성 (모델과 일치)
     await queryInterface.createTable(
       "Users",
       {
@@ -118,13 +109,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Recruitments 테이블 생성
     await queryInterface.createTable(
       "Recruitments",
       {
@@ -164,13 +151,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Applications 테이블 생성
     await queryInterface.createTable(
       "Applications",
       {
@@ -203,13 +186,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Projects 테이블 생성
     await queryInterface.createTable(
       "Projects",
       {
@@ -226,6 +205,7 @@ module.exports = {
         description: {
           type: Sequelize.TEXT,
           allowNull: false,
+          defaultValue: "Default Description",
         },
         user_id: {
           type: Sequelize.CHAR(36).BINARY,
@@ -236,9 +216,18 @@ module.exports = {
           allowNull: false,
           unique: true,
         },
-        role: {
-          type: Sequelize.STRING,
+        start_date: {
+          type: Sequelize.DATE,
           allowNull: true,
+        },
+        end_date: {
+          type: Sequelize.DATE,
+          allowNull: true,
+        },
+        status: {
+          type: Sequelize.ENUM("예정", "진행 중", "완료"),
+          defaultValue: "예정",
+          allowNull: false,
         },
         createdAt: {
           type: Sequelize.DATE,
@@ -251,13 +240,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Comments 테이블 생성
     await queryInterface.createTable(
       "Comments",
       {
@@ -289,13 +274,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Likes 테이블 생성
     await queryInterface.createTable(
       "Likes",
       {
@@ -323,13 +304,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Colleges 테이블 생성
     await queryInterface.createTable(
       "Colleges",
       {
@@ -357,13 +334,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Departments 테이블 생성
     await queryInterface.createTable(
       "Departments",
       {
@@ -391,13 +364,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Notifications 테이블 생성
     await queryInterface.createTable(
       "Notifications",
       {
@@ -425,13 +394,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Profiles 테이블 생성
     await queryInterface.createTable(
       "Profiles",
       {
@@ -491,13 +456,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Reviews 테이블 생성
     await queryInterface.createTable(
       "Reviews",
       {
@@ -554,13 +515,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Keywords 테이블 생성
     await queryInterface.createTable(
       "Keywords",
       {
@@ -588,13 +545,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Searches 테이블 생성
     await queryInterface.createTable(
       "Searches",
       {
@@ -622,13 +575,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // VerifiedEmails 테이블 생성
     await queryInterface.createTable(
       "VerifiedEmails",
       {
@@ -661,13 +610,9 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // Hashtags 테이블 생성 (모델과 일치)
     await queryInterface.createTable(
       "Hashtags",
       {
@@ -692,13 +637,143 @@ module.exports = {
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
       },
-      {
-        charset: "utf8mb4",
-        collate: "utf8mb4_bin",
-      }
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
 
-    // 외래 키 제약 추가 (모델 관계 반영)
+    await queryInterface.createTable(
+      "Todos",
+      {
+        todo_id: {
+          type: Sequelize.UUID,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        project_id: {
+          type: Sequelize.UUID,
+          allowNull: false,
+          references: {
+            model: "Projects",
+            key: "project_id",
+          },
+          onDelete: "CASCADE",
+        },
+        task: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+        completed: {
+          type: Sequelize.BOOLEAN,
+          defaultValue: false,
+        },
+        due_date: {
+          type: Sequelize.DATE,
+          allowNull: true,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+      },
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
+    );
+
+    await queryInterface.createTable(
+      "ProjectMembers",
+      {
+        id: {
+          type: Sequelize.UUID,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        project_id: {
+          type: Sequelize.UUID,
+          allowNull: false,
+          references: {
+            model: "Projects",
+            key: "project_id",
+          },
+          onDelete: "CASCADE",
+        },
+        user_id: {
+          type: Sequelize.UUID,
+          allowNull: false,
+          references: {
+            model: "Users",
+            key: "user_id",
+          },
+          onDelete: "CASCADE",
+        },
+        role: {
+          type: Sequelize.ENUM("팀장", "팀원"),
+          defaultValue: "팀원",
+          allowNull: false,
+        },
+        joined_at: {
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        status: {
+          type: Sequelize.ENUM("활성", "비활성"),
+          defaultValue: "활성",
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+      },
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
+    );
+
+    await queryInterface.createTable(
+      "Timelines",
+      {
+        timeline_id: {
+          type: Sequelize.UUID,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
+        },
+        project_id: {
+          type: Sequelize.UUID,
+          allowNull: false,
+          references: {
+            model: "Projects",
+            key: "project_id",
+          },
+          onDelete: "CASCADE",
+        },
+        event_title: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+        description: {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        date: {
+          type: Sequelize.DATE,
+          allowNull: false,
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+      },
+      { charset: "utf8mb4", collate: "utf8mb4_bin" }
+    );
+
     await queryInterface.addConstraint("Recruitments", {
       fields: ["user_id"],
       type: "foreign key",
@@ -706,7 +781,6 @@ module.exports = {
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Applications", {
       fields: ["user_id"],
       type: "foreign key",
@@ -714,7 +788,6 @@ module.exports = {
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Applications", {
       fields: ["recruitment_id"],
       type: "foreign key",
@@ -722,7 +795,6 @@ module.exports = {
       references: { table: "Recruitments", field: "recruitment_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Projects", {
       fields: ["user_id"],
       type: "foreign key",
@@ -730,7 +802,6 @@ module.exports = {
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Projects", {
       fields: ["recruitment_id"],
       type: "foreign key",
@@ -738,7 +809,6 @@ module.exports = {
       references: { table: "Recruitments", field: "recruitment_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Comments", {
       fields: ["user_id"],
       type: "foreign key",
@@ -746,7 +816,6 @@ module.exports = {
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Comments", {
       fields: ["recruitment_id"],
       type: "foreign key",
@@ -754,7 +823,6 @@ module.exports = {
       references: { table: "Recruitments", field: "recruitment_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Likes", {
       fields: ["user_id"],
       type: "foreign key",
@@ -762,7 +830,6 @@ module.exports = {
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Likes", {
       fields: ["recruitment_id"],
       type: "foreign key",
@@ -770,7 +837,6 @@ module.exports = {
       references: { table: "Recruitments", field: "recruitment_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Colleges", {
       fields: ["UniversityID"],
       type: "foreign key",
@@ -778,7 +844,6 @@ module.exports = {
       references: { table: "Universities", field: "ID" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Departments", {
       fields: ["CollegeID"],
       type: "foreign key",
@@ -786,7 +851,6 @@ module.exports = {
       references: { table: "Colleges", field: "ID" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Profiles", {
       fields: ["user_id"],
       type: "foreign key",
@@ -795,7 +859,6 @@ module.exports = {
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     });
-
     await queryInterface.addConstraint("Reviews", {
       fields: ["project_id"],
       type: "foreign key",
@@ -803,7 +866,6 @@ module.exports = {
       references: { table: "Projects", field: "project_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Reviews", {
       fields: ["reviewer_id"],
       type: "foreign key",
@@ -811,7 +873,6 @@ module.exports = {
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
     });
-
     await queryInterface.addConstraint("Reviews", {
       fields: ["reviewee_id"],
       type: "foreign key",
@@ -819,10 +880,41 @@ module.exports = {
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
     });
+    await queryInterface.addConstraint("Todos", {
+      fields: ["project_id"],
+      type: "foreign key",
+      name: "fk_todos_project_id_unique_v3", // 수정된 부분
+      references: { table: "Projects", field: "project_id" },
+      onDelete: "CASCADE",
+    });
+    await queryInterface.addConstraint("ProjectMembers", {
+      fields: ["project_id"],
+      type: "foreign key",
+      name: "fk_projectmembers_project_id_unique_v2",
+      references: { table: "Projects", field: "project_id" },
+      onDelete: "CASCADE",
+    });
+    await queryInterface.addConstraint("ProjectMembers", {
+      fields: ["user_id"],
+      type: "foreign key",
+      name: "fk_projectmembers_user_id_unique",
+      references: { table: "Users", field: "user_id" },
+      onDelete: "CASCADE",
+    });
+    await queryInterface.addConstraint("Timelines", {
+      fields: ["project_id"],
+      type: "foreign key",
+      name: "fk_timelines_project_id_unique",
+      references: { table: "Projects", field: "project_id" },
+      onDelete: "CASCADE",
+    });
   },
 
   down: async (queryInterface) => {
-    // 외래 키 제거 (모델 관계 반영)
+    await queryInterface.removeConstraint("Timelines", "fk_timelines_project_id_unique");
+    await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_user_id_unique");
+    await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_project_id_unique_v2");
+    await queryInterface.removeConstraint("Todos", "fk_todos_project_id_unique_v3"); // 수정된 부분
     await queryInterface.removeConstraint("Reviews", "fk_reviews_reviewee_id");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_reviewer_id");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_project_id");
@@ -839,7 +931,10 @@ module.exports = {
     await queryInterface.removeConstraint("Applications", "fk_applications_user_id");
     await queryInterface.removeConstraint("Recruitments", "fk_recruitments_user_id");
 
-    // 테이블 삭제 (모델 순서 반대)
+    await queryInterface.dropTable("Timelines");
+    await queryInterface.dropTable("ProjectMembers");
+    await queryInterface.dropTable("Todos");
+    await queryInterface.dropTable("Hashtags");
     await queryInterface.dropTable("VerifiedEmails");
     await queryInterface.dropTable("Searches");
     await queryInterface.dropTable("Keywords");
