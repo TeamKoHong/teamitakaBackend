@@ -141,23 +141,16 @@ jobs:
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate:status --url ${{ env.DATABASE_URL }}"
 
-      - name: Check if Users table exists
-        run: |
-          docker run --network host \
-            -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            -e NODE_ENV=production \
-            teamitaka-app \
-            node src/scripts/checkDB.js
-
       - name: Insert Mockup Data
         run: |
-          echo "🔍 Inserting all mockup data into DB..."
+          echo "🔍 Starting mockup data insertion process..."
           docker run --network host \
             -v ${GITHUB_WORKSPACE}/src/data:/app/data \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
+            -e NODE_ENV=production \
             teamitaka-app \
-            node src/scripts/loadMockupData.js --users --recruitments --projects
-          echo "✅ Mockup Data Insert Completed"
+            node src/scripts/loadMockupData.js --users --recruitments --projects --verbose
+          echo "✅ Mockup data insertion completed"
 
       - name: Insert Universities, Colleges, Departments Data
         run: |
@@ -187,3 +180,6 @@ jobs:
             exit 1
           }
           echo "✅ Application health check passed for deployment"
+
+      - name: Stop Cloud SQL Proxy
+        run: pkill cloud_sql_proxy || true

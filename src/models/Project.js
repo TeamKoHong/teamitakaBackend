@@ -1,4 +1,3 @@
-// Project.js
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
@@ -23,6 +22,11 @@ module.exports = (sequelize) => {
       user_id: {
         type: DataTypes.UUID,
         allowNull: false,
+        references: {
+          model: "Users",
+          key: "user_id",
+        },
+        onDelete: "CASCADE",
       },
       recruitment_id: {
         type: DataTypes.UUID,
@@ -47,7 +51,6 @@ module.exports = (sequelize) => {
         defaultValue: "예정",
         allowNull: false,
       },
-      // role 필드 제거됨
     },
     {
       tableName: "Projects",
@@ -55,6 +58,11 @@ module.exports = (sequelize) => {
       timestamps: true,
     }
   );
+
+  Project.beforeCreate((project, options) => {
+    if (!project.user_id) throw new Error("User ID is required");
+    if (!project.recruitment_id) throw new Error("Recruitment ID is required");
+  });
 
   Project.associate = (models) => {
     Project.belongsTo(models.Recruitment, {
