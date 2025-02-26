@@ -41,7 +41,7 @@ jobs:
       - name: Start Cloud SQL Proxy
         run: |
           ./cloud_sql_proxy \
-            -instances="${{ secrets.INSTANCE_CONNECTION_NAME }}=tcp:127.0.0.1:3306" \
+            -instances="${{ secrets.INSTANCE_CONNECTION_NAME }}=tcp:127.0.0.1:3307" \
             -credential_file=sa-key.json \
             > proxy.log 2>&1 &
           echo "Cloud SQL Proxy started in the background."
@@ -76,7 +76,7 @@ jobs:
 
       - name: Set Database Environment
         run: |
-          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}" >> $GITHUB_ENV
+          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3307/${{ secrets.DB_NAME }}" >> $GITHUB_ENV
           echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
