@@ -12,6 +12,7 @@ module.exports = (sequelize) => {
       title: {
         type: DataTypes.STRING,
         allowNull: true, // 모의 데이터에 없으므로 임시로 허용
+
       },
       description: {
         type: DataTypes.TEXT,
