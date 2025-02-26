@@ -1,25 +1,25 @@
 "use strict";
 
 async function checkAndAddConstraint(queryInterface, tableName, constraintName, constraintOptions, transaction) {
-  // 현재 존재하는 외래 키 확인
-  const [results] = await queryInterface.sequelize.query(`
-      SELECT CONSTRAINT_NAME 
-      FROM information_schema.TABLE_CONSTRAINTS 
-      WHERE TABLE_NAME = '${tableName}' 
-      AND CONSTRAINT_NAME = '${constraintName}';
-  `, { transaction });
+  try {
+    await queryInterface.removeConstraint(tableName, constraintName, { transaction });
+    console.log(`Removed existing constraint '${constraintName}'.`);
+  } catch (error) {
+    console.log(`Skipping removal: '${constraintName}', constraint does not exist.`);
+  }
 
-  // 기존에 존재하지 않는 경우에만 추가
-  if (results.length === 0) {
+  try {
     await queryInterface.addConstraint(tableName, constraintOptions, { transaction });
-  } else {
-    console.log(`Skipping constraint '${constraintName}', already exists.`);
+    console.log(`Added constraint '${constraintName}'.`);
+  } catch (error) {
+    console.error(`Failed to add constraint '${constraintName}':`, error);
   }
 }
 
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
+      // 🔹 기존 외래 키 및 UNIQUE 제약 제거
       try {
         await queryInterface.removeConstraint("Projects", "fk_recruitments_user_id", { transaction });
       } catch (error) {
@@ -32,29 +32,24 @@ module.exports = {
         console.log("No existing 'Projects_recruitment_id_fkey' constraint to remove.");
       }
 
-      // Projects 테이블 수정
-      await queryInterface.changeColumn(
-        "Projects",
-        "title",
-        { type: Sequelize.STRING, allowNull: true },
-        { transaction }
-      );
+      try {
+        await queryInterface.removeConstraint("Projects", "recruitment_id", { transaction });
+      } catch (error) {
+        console.log("No existing 'recruitment_id' UNIQUE constraint to remove.");
+      }
 
-      await queryInterface.changeColumn(
-        "Projects",
-        "description",
-        { type: Sequelize.TEXT, allowNull: true },
-        { transaction }
-      );
-
+      // 🔹 Projects 테이블 수정 (recruitment_id: UNIQUE 제거 + NULL 허용)
       await queryInterface.changeColumn(
         "Projects",
         "recruitment_id",
-        { type: Sequelize.UUID, allowNull: true, unique: true },
+        {
+          type: Sequelize.CHAR(36),
+          allowNull: true, // ✅ NULL 허용
+        },
         { transaction }
       );
 
-      // 외래 키 중복 체크 후 추가
+      // 🔹 외래 키 다시 추가
       await checkAndAddConstraint(
         queryInterface,
         "Projects",
@@ -85,7 +80,7 @@ module.exports = {
         transaction
       );
 
-      // Search 테이블 생성
+      // 🔹 Search 테이블 생성
       await queryInterface.createTable(
         "Search",
         {
@@ -102,36 +97,26 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      // Search 테이블 삭제
+      // 🔹 Search 테이블 삭제
       await queryInterface.dropTable("Search", { transaction });
 
-      // Projects 외래 키 제거
+      // 🔹 Projects 외래 키 제거
       await queryInterface.removeConstraint("Projects", "fk_projects_user_id", { transaction });
       await queryInterface.removeConstraint("Projects", "fk_projects_recruitment_id", { transaction });
 
-      // Projects 컬럼 원래대로 복구
-      await queryInterface.changeColumn(
-        "Projects",
-        "title",
-        { type: Sequelize.STRING, allowNull: false },
-        { transaction }
-      );
-
-      await queryInterface.changeColumn(
-        "Projects",
-        "description",
-        { type: Sequelize.TEXT, allowNull: false },
-        { transaction }
-      );
-
+      // 🔹 Projects 컬럼 원래대로 복구 (NULL 허용 X, UNIQUE 복원)
       await queryInterface.changeColumn(
         "Projects",
         "recruitment_id",
-        { type: Sequelize.UUID, allowNull: false, unique: true },
+        {
+          type: Sequelize.CHAR(36),
+          allowNull: false,
+          unique: true, // 🚨 원래대로 UNIQUE 복원 (이전 상태로 되돌리기)
+        },
         { transaction }
       );
 
-      // 이전 외래 키 복원 (고유한 이름 유지)
+      // 🔹 이전 외래 키 복원
       await checkAndAddConstraint(
         queryInterface,
         "Projects",
