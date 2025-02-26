@@ -79,7 +79,7 @@ async function insertDataFromCSV() {
 
       const [college, created] = await College.findOrCreate({
         where: { Name: collegeName, UniversityID: universityID },
-        defaults: { ID: uuidv4() }, // UUID로 기본 키 생성
+        defaults: { Name: collegeName }, // UUID로 기본 키 생성
         transaction,
       });
       collegeMap.set(collegeKey, college.ID);
