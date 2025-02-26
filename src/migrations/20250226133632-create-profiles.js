@@ -3,13 +3,14 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      // ✅ Profiles 테이블이 존재하는지 확인 후 생성
-      const tableExists = await queryInterface.sequelize.query(
+      // ✅ 1. Profiles 테이블이 존재하는지 확인
+      const [tableExists] = await queryInterface.sequelize.query(
         `SHOW TABLES LIKE 'Profiles';`,
         { transaction }
       );
 
-      if (tableExists[0].length === 0) {
+      // ✅ 2. Profiles 테이블이 없으면 새로 생성
+      if (tableExists.length === 0) {
         await queryInterface.createTable(
           "Profiles",
           {
@@ -43,37 +44,54 @@ module.exports = {
           },
           { transaction }
         );
+      } else {
+        console.log("✅ Profiles table already exists.");
       }
 
-      // ✅ 외래 키가 이미 존재하는지 확인 후 추가
+      // ✅ 3. 기존 FK(`fk_profiles_user_id`) 존재 여부 확인 후 추가
       const [existingConstraints] = await queryInterface.sequelize.query(
         `SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS 
         WHERE TABLE_NAME = 'Profiles' AND CONSTRAINT_NAME = 'fk_profiles_user_id';`,
         { transaction }
       );
 
-      if (existingConstraints.length === 0) {
-        await queryInterface.addConstraint(
-          "Profiles",
-          {
-            fields: ["user_id"],
-            type: "foreign key",
-            name: "fk_profiles_user_id",
-            references: { table: "Users", field: "user_id" },
-            onDelete: "CASCADE",
-            onUpdate: "CASCADE",
-          },
-          { transaction }
-        );
-      } else {
-        console.log("✅ Foreign key 'fk_profiles_user_id' already exists, skipping creation.");
+      if (existingConstraints.length > 0) {
+        console.log("✅ Foreign key 'fk_profiles_user_id' already exists, removing...");
+        await queryInterface.removeConstraint("Profiles", "fk_profiles_user_id", { transaction });
       }
+
+      // ✅ 4. 외래 키 다시 추가
+      await queryInterface.addConstraint(
+        "Profiles",
+        {
+          fields: ["user_id"],
+          type: "foreign key",
+          name: "fk_profiles_user_id",
+          references: { table: "Users", field: "user_id" },
+          onDelete: "CASCADE",
+          onUpdate: "CASCADE",
+        },
+        { transaction }
+      );
+
+      console.log("✅ Foreign key 'fk_profiles_user_id' successfully added.");
     });
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      await queryInterface.dropTable("Profiles", { transaction });
+      // ✅ Profiles 테이블이 존재하면 삭제
+      const [tableExists] = await queryInterface.sequelize.query(
+        `SHOW TABLES LIKE 'Profiles';`,
+        { transaction }
+      );
+
+      if (tableExists.length > 0) {
+        await queryInterface.dropTable("Profiles", { transaction });
+        console.log("✅ Profiles table successfully dropped.");
+      } else {
+        console.log("⚠️ Profiles table does not exist. Skipping drop.");
+      }
     });
   },
 };

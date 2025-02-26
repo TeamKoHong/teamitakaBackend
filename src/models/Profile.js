@@ -51,10 +51,16 @@ module.exports = (sequelize) => {
       onDelete: "CASCADE",
     });
 
-    // ✅ Profiles 테이블과 Projects 테이블 연결 (1:N 관계)
-    Profile.hasMany(models.Project, {
-      foreignKey: "user_id", // ✅ 한 명의 사용자가 여러 개의 프로젝트를 가질 수 있음
+    // ✅ Projects 테이블과 Users 테이블 직접 연결 (Profiles를 거치지 않음)
+    models.Project.belongsTo(models.User, {
+      foreignKey: "user_id",
       onDelete: "CASCADE",
+    });
+
+    // ✅ Profile과 Projects를 1:N으로 조회 가능하도록 설정 (하지만 FK는 Users.user_id를 사용)
+    Profile.hasMany(models.Project, {
+      foreignKey: "user_id", // ✅ Projects.user_id는 Users.user_id를 참조해야 함
+      sourceKey: "user_id",
     });
   };
 
