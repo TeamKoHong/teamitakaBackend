@@ -82,7 +82,7 @@ jobs:
           echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3307/${{ secrets.DB_NAME }}" >> $GITHUB_ENV
           echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
+          echo "DB_NAME=${{ env.DB_NAME }}" >> $GITHUB_ENV
           echo "DB_HOST=127.0.0.1" >> $GITHUB_ENV
           echo "DB_PORT=3307" >> $GITHUB_ENV
           echo "DB_DIALECT=mysql" >> $GITHUB_ENV
@@ -111,9 +111,9 @@ jobs:
             }
           echo "✅ Container -> Cloud SQL Proxy connection successful"
 
-      - name: Reset Database (Drop All Tables)
+      - name: Reset Database (Drop and Recreate Schema)
         run: |
-          echo "Resetting database by dropping all tables for deployment..."
+          echo "Resetting database by dropping and recreating schema..."
           docker run --network host \
             -e DB_USER=${{ env.DB_USER }} \
             -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
@@ -121,7 +121,7 @@ jobs:
             -e DB_HOST=${{ env.DB_HOST }} \
             -e DB_PORT=${{ env.DB_PORT }} \
             teamitaka-app \
-            bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} ${{ env.DB_NAME }} -e 'SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS Applications, VerifiedEmails, Searches, Keywords, Reviews, Notifications, Likes, Comments, Projects, Recruitments, Departments, Colleges, Universities, Admins, Users, Profiles, SequelizeMeta; SET FOREIGN_KEY_CHECKS = 1;'"
+            bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'DROP SCHEMA IF EXISTS \`${{ env.DB_NAME }}\`;' && mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'CREATE SCHEMA \`${{ env.DB_NAME }}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;' && echo 'Database schema reset completed'"
 
       - name: Run Sequelize migrations in Docker
         run: |
