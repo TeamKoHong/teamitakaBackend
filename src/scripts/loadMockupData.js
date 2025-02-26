@@ -145,45 +145,42 @@ async function loadMockupData() {
     }
 
     // Process Projects (--projects flag)
-    if (argv.projects) {
-      if (!argv.users || !argv.recruitments) {
-        throw new Error("🚨 Projects require users and recruitments data. Use --users and --recruitments flags first.");
-      }
-      await new Promise((resolve, reject) => {
-        fs.createReadStream(path.join(dataPath, "projects_mockup.csv")) // 동적 경로 적용
-          .pipe(csv({ skipEmptyLines: true, trim: true }))
-          .on("data", (row) => {
-            console.log("Parsed projects CSV row:", row);
-            if (!row.title || !row.description || !row.user_id || !row.recruitment_id) {
-              throw new Error(`Missing required fields in projects CSV: ${JSON.stringify(row)}`);
-            }
-            const user = users.find((u) => u.user_id === row.user_id);
-            const recruitment = recruitments.find((r) => r.recruitment_id === row.recruitment_id);
-            if (!user) throw new Error(`No user found for user_id '${row.user_id}'`);
-            if (!recruitment) throw new Error(`No recruitment found for recruitment_id '${row.recruitment_id}'`);
-            projects.push({
-              project_id: row.project_id || uuidv4(),
-              title: row.title,
-              description: row.description,
-              user_id: row.user_id,
-              recruitment_id: row.recruitment_id,
-              role: row.role || null,
-              createdAt: new Date(row.createdAt || Date.now()),
-              updatedAt: new Date(row.updatedAt || Date.now()),
-            });
-          })
-          .on("end", resolve)
-          .on("error", (error) => {
-            console.error("🚨 Error reading projects_mockup.csv:", error);
-            reject(error);
-          });
+    // Process Projects (--projects flag)
+if (argv.projects) {
+  if (!argv.users || !argv.recruitments) {
+    throw new Error("🚨 Projects require users and recruitments data.");
+  }
+  await new Promise((resolve, reject) => {
+    fs.createReadStream(path.join(dataPath, "projects_mockup.csv"))
+      .pipe(csv({ skipEmptyLines: true, trim: true }))
+      .on("data", (row) => {
+        console.log("Parsed projects CSV row:", row);
+        if (!row.title || !row.description || !row.user_id || !row.recruitment_id) {
+          reject(new Error(`Missing required fields in projects CSV: ${JSON.stringify(row)}`));
+          return;
+        }
+        projects.push({
+          project_id: row.project_id || uuidv4(),
+          title: row.title,
+          description: row.description,
+          user_id: row.user_id,
+          recruitment_id: row.recruitment_id,
+          createdAt: new Date(row.createdAt || Date.now()),
+          updatedAt: new Date(row.updatedAt || Date.now()),
+        });
+      })
+      .on("end", resolve)
+      .on("error", (error) => {
+        console.error("🚨 Error reading projects_mockup.csv:", error);
+        reject(error);
       });
+  });
 
-      if (projects.length > 0) {
-        await Project.bulkCreate(projects, { transaction });
-        console.log("✅ Projects mockup data inserted for deployment.");
-      }
-    }
+  if (projects.length > 0) {
+    await Project.bulkCreate(projects, { transaction });
+    console.log("✅ Projects mockup data inserted for deployment.");
+  }
+}
 
     // Ensure at least one flag is provided
     if (!argv.users && !argv.recruitments && !argv.projects) {
