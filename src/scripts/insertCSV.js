@@ -58,7 +58,6 @@ async function insertDataFromCSV() {
       const [university, created] = await University.findOrCreate({
         where: { Name: uniName },
         defaults: {
-          ID: uuidv4(), // UUID로 기본 키 생성
           Country: "대한민국",
         },
         transaction,
