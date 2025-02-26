@@ -883,38 +883,38 @@ module.exports = {
     await queryInterface.addConstraint("Todos", {
       fields: ["project_id"],
       type: "foreign key",
-      name: "fk_todos_project_id",
+      name: "fk_todos_project_id_unique",
       references: { table: "Projects", field: "project_id" },
       onDelete: "CASCADE",
     });
     await queryInterface.addConstraint("ProjectMembers", {
       fields: ["project_id"],
       type: "foreign key",
-      name: "fk_projectmembers_project_id",
+      name: "fk_projectmembers_project_id_unique",
       references: { table: "Projects", field: "project_id" },
       onDelete: "CASCADE",
     });
     await queryInterface.addConstraint("ProjectMembers", {
       fields: ["user_id"],
       type: "foreign key",
-      name: "fk_projectmembers_user_id",
+      name: "fk_projectmembers_user_id_unique",
       references: { table: "Users", field: "user_id" },
       onDelete: "CASCADE",
     });
     await queryInterface.addConstraint("Timelines", {
       fields: ["project_id"],
       type: "foreign key",
-      name: "fk_timelines_project_id",
+      name: "fk_timelines_project_id_unique",
       references: { table: "Projects", field: "project_id" },
       onDelete: "CASCADE",
     });
   },
 
   down: async (queryInterface) => {
-    await queryInterface.removeConstraint("Timelines", "fk_timelines_project_id");
-    await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_user_id");
-    await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_project_id");
-    await queryInterface.removeConstraint("Todos", "fk_todos_project_id");
+    await queryInterface.removeConstraint("Timelines", "fk_timelines_project_id_unique");
+    await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_user_id_unique");
+    await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_project_id_unique");
+    await queryInterface.removeConstraint("Todos", "fk_todos_project_id_unique");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_reviewee_id");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_reviewer_id");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_project_id");
