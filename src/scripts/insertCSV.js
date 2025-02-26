@@ -97,7 +97,7 @@ async function insertDataFromCSV() {
 
       const [department, created] = await Department.findOrCreate({
         where: { Name: deptName, CollegeID: collegeID },
-        defaults: { ID: uuidv4() }, // UUID로 기본 키 생성
+        defaults: { CollegeID: collegeID, Name: deptName },
         transaction,
       });
       if (created) console.log(`✅ Created new Department: ${deptName} under ${collegeName} with ID ${department.ID}`);
