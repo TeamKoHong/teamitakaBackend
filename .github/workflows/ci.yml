@@ -127,7 +127,7 @@ jobs:
             bash -c "echo 'SET FOREIGN_KEY_CHECKS = 0;' > reset.sql && \
                      echo 'DROP TABLE IF EXISTS Applications, VerifiedEmails, Searches, Keywords, Reviews, Notifications, Likes, Comments, Projects, Recruitments, Departments, Colleges, Universities, Admins, Users, Profiles, SequelizeMeta;' >> reset.sql && \
                      echo 'SET FOREIGN_KEY_CHECKS = 1;' > reset.sql && \
-                     mysql -h ${{ env.DB_HOST }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} ${{ env.DB_NAME }} < reset.sql"
+                     mysql -h ${{ env.DB_HOST }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} ${{ env.DB_NAME }} < reset.sql || { echo 'Failed to reset database'; exit 1; }"
 
       - name: Run Sequelize migrations in Docker
         run: |
