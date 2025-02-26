@@ -205,6 +205,7 @@ module.exports = {
         description: {
           type: Sequelize.TEXT,
           allowNull: false,
+          defaultValue: "Default Description",
         },
         user_id: {
           type: Sequelize.CHAR(36).BINARY,
@@ -882,14 +883,14 @@ module.exports = {
     await queryInterface.addConstraint("Todos", {
       fields: ["project_id"],
       type: "foreign key",
-      name: "fk_todos_project_id_unique_v2",
+      name: "fk_todos_project_id_unique_v3", // 수정된 부분
       references: { table: "Projects", field: "project_id" },
       onDelete: "CASCADE",
     });
     await queryInterface.addConstraint("ProjectMembers", {
       fields: ["project_id"],
       type: "foreign key",
-      name: "fk_projectmembers_project_id_unique_v2", // 수정된 부분
+      name: "fk_projectmembers_project_id_unique_v2",
       references: { table: "Projects", field: "project_id" },
       onDelete: "CASCADE",
     });
@@ -912,8 +913,8 @@ module.exports = {
   down: async (queryInterface) => {
     await queryInterface.removeConstraint("Timelines", "fk_timelines_project_id_unique");
     await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_user_id_unique");
-    await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_project_id_unique_v2"); // 수정된 부분
-    await queryInterface.removeConstraint("Todos", "fk_todos_project_id_unique_v2");
+    await queryInterface.removeConstraint("ProjectMembers", "fk_projectmembers_project_id_unique_v2");
+    await queryInterface.removeConstraint("Todos", "fk_todos_project_id_unique_v3"); // 수정된 부분
     await queryInterface.removeConstraint("Reviews", "fk_reviews_reviewee_id");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_reviewer_id");
     await queryInterface.removeConstraint("Reviews", "fk_reviews_project_id");
