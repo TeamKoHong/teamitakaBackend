@@ -6,8 +6,8 @@ const { v4: uuidv4 } = require("uuid");
 const { User, Profile, Recruitment, Project, ProjectMember, Todo, Timeline, Notification, sequelize } = require("../models");
 const yargs = require("yargs/yargs");
 
-const dataPath = process.env.DATA_PATH || "/app/data";
-const verbose = process.argv.includes("--verbose");
+const dataPath = process.env.DATA_PATH || path.join(__dirname, "../../data");
+console.log("Data path:", dataPath); // 디버깅 로그
 
 const argv = yargs(process.argv.slice(2))
   .option("users", { type: "boolean", default: false, description: "Process users" })
@@ -18,7 +18,7 @@ const argv = yargs(process.argv.slice(2))
   .argv;
 
 async function createUser(data, transaction) {
-  if (verbose) console.log("Creating user:", data);
+  if (argv.verbose) console.log("Creating user:", data);
   const user = await User.create(
     {
       user_id: data.user_id || uuidv4(),
@@ -42,12 +42,12 @@ async function createUser(data, transaction) {
     },
     { transaction }
   );
-  if (verbose) console.log("✅ User and Profile created:", user.user_id);
+  if (argv.verbose) console.log("✅ User and Profile created:", user.user_id);
   return user;
 }
 
 async function createRecruitment(data, users, transaction) {
-  if (verbose) console.log("Creating recruitment:", data);
+  if (argv.verbose) console.log("Creating recruitment:", data);
   const user = users.find((u) => u.user_id === data.user_id);
   if (!user) throw new Error(`No user found for user_id: ${data.user_id}`);
   const recruitment = await Recruitment.create(
@@ -63,21 +63,24 @@ async function createRecruitment(data, users, transaction) {
     },
     { transaction }
   );
-  if (verbose) console.log("✅ Recruitment created:", recruitment.recruitment_id);
+  if (argv.verbose) console.log("✅ Recruitment created:", recruitment.recruitment_id);
   return recruitment;
 }
 
 async function createProject(data, users, recruitments, transaction) {
-  if (verbose) console.log("Creating project:", data);
+  if (argv.verbose) console.log("Creating project:", data);
   const user = users.find((u) => u.user_id === data.user_id);
   const recruitment = recruitments.find((r) => r.recruitment_id === data.recruitment_id);
   if (!user) throw new Error(`No user found for user_id: ${data.user_id}`);
   if (!recruitment) throw new Error(`No recruitment found for recruitment_id: ${data.recruitment_id}`);
+  if (!data.title || !data.description) {
+    throw new Error(`Missing required fields in project data: ${JSON.stringify(data)}`);
+  }
   const project = await Project.create(
     {
       project_id: data.project_id || uuidv4(),
-      title: data.title || "Untitled Project",
-      description: data.description || "Default Description",
+      title: data.title,
+      description: data.description,
       user_id: data.user_id,
       recruitment_id: data.recruitment_id,
       createdAt: new Date(data.createdAt || Date.now()),
@@ -86,7 +89,6 @@ async function createProject(data, users, recruitments, transaction) {
     { transaction }
   );
 
-  // 연관 데이터 생성 (서비스 로직 시뮬레이션)
   await ProjectMember.create(
     {
       id: uuidv4(),
@@ -136,7 +138,7 @@ async function createProject(data, users, recruitments, transaction) {
     { transaction }
   );
 
-  if (verbose) console.log("✅ Project and related data created:", project.project_id);
+  if (argv.verbose) console.log("✅ Project and related data created:", project.project_id);
   return project;
 }
 
@@ -158,11 +160,14 @@ async function loadMockupData() {
         fs.createReadStream(path.join(dataPath, "users_mockup.csv"))
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
-            if (verbose) console.log("Parsed users CSV row:", row);
+            if (argv.verbose) console.log("Parsed users CSV row:", row);
             users.push(row);
           })
           .on("end", resolve)
-          .on("error", reject);
+          .on("error", (err) => {
+            console.error("Error reading users_mockup.csv:", err.message);
+            reject(err);
+          });
       });
 
       for (const userData of users) {
@@ -178,11 +183,14 @@ async function loadMockupData() {
         fs.createReadStream(path.join(dataPath, "recruitment_mockup.csv"))
           .pipe(csv({ skipEmptyLines: true, trim: true }))
           .on("data", (row) => {
-            if (verbose) console.log("Parsed recruitments CSV row:", row);
+            if (argv.verbose) console.log("Parsed recruitments CSV row:", row);
             recruitments.push(row);
           })
           .on("end", resolve)
-          .on("error", reject);
+          .on("error", (err) => {
+            console.error("Error reading recruitment_mockup.csv:", err.message);
+            reject(err);
+          });
       });
 
       for (const recruitmentData of recruitments) {
@@ -195,6 +203,11 @@ async function loadMockupData() {
     if (argv.projects) {
       if (!argv.users || !argv.recruitments) throw new Error("🚨 Projects require users and recruitments.");
       await new Promise((resolve, reject) => {
+        if (!fs.existsSync(path.join(dataPath, "projects_mockup.csv"))) {
+          console.error("projects_mockup.csv not found at:", path.join(dataPath, "projects_mockup.csv"));
+          reject(new Error("projects_mockup.csv file missing"));
+          return;
+        }
         fs.createReadStream(path.join(dataPath, "projects_mockup.csv"))
           .pipe(csv({ 
             headers: ["project_id", "title", "description", "user_id", "recruitment_id", "createdAt", "updatedAt"], 
@@ -202,15 +215,22 @@ async function loadMockupData() {
             trim: true 
           }))
           .on("data", (row) => {
-            if (verbose) console.log("Parsed projects CSV row:", row);
+            if (argv.verbose) console.log("Parsed projects CSV row:", row);
             projects.push(row);
           })
           .on("end", resolve)
-          .on("error", reject);
+          .on("error", (err) => {
+            console.error("Error reading projects_mockup.csv:", err.message);
+            reject(err);
+          });
       });
 
-      for (const projectData of projects) {
-        await createProject(projectData, users, recruitments, transaction);
+      if (projects.length === 0) {
+        console.warn("No projects data found in projects_mockup.csv");
+      } else {
+        for (const projectData of projects) {
+          await createProject(projectData, users, recruitments, transaction);
+        }
       }
       console.log("✅ All Projects and related data inserted.");
     }
