@@ -6,8 +6,8 @@ const { v4: uuidv4 } = require("uuid");
 const { User, Profile, Recruitment, Project, ProjectMember, Todo, Timeline, Notification, sequelize } = require("../models");
 const yargs = require("yargs/yargs");
 
-const dataPath = process.env.DATA_PATH || path.join(__dirname, "../../data");
-console.log("Data path:", dataPath); // 디버깅 로그
+const dataPath = process.env.DATA_PATH || "/app/data"; // 컨테이너 환경에 맞춰진 경로
+console.log("Data path:", dataPath); // 경로 확인
 
 const argv = yargs(process.argv.slice(2))
   .option("users", { type: "boolean", default: false, description: "Process users" })
@@ -17,6 +17,7 @@ const argv = yargs(process.argv.slice(2))
   .help()
   .argv;
 
+// 사용자 생성 함수
 async function createUser(data, transaction) {
   if (argv.verbose) console.log("Creating user:", data);
   const user = await User.create(
@@ -32,7 +33,7 @@ async function createUser(data, transaction) {
     },
     { transaction }
   );
-  const profile = await Profile.create(
+  await Profile.create(
     {
       user_id: user.user_id,
       nickname: data.username,
@@ -46,6 +47,7 @@ async function createUser(data, transaction) {
   return user;
 }
 
+// 모집 공고 생성 함수
 async function createRecruitment(data, users, transaction) {
   if (argv.verbose) console.log("Creating recruitment:", data);
   const user = users.find((u) => u.user_id === data.user_id);
@@ -67,15 +69,19 @@ async function createRecruitment(data, users, transaction) {
   return recruitment;
 }
 
+// 프로젝트 생성 함수
 async function createProject(data, users, recruitments, transaction) {
   if (argv.verbose) console.log("Creating project:", data);
   const user = users.find((u) => u.user_id === data.user_id);
   const recruitment = recruitments.find((r) => r.recruitment_id === data.recruitment_id);
+  
+  // 필수 필드 검사
   if (!user) throw new Error(`No user found for user_id: ${data.user_id}`);
   if (!recruitment) throw new Error(`No recruitment found for recruitment_id: ${data.recruitment_id}`);
-  if (!data.title || !data.description) {
+  if (!data.title || !data.description || !data.recruitment_id) {
     throw new Error(`Missing required fields in project data: ${JSON.stringify(data)}`);
   }
+
   const project = await Project.create(
     {
       project_id: data.project_id || uuidv4(),
@@ -88,57 +94,7 @@ async function createProject(data, users, recruitments, transaction) {
     },
     { transaction }
   );
-
-  await ProjectMember.create(
-    {
-      id: uuidv4(),
-      project_id: project.project_id,
-      user_id: user.user_id,
-      role: "팀장",
-      joined_at: new Date(),
-      status: "활성",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    { transaction }
-  );
-
-  await Todo.create(
-    {
-      todo_id: uuidv4(),
-      project_id: project.project_id,
-      task: `기본 작업: ${project.title} 시작`,
-      completed: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    { transaction }
-  );
-
-  await Timeline.create(
-    {
-      timeline_id: uuidv4(),
-      project_id: project.project_id,
-      event_title: `프로젝트 ${project.title} 시작`,
-      date: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    { transaction }
-  );
-
-  await Notification.create(
-    {
-      id: uuidv4(),
-      message: `${user.username}님의 ${project.title} 프로젝트가 시작되었습니다.`,
-      isRead: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    { transaction }
-  );
-
-  if (argv.verbose) console.log("✅ Project and related data created:", project.project_id);
+  console.log("✅ Project created:", project.project_id);
   return project;
 }
 
@@ -232,7 +188,7 @@ async function loadMockupData() {
           await createProject(projectData, users, recruitments, transaction);
         }
       }
-      console.log("✅ All Projects and related data inserted.");
+      console.log("✅ All Projects inserted.");
     }
 
     if (!argv.users && !argv.recruitments && !argv.projects) {
