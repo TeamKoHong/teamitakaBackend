@@ -11,9 +11,11 @@ const recruitmentRoutes = require("./routes/recruitmentRoutes"); // ← ✅ 추�
 const commentRoutes = require("./routes/commentRoutes");
 const projectRoutes = require("./routes/projectRoutes"); // ✅ 프로젝트 라우트 추가
 const searchRoutes = require("./routes/searchRoutes");
-const profileRoutes = require("./routes/profileRoutes");//프로필
+//const profileRoutes = require("./routes/profileRoutes");//프로필
 const reviewRoutes = require("./routes/reviewRoutes"); // ✅ 리뷰 라우트 추가
-console.log("✅ recruitmentRoutes: ", recruitmentRoutes); // ✅ recruitmentRoutes 확인
+const draftRoutes = require("./routes/draftRoutes");  // draftRoutes 추가
+const scrapRoutes = require("./routes/scrapRoutes");  // scrapRoutes 추가
+const applicationRoutes = require("./routes/applicationRoutes"); 
 
 const app = express();
 app.use(cors());
@@ -33,8 +35,12 @@ app.use("/api/recruitment", recruitmentRoutes); // ✅ 개별 등록 방식
 app.use("/api/comment", commentRoutes);
 app.use("/api/project", projectRoutes);       // ✅ 프로젝트 라우트 추가
 app.use("/api/search", searchRoutes);
-app.use("/api/profiles", profileRoutes);
+//app.use("/api/profiles", profileRoutes);
 app.use("/api/reviews", reviewRoutes); // ✅ 리뷰 라우트 추가
+app.use("/api/drafts", draftRoutes);    // draftRoutes 라우트 추가
+app.use("/api/scraps", scrapRoutes); 
+app.use("/api/applications", applicationRoutes); 
+
 // 기본 라우트
 app.get("/", (req, res) => {
   res.status(200).send("Teamitaka Backend Running!");
