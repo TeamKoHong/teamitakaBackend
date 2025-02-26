@@ -3,67 +3,34 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      // 🔹 기존 UNIQUE 및 외래 키 제약 제거
-      await queryInterface.sequelize.query(
-        `ALTER TABLE Projects DROP INDEX recruitment_id;`,
-        { transaction }
-      );
+      // ✅ `UNIQUE`를 유지해야 하므로, 외래 키를 삭제할 필요 없음
 
-      try {
-        await queryInterface.removeConstraint("Projects", "fk_projects_user_id", { transaction });
-      } catch (error) {
-        console.log("No existing 'fk_projects_user_id' constraint to remove.");
-      }
-
-      try {
-        await queryInterface.removeConstraint("Projects", "fk_projects_recruitment_id", { transaction });
-      } catch (error) {
-        console.log("No existing 'fk_projects_recruitment_id' constraint to remove.");
-      }
-
-      // 🔹 Projects 테이블 수정 (recruitment_id: NULL 허용)
+      // 🔹 Projects 테이블 수정 (외래 키를 유지한 채, NOT NULL 속성을 확인)
       await queryInterface.changeColumn(
         "Projects",
         "recruitment_id",
         {
           type: Sequelize.CHAR(36),
-          allowNull: true,
+          allowNull: false, // ✅ NOT NULL 유지
+          unique: true,     // ✅ UNIQUE 유지
         },
         { transaction }
       );
 
-      // 🔹 외래 키 추가 전, Projects.recruitment_id 정리
-      await queryInterface.sequelize.query(
-        `UPDATE Projects p
-         LEFT JOIN Recruitments r ON p.recruitment_id = r.recruitment_id
-         SET p.recruitment_id = NULL
-         WHERE r.recruitment_id IS NULL;`,
-        { transaction }
-      );
+      // ✅ 외래 키를 유지하므로, 다시 추가할 필요 없음
+    });
+  },
 
-      // 🔹 외래 키 다시 추가
-      await queryInterface.addConstraint(
+  async down(queryInterface, Sequelize) {
+    await queryInterface.sequelize.transaction(async (transaction) => {
+      // ❌ 기존 컬럼 원래대로 복구
+      await queryInterface.changeColumn(
         "Projects",
+        "recruitment_id",
         {
-          fields: ["user_id"],
-          type: "foreign key",
-          name: "fk_projects_user_id",
-          references: { table: "Users", field: "user_id" },
-          onDelete: "CASCADE",
-          onUpdate: "CASCADE",
-        },
-        { transaction }
-      );
-
-      await queryInterface.addConstraint(
-        "Projects",
-        {
-          fields: ["recruitment_id"],
-          type: "foreign key",
-          name: "fk_projects_recruitment_id",
-          references: { table: "Recruitments", field: "recruitment_id" },
-          onDelete: "CASCADE",
-          onUpdate: "CASCADE",
+          type: Sequelize.CHAR(36),
+          allowNull: false,
+          unique: true, // 원래대로 복원
         },
         { transaction }
       );
