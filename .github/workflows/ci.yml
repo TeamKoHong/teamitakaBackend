@@ -44,7 +44,7 @@ jobs:
             -instances="${{ secrets.INSTANCE_CONNECTION_NAME }}=tcp:127.0.0.1:3307" \
             -credential_file=sa-key.json \
             > proxy.log 2>&1 &
-          sleep 5
+          sleep 10  # 더 길게 기다려서 Proxy 실행 보장
           if ! nc -z 127.0.0.1 3307; then
             echo "⚠️ Proxy failed to start!"
             cat proxy.log
@@ -127,7 +127,7 @@ jobs:
             bash -c "echo 'SET FOREIGN_KEY_CHECKS = 0;' > reset.sql && \
                      echo 'DROP TABLE IF EXISTS Applications, VerifiedEmails, Searches, Keywords, Reviews, Notifications, Likes, Comments, Projects, Recruitments, Departments, Colleges, Universities, Admins, Users, Profiles, SequelizeMeta;' >> reset.sql && \
                      echo 'SET FOREIGN_KEY_CHECKS = 1;' > reset.sql && \
-                     mysql -h ${{ env.DB_HOST }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} ${{ env.DB_NAME }} < reset.sql || { echo 'Failed to reset database'; exit 1; }"
+                     mysql -h ${{ env.DB_HOST }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} ${{ env.DB_NAME }} < reset.sql || { echo 'Failed to reset database'; cat /proc/self/stat; exit 1; }"
 
       - name: Run Sequelize migrations in Docker
         run: |
