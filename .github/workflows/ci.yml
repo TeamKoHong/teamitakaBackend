@@ -170,56 +170,15 @@ jobs:
             teamitaka-app \
             node src/scripts/checkDB.js
 
-      - name: Insert Users Mockup Data
+      - name: Insert Mockup Data
         run: |
-          echo "🔍 Inserting users mockup data into DB from CSV for deployment..."
+          echo "🔍 Inserting all mockup data into DB..."
           docker run --network host \
             -v ${GITHUB_WORKSPACE}/src/data:/app/data \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            -e DB_USER=${{ env.DB_USER }} \
-            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
-            -e DB_NAME=${{ env.DB_NAME }} \
-            -e DB_HOST=${{ env.DB_HOST }} \
-            -e DB_PORT=${{ env.DB_PORT }} \
-            -e DB_DIALECT=${{ env.DB_DIALECT }} \
-            -e NODE_ENV=${{ env.NODE_ENV }} \
             teamitaka-app \
-            node src/scripts/loadMockupData.js --users
-          echo "✅ Users Mockup Data Insert Completed"
-
-      - name: Insert Recruitments Mockup Data
-        run: |
-          echo "🔍 Inserting recruitments mockup data into DB from CSV for deployment..."
-          docker run --network host \
-            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
-            -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            -e DB_USER=${{ env.DB_USER }} \
-            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
-            -e DB_NAME=${{ env.DB_NAME }} \
-            -e DB_HOST=${{ env.DB_HOST }} \
-            -e DB_PORT=${{ env.DB_PORT }} \
-            -e DB_DIALECT=${{ env.DB_DIALECT }} \
-            -e NODE_ENV=${{ env.NODE_ENV }} \
-            teamitaka-app \
-            node src/scripts/loadMockupData.js --recruitments
-          echo "✅ Recruitments Mockup Data Insert Completed"
-
-      - name: Insert Projects Mockup Data
-        run: |
-          echo "🔍 Inserting projects mockup data into DB from CSV for deployment..."
-          docker run --network host \
-            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
-            -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            -e DB_USER=${{ env.DB_USER }} \
-            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
-            -e DB_NAME=${{ env.DB_NAME }} \
-            -e DB_HOST=${{ env.DB_HOST }} \
-            -e DB_PORT=${{ env.DB_PORT }} \
-            -e DB_DIALECT=${{ env.DB_DIALECT }} \
-            -e NODE_ENV=${{ env.NODE_ENV }} \
-            teamitaka-app \
-            node src/scripts/loadMockupData.js --projects
-          echo "✅ Projects Mockup Data Insert Completed"
+            node src/scripts/loadMockupData.js --users --recruitments --projects
+          echo "✅ Mockup Data Insert Completed"
 
       - name: Insert Universities, Colleges, Departments Data
         run: |
