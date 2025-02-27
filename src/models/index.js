@@ -10,7 +10,6 @@ db.sequelize = sequelize;
 try {
   // ✅ 모델 불러오기
   db.User = require("./User")(sequelize, Sequelize.DataTypes);
-  //db.Profile = require("./Profile")(sequelize, Sequelize.DataTypes);
   db.Project = require("./Project")(sequelize, Sequelize.DataTypes);
   db.Recruitment = require("./Recruitment")(sequelize, Sequelize.DataTypes);
   db.Review = require("./Review")(sequelize, Sequelize.DataTypes);
@@ -29,8 +28,6 @@ try {
   db.Comment = require("./Comment")(sequelize, Sequelize.DataTypes);         // ✅ 추가
   db.Scrap = require("./Scrap")(sequelize, Sequelize.DataTypes);             // ✅ 추가
   db.ProjectMembers = require("./ProjectMembers")(sequelize, Sequelize.DataTypes); // ✅ 추가
-  db.Review = require("./Review")(sequelize, Sequelize.DataTypes); // ✅ 리뷰 모델 추가
-
 
 } catch (error) {
   console.error("❌ Error in models/index.js:", error);
