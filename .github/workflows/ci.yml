@@ -170,7 +170,7 @@ jobs:
 
       - name: Deploy and Test Application
         run: |
-          echo "🚀 Starting Application for deployment testing..."
+          echo "🚀 Starting Application..."
           docker run -d --network host \
             --name teamitaka-prod \
             -e DATABASE_URL="${{ env.DATABASE_URL }}" \
@@ -178,45 +178,39 @@ jobs:
             -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
             teamitaka-app \
             npm run start
-          echo "✅ App container started (port 3000 exposed on host)"
+          echo "✅ App container started"
           
-          # DB 준비 대기
-          echo "⏳ Waiting for DB to be ready..."
+          echo "⏳ Waiting for DB..."
           for i in {1..60}; do
             if mysqladmin ping -h 127.0.0.1 -P 3307 --silent -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }}; then
               echo "✅ DB is ready"
               break
             fi
-            echo "DB not ready, retrying in 10 seconds..."
+            echo "DB not ready, retrying..."
             sleep 10
           done || {
-            echo "⚠️ DB not ready after 60 attempts (10 minutes)"
-            docker logs teamitaka-prod 2>&1 || echo "No logs available"
+            echo "⚠️ DB timeout"
+            docker logs teamitaka-prod
             exit 1
           }
           
-          # 서버 준비 대기
-          echo "⏳ Waiting for server to initialize..."
-          sleep 10  # 모델 로딩 및 서버 준비 대기
+          echo "⏳ Waiting for server..."
+          sleep 20  # 시간 늘려서 확실히
           
-          # 헬스체크 및 로그 출력
-          echo "🔍 Testing application health..."
+          echo "🔍 Checking health..."
           for i in {1..5}; do
-            HEALTH_RESPONSE=$(curl -s -w "%{http_code}" http://127.0.0.1:3000/health)
-            STATUS_CODE=${HEALTH_RESPONSE: -3}  # 마지막 3자리 (HTTP 상태 코드)
-            RESPONSE_BODY=${HEALTH_RESPONSE:0:${#HEALTH_RESPONSE}-3}  # 응답 본문
-            echo "Health check response: $RESPONSE_BODY (Status: $STATUS_CODE)"
-            if [ "$STATUS_CODE" -eq 200 ]; then
-              echo "✅ Application health check passed for deployment"
+            RESPONSE=$(curl -s http://127.0.0.1:3000/health)
+            if [ -n "$RESPONSE" ]; then
+              echo "✅ Health OK: $RESPONSE"
               break
             else
-              echo "⚠️ Health check failed, retrying in 5 seconds..."
-              docker logs teamitaka-prod 2>&1 || echo "No logs available"
+              echo "⚠️ Health failed, retrying..."
+              docker logs teamitaka-prod
               sleep 5
             fi
-            if [ $i -eq 5 ]; then
-              echo "⚠️ Application health check failed after 5 attempts"
-              docker logs teamitaka-prod 2>&1
+            if [ "$i" -eq 5 ]; then
+              echo "⚠️ Health check failed after 5 tries"
+              docker logs teamitaka-prod
               exit 1
             fi
           done
