@@ -195,10 +195,18 @@ jobs:
             exit 1
           }
           
+          # 서버 준비 대기
+          echo "⏳ Waiting for server to initialize..."
+          sleep 10  # 모델 로딩 및 서버 준비 대기
+          
           # 헬스체크 및 로그 출력
           echo "🔍 Testing application health..."
           for i in {1..5}; do
-            if curl -s http://127.0.0.1:3000/health; then
+            HEALTH_RESPONSE=$(curl -s -w "%{http_code}" http://127.0.0.1:3000/health)
+            STATUS_CODE=${HEALTH_RESPONSE: -3}  # 마지막 3자리 (HTTP 상태 코드)
+            RESPONSE_BODY=${HEALTH_RESPONSE:0:${#HEALTH_RESPONSE}-3}  # 응답 본문
+            echo "Health check response: $RESPONSE_BODY (Status: $STATUS_CODE)"
+            if [ "$STATUS_CODE" -eq 200 ]; then
               echo "✅ Application health check passed for deployment"
               break
             else
