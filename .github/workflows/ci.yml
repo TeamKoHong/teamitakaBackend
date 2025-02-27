@@ -170,46 +170,51 @@ jobs:
 
       - name: Deploy and Test Application
         run: |
-          echo "🚀 Starting Application for deployment testing..."
-            docker run -d --network host \
-              --name teamitaka-prod \
-              -e DATABASE_URL=${{ env.DATABASE_URL }} \
-              -e NODE_ENV=production \
-              teamitaka-app \
-              npm run start
-            echo "✅ App container started (port 3000 exposed on host)"
+          echo "🚀 Starting Application..."
+          docker run -d --network host \
+            --name teamitaka-prod \
+            -e DATABASE_URL="${{ env.DATABASE_URL }}" \
+            -e NODE_ENV=production \
+            -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            teamitaka-app \
+            npm run start
+          echo "✅ App container started"
           
-          # DB 준비 대기
-          echo "⏳ Waiting for DB to be ready..."
+          echo "⏳ Waiting for DB..."
           for i in {1..60}; do
             if mysqladmin ping -h 127.0.0.1 -P 3307 --silent -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }}; then
               echo "✅ DB is ready"
               break
             fi
-            echo "DB not ready, retrying in 10 seconds..."
+            echo "DB not ready, retrying..."
             sleep 10
           done || {
-            echo "⚠️ DB not ready after 60 attempts (10 minutes)"
+            echo "⚠️ DB timeout"
+            docker logs teamitaka-prod
             exit 1
           }
-            
-          # 헬스체크 및 로그 출력
-          echo "🔍 Testing application health..."
-            for i in {1..5}; do
-              if curl -s http://127.0.0.1:3000/health; then
-                echo "✅ Application health check passed for deployment"
-                break
-              else
-                echo "⚠️ Health check failed, retrying in 5 seconds..."
-                docker logs teamitaka-prod 2>&1 || echo "No logs available"
-                sleep 5
-              fi
-              if [ $i -eq 5 ]; then
-                echo "⚠️ Application health check failed after 5 attempts"
-                docker logs teamitaka-prod 2>&1
-                exit 1
-              fi
-            done
-        
+          
+          echo "⏳ Waiting for server..."
+          sleep 20  # 시간 늘려서 확실히
+          
+          echo "🔍 Checking health..."
+          for i in {1..5}; do
+            RESPONSE=$(curl -s http://127.0.0.1:3000/health 2>&1 || echo "Curl failed with error: $?")
+            echo "Response: $RESPONSE"
+            if [ -n "$RESPONSE" ] && [ "$RESPONSE" != "Curl failed with error: $?" ]; then
+              echo "✅ Health OK: $RESPONSE"
+              break
+            else
+              echo "⚠️ Health failed, retrying... (Attempt $i)"
+              docker logs teamitaka-prod  # 컨테이너 로그 출력
+              sleep 5
+            fi
+            if [ "$i" -eq 5 ]; then
+              echo "⚠️ Health check failed after 5 tries"
+              docker logs teamitaka-prod
+              exit 1
+            fi
+          done
+
       - name: Stop Cloud SQL Proxy
         run: pkill cloud_sql_proxy || true
