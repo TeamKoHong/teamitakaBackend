@@ -145,8 +145,8 @@ module.exports = {
         "Users",
         {
           user_id: {
-            type: Sequelize.UUID,
-            defaultValue: Sequelize.UUIDV4,
+            type: Sequelize.ENUM("ADMIN", "MEMBER"), 
+            defaultValue: "MEMBER",
             primaryKey: true,
           },
           username: {
