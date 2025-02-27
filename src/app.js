@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
-const { sequelize } = require("../models"); // Sequelize 인스턴스 가져오기
+const { sequelize } = require("./models"); // Sequelize 인스턴스 가져오기
 
 const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -41,13 +41,14 @@ app.get("/", (req, res) => {
 });
 
 // 헬스체크 엔드포인트
-app.get("/health", async (req, res) => {
+app.get('/health', async (req, res) => {
+  console.log('Received /health request'); // Debug log
   try {
-    await sequelize.authenticate(); // DB 연결 확인
-    res.status(200).json({ status: "OK", database: "connected" });
+    await sequelize.authenticate();
+    res.status(200).json({ status: 'OK', database: 'connected' });
   } catch (error) {
-    console.error("🚨 Health check failed:", error.message);
-    res.status(503).json({ status: "ERROR", database: "disconnected", error: error.message });
+    console.error('🚨 Health check failed:', error.message);
+    res.status(503).json({ status: 'ERROR', database: 'disconnected', error: error.message });
   }
 });
 
