@@ -141,41 +141,46 @@ module.exports = {
       );
 
       // ✅ 기존 Users, Recruitments, Projects, Todos 테이블 추가
-      await queryInterface.createTable(
-        "Users",
-        {
-          user_id: {
-            type: Sequelize.ENUM("ADMIN", "MEMBER"), 
-            defaultValue: "MEMBER",
-            primaryKey: true,
-          },
-          username: {
-            type: Sequelize.STRING(255),
-            allowNull: false,
-            unique: true,
-          },
-          email: {
-            type: Sequelize.STRING(255),
-            allowNull: false,
-            unique: true,
-          },
-          password: {
-            type: Sequelize.STRING(255),
-            allowNull: false,
-          },
-          createdAt: {
-            type: Sequelize.DATE,
-            allowNull: false,
-            defaultValue: Sequelize.NOW,
-          },
-          updatedAt: {
-            type: Sequelize.DATE,
-            allowNull: false,
-            defaultValue: Sequelize.NOW,
-          },
+      await queryInterface.createTable("Users", {
+        user_id: {
+          type: Sequelize.UUID,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true,
         },
-        { transaction }
-      );
+        username: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+          unique: true,
+        },
+        email: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+          unique: true,
+        },
+        password: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+        },
+        userType: {  // ✅ 이 부분 추가
+          type: Sequelize.ENUM("ADMIN", "MEMBER"),
+          defaultValue: "MEMBER",
+        },
+        role: {
+          type: Sequelize.ENUM("ADMIN", "MEMBER"),
+          defaultValue: "MEMBER",
+        },
+        createdAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+        updatedAt: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        },
+      });
+      
     });
   },
 
