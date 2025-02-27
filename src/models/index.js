@@ -29,6 +29,7 @@ try {
   db.Comment = require("./Comment")(sequelize, Sequelize.DataTypes);         // ✅ 추가
   db.Scrap = require("./Scrap")(sequelize, Sequelize.DataTypes);             // ✅ 추가
   db.ProjectMembers = require("./ProjectMembers")(sequelize, Sequelize.DataTypes); // ✅ 추가
+  db.Review = require("./Review")(sequelize, Sequelize.DataTypes); // ✅ 리뷰 모델 추가
 
 
 } catch (error) {
