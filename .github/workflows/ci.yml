@@ -171,13 +171,14 @@ jobs:
       - name: Deploy and Test Application
         run: |
           echo "🚀 Starting Application for deployment testing..."
-            docker run -d --network host \
-              --name teamitaka-prod \
-              -e DATABASE_URL=${{ env.DATABASE_URL }} \
-              -e NODE_ENV=production \
-              teamitaka-app \
-              npm run start
-            echo "✅ App container started (port 3000 exposed on host)"
+          docker run -d --network host \
+            --name teamitaka-prod \
+            -e DATABASE_URL="${{ env.DATABASE_URL }}" \
+            -e NODE_ENV=production \
+            -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            teamitaka-app \
+            npm run start
+          echo "✅ App container started (port 3000 exposed on host)"
           
           # DB 준비 대기
           echo "⏳ Waiting for DB to be ready..."
@@ -190,26 +191,52 @@ jobs:
             sleep 10
           done || {
             echo "⚠️ DB not ready after 60 attempts (10 minutes)"
+            docker logs teamitaka-prod 2>&1 || echo "No logs available"
             exit 1
           }
-            
+          
+          # (선택) 관리자 계정 초기화
+          echo "🔧 Checking and initializing admin account..."
+          docker exec teamitaka-prod bash -c "
+            npm install mysql2 && 
+            node -e 'const mysql = require(\"mysql2/promise\");
+            (async () => {
+              const conn = await mysql.createConnection(\"${{ env.DATABASE_URL }}\");
+              const [rows] = await conn.execute(\"SELECT * FROM Admins WHERE email = \"admin@teamitaka.com\"\");
+              if (rows.length === 0) {
+                await conn.execute(
+                  \"INSERT INTO Admins (email, password, role) VALUES (?, ?, ?)\",
+                  [\"admin@teamitaka.com\", \"${{ secrets.ADMIN_PASSWORD_HASH }}\", \"ADMIN\"]
+                );
+                console.log(\"✅ Admin account initialized\");
+              } else {
+                console.log(\"✅ Admin account already exists\");
+              }
+              await conn.end();
+            })();'
+          " || {
+            echo "⚠️ Failed to initialize admin account"
+            docker logs teamitaka-prod 2>&1
+            exit 1
+          }
+          
           # 헬스체크 및 로그 출력
           echo "🔍 Testing application health..."
-            for i in {1..5}; do
-              if curl -s http://127.0.0.1:3000/health; then
-                echo "✅ Application health check passed for deployment"
-                break
-              else
-                echo "⚠️ Health check failed, retrying in 5 seconds..."
-                docker logs teamitaka-prod 2>&1 || echo "No logs available"
-                sleep 5
-              fi
-              if [ $i -eq 5 ]; then
-                echo "⚠️ Application health check failed after 5 attempts"
-                docker logs teamitaka-prod 2>&1
-                exit 1
-              fi
-            done
-        
+          for i in {1..5}; do
+            if curl -s http://127.0.0.1:3000/health; then
+              echo "✅ Application health check passed for deployment"
+              break
+            else
+              echo "⚠️ Health check failed, retrying in 5 seconds..."
+              docker logs teamitaka-prod 2>&1 || echo "No logs available"
+              sleep 5
+            fi
+            if [ $i -eq 5 ]; then
+              echo "⚠️ Application health check failed after 5 attempts"
+              docker logs teamitaka-prod 2>&1
+              exit 1
+            fi
+          done
+    
       - name: Stop Cloud SQL Proxy
         run: pkill cloud_sql_proxy || true
