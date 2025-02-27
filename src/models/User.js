@@ -9,7 +9,7 @@ module.exports = (sequelize) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      nickname: { // 기존 username → nickname 변경
+      username: { 
         type: DataTypes.STRING(255),
         allowNull: false,
         unique: true,
