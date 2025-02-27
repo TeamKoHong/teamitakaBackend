@@ -12,7 +12,7 @@ const recruitmentRoutes = require("./routes/recruitmentRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const searchRoutes = require("./routes/searchRoutes");
-//const profileRoutes = require("./routes/profileRoutes");//프로필
+const profileRoutes = require("./routes/profileRoutes");//프로필
 const reviewRoutes = require("./routes/reviewRoutes"); // ✅ 리뷰 라우트 추가
 const draftRoutes = require("./routes/draftRoutes");  // draftRoutes 추가
 const scrapRoutes = require("./routes/scrapRoutes");  // scrapRoutes 추가
@@ -33,7 +33,7 @@ app.use("/api/recruitment", recruitmentRoutes);
 app.use("/api/comment", commentRoutes);
 app.use("/api/project", projectRoutes);
 app.use("/api/search", searchRoutes);
-//app.use("/api/profiles", profileRoutes);
+app.use("/api/profiles", profileRoutes);
 app.use("/api/reviews", reviewRoutes); // ✅ 리뷰 라우트 추가
 app.use("/api/drafts", draftRoutes);    // draftRoutes 라우트 추가
 app.use("/api/scraps", scrapRoutes); 
