@@ -652,9 +652,10 @@ module.exports = {
           type: Sequelize.UUID,
           allowNull: false,
           references: {
-            model: "Projects",
+            model: "Projects", // ⚠️ 테이블명이 소문자로 되어 있는지 확인 필수!
             key: "project_id",
           },
+          onUpdate: "CASCADE",
           onDelete: "CASCADE",
         },
         task: {
@@ -671,15 +672,18 @@ module.exports = {
         },
         createdAt: {
           type: Sequelize.DATE,
+          allowNull: false,
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
         updatedAt: {
           type: Sequelize.DATE,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+          allowNull: false,
+          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
         },
       },
       { charset: "utf8mb4", collate: "utf8mb4_bin" }
     );
+    
 
     await queryInterface.createTable(
       "ProjectMembers",
