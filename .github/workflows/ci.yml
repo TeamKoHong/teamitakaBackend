@@ -195,31 +195,6 @@ jobs:
             exit 1
           }
           
-          # (선택) 관리자 계정 초기화
-          echo "🔧 Checking and initializing admin account..."
-          docker exec teamitaka-prod bash -c "
-            npm install mysql2 && 
-            node -e 'const mysql = require(\"mysql2/promise\");
-            (async () => {
-              const conn = await mysql.createConnection(\"${{ env.DATABASE_URL }}\");
-              const [rows] = await conn.execute(\"SELECT * FROM Admins WHERE email = \"admin@teamitaka.com\"\");
-              if (rows.length === 0) {
-                await conn.execute(
-                  \"INSERT INTO Admins (email, password, role) VALUES (?, ?, ?)\",
-                  [\"admin@teamitaka.com\", \"${{ secrets.ADMIN_PASSWORD_HASH }}\", \"ADMIN\"]
-                );
-                console.log(\"✅ Admin account initialized\");
-              } else {
-                console.log(\"✅ Admin account already exists\");
-              }
-              await conn.end();
-            })();'
-          " || {
-            echo "⚠️ Failed to initialize admin account"
-            docker logs teamitaka-prod 2>&1
-            exit 1
-          }
-          
           # 헬스체크 및 로그 출력
           echo "🔍 Testing application health..."
           for i in {1..5}; do
@@ -237,6 +212,6 @@ jobs:
               exit 1
             fi
           done
-    
+
       - name: Stop Cloud SQL Proxy
         run: pkill cloud_sql_proxy || true
