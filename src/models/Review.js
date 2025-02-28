@@ -82,25 +82,5 @@ module.exports = (sequelize) => {
     }
   );
 
-  // **프로젝트, 유저와의 관계 설정**
-  Review.associate = (models) => {
-    Review.belongsTo(models.Project, {
-      foreignKey: "project_id",
-      onDelete: "CASCADE",
-    });
-
-    Review.belongsTo(models.User, {
-      as: "Reviewer",
-      foreignKey: "reviewer_id",
-      onDelete: "CASCADE",
-    });
-
-    Review.belongsTo(models.User, {
-      as: "Reviewee",
-      foreignKey: "reviewee_id",
-      onDelete: "CASCADE",
-    });
-  };
-
   return Review;
 };

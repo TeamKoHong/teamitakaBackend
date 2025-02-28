@@ -37,10 +37,6 @@ module.exports = (sequelize) => {
     },
   });
 
-  Scrap.associate = (models) => {
-    Scrap.belongsTo(models.User, { foreignKey: "user_id" });
-    Scrap.belongsTo(models.Recruitment, { foreignKey: "recruitment_id" });
-  };
 
   return Scrap;
 };

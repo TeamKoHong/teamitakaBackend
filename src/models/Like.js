@@ -27,10 +27,5 @@ module.exports = (sequelize) => {
     },
   });
 
-  Like.associate = (models) => {
-    Like.belongsTo(models.User, { foreignKey: "user_id" });
-    Like.belongsTo(models.Recruitment, { foreignKey: "recruitment_id" });
-  };
-
   return Like;
 };
