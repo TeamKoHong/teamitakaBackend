@@ -28,6 +28,7 @@ db.Comment = require("./Comment")(sequelize, Sequelize.DataTypes);
 db.Scrap = require("./Scrap")(sequelize, Sequelize.DataTypes);
 db.ProjectMembers = require("./ProjectMembers")(sequelize, Sequelize.DataTypes);
 db.Campus = require("./Campus")(sequelize, Sequelize.DataTypes);
+db.Like = require("./Like")(sequelize, Sequelize.DataTypes);
 
 // 모델 간 관계 설정
 db.Application.associate = (models) => {
