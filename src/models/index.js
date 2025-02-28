@@ -115,12 +115,12 @@ db.Project.associate = (models) => {
   });
 };
 
-db.ProjectMember.associate = (models) => {
+db.ProjectMembers.associate = (models) => {
   db.ProjectMember.belongsTo(models.Project, {
     foreignKey: "project_id",
     onDelete: "CASCADE",
   });
-  db.ProjectMember.belongsTo(models.User, {
+  db.ProjectMembers.belongsTo(models.User, {
     foreignKey: "user_id",
     onDelete: "CASCADE",
   });
