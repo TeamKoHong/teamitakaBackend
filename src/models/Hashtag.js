@@ -12,13 +12,6 @@ module.exports = (sequelize, DataTypes) => {
       },
     });
   
-    Hashtag.associate = (models) => {
-      Hashtag.belongsToMany(models.Recruitment, {
-        through: "recruitment_hashtags",
-        foreignKey: "hashtag_id",
-      });
-    };
-  
     return Hashtag;
   };
   

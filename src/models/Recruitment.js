@@ -52,16 +52,5 @@ module.exports = (sequelize) => {
     }
   );
 
-  Recruitment.associate = (models) => {
-    Recruitment.belongsTo(models.User, {
-      foreignKey: "user_id",
-      onDelete: "CASCADE",
-    });
-    Recruitment.hasOne(models.Project, {
-      foreignKey: "recruitment_id",
-      onDelete: "CASCADE",
-    });
-  };
-
   return Recruitment;
 };
