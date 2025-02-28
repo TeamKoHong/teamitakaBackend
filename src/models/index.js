@@ -7,7 +7,6 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-try {
   // ✅ 모델 불러오기
   db.User = require("./User")(sequelize, Sequelize.DataTypes);
   db.Project = require("./Project")(sequelize, Sequelize.DataTypes);
@@ -29,8 +28,14 @@ try {
   db.Scrap = require("./Scrap")(sequelize, Sequelize.DataTypes);             // ✅ 추가
   db.ProjectMembers = require("./ProjectMembers")(sequelize, Sequelize.DataTypes); // ✅ 추가
 
-} catch (error) {
-  console.error("❌ Error in models/index.js:", error);
-}
+
+
+// 모델 간 관계 설정
+Object.values(db).forEach((model) => {
+  if (model && model.associate) {
+    console.log(`Associating model: ${model.name}`);
+    model.associate(db);
+  }
+});
 
 module.exports = db;
