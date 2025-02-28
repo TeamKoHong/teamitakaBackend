@@ -18,7 +18,6 @@ db.Hashtag = require("./Hashtag")(sequelize, Sequelize.DataTypes);
 db.Keyword = require("./Keyword")(sequelize, Sequelize.DataTypes);
 db.Like = require("./Like")(sequelize, Sequelize.DataTypes);
 db.Notification = require("./Notification")(sequelize, Sequelize.DataTypes);
-db.Profile = require("./Profile")(sequelize, Sequelize.DataTypes);
 db.Project = require("./Project")(sequelize, Sequelize.DataTypes);
 db.ProjectMembers = require("./ProjectMembers")(sequelize, Sequelize.DataTypes);
 db.Recruitment = require("./Recruitment")(sequelize, Sequelize.DataTypes);
