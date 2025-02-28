@@ -64,5 +64,10 @@ module.exports = (sequelize) => {
     }
   );
 
+  Project.beforeCreate((project, options) => {
+    if (!project.user_id) throw new Error("User ID is required");
+    if (!project.recruitment_id) throw new Error("Recruitment ID is required");
+  });
+
   return Project;
 };

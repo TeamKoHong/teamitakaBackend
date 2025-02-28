@@ -19,7 +19,6 @@ module.exports = (sequelize, DataTypes) => {
       },
     });
   
-
     return Campus;
   };
   
