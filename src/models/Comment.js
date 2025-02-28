@@ -30,6 +30,6 @@ module.exports = (sequelize) => {
       onDelete: "CASCADE",
     },
   });
-
+  
   return Comment;
 };

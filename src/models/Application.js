@@ -28,7 +28,6 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "PENDING",
       },
     });
-
   
     return Application;
   };
