@@ -126,7 +126,6 @@ async function loadMockupData() {
     const projects = [];
     const projectMembers = [];
 
-    // Step 1: 사용자 데이터 처리
     if (argv.users) {
       const userFilePath = path.join(dataPath, "users_mockup.csv");
       if (!fs.existsSync(userFilePath)) throw new Error(`users_mockup.csv not found at: ${userFilePath}`);
