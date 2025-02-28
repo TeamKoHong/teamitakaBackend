@@ -19,13 +19,6 @@ module.exports = (sequelize, DataTypes) => {
       },
     });
   
-    Department.associate = (models) => {
-      Department.belongsTo(models.College, {
-        foreignKey: "CollegeID",
-        onDelete: "CASCADE",
-      });
-    };
-  
     return Department;
   };
   

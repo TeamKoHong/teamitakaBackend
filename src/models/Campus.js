@@ -19,18 +19,7 @@ module.exports = (sequelize, DataTypes) => {
       },
     });
   
-    Campus.associate = (models) => {
-      Campus.belongsTo(models.University, {
-        foreignKey: "UniversityID",
-        onDelete: "CASCADE",
-      });
-  
-      Campus.hasMany(models.College, {
-        foreignKey: "CampusID",
-        onDelete: "CASCADE",
-      });
-    };
-  
+
     return Campus;
   };
   

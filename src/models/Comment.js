@@ -31,10 +31,5 @@ module.exports = (sequelize) => {
     },
   });
 
-  Comment.associate = (models) => {
-    Comment.belongsTo(models.User, { foreignKey: "user_id" });
-    Comment.belongsTo(models.Recruitment, { foreignKey: "recruitment_id" });
-  };
-
   return Comment;
 };

@@ -64,34 +64,5 @@ module.exports = (sequelize) => {
     }
   );
 
-  Project.beforeCreate((project, options) => {
-    if (!project.user_id) throw new Error("User ID is required");
-    if (!project.recruitment_id) throw new Error("Recruitment ID is required");
-  });
-
-  Project.associate = (models) => {
-    Project.belongsTo(models.Recruitment, {
-      foreignKey: "recruitment_id",
-      onDelete: "CASCADE",
-    });
-    Project.belongsTo(models.User, {
-      foreignKey: "user_id",
-      onDelete: "CASCADE",
-    });
-    Project.belongsToMany(models.User, {
-      through: "ProjectMember",
-      foreignKey: "project_id",
-      otherKey: "user_id",
-    });
-    Project.hasMany(models.Todo, {
-      foreignKey: "project_id",
-      onDelete: "CASCADE",
-    });
-    Project.hasMany(models.Timeline, {
-      foreignKey: "project_id",
-      onDelete: "CASCADE",
-    });
-  };
-
   return Project;
 };

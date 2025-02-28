@@ -49,16 +49,6 @@ module.exports = (sequelize) => {
     }
   );
 
-  ProjectMember.associate = (models) => {
-    ProjectMember.belongsTo(models.Project, {
-      foreignKey: "project_id",
-      onDelete: "CASCADE",
-    });
-    ProjectMember.belongsTo(models.User, {
-      foreignKey: "user_id",
-      onDelete: "CASCADE",
-    });
-  };
 
   return ProjectMember;
 };

@@ -24,12 +24,5 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  Todo.associate = (models) => {
-    Todo.belongsTo(models.Project, {
-      foreignKey: "project_id",
-      onDelete: "CASCADE",
-    });
-  };
-
   return Todo;
 };
