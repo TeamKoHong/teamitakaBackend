@@ -11,8 +11,8 @@ module.exports = (sequelize) => {
       },
       title: {
         type: DataTypes.STRING,
-        allowNull: false,
-        defaultValue: "Default Project",
+        allowNull: true, // 모의 데이터에 없으므로 임시로 허용
+
       },
       description: {
         type: DataTypes.TEXT,
@@ -51,6 +51,11 @@ module.exports = (sequelize) => {
         defaultValue: "예정",
         allowNull: false,
       },
+      role: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+
     },
     {
       tableName: "Projects",

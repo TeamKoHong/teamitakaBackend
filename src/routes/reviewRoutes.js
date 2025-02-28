@@ -1,8 +1,11 @@
 const express = require("express");
 const router = express.Router();
+const ReviewController = require("../controllers/reviewController");
+const authMiddleware = require("../middlewares/authMiddleware"); // 인증 미들웨어
 
-router.get("/", (req, res) => {
-  res.json({ message: "Review routes working" });
-});
+router.post("/", authMiddleware, ReviewController.createReview);
+router.get("/user/:user_id", authMiddleware, ReviewController.getUserReviews);
+router.get("/project/:project_id", authMiddleware, ReviewController.getProjectReviews);
+router.delete("/:review_id", authMiddleware, ReviewController.deleteReview);
 
 module.exports = router;
