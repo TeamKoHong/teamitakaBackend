@@ -29,11 +29,6 @@ module.exports = (sequelize, DataTypes) => {
       },
     });
   
-    Application.associate = (models) => {
-      Application.belongsTo(models.User, { foreignKey: "user_id", onDelete: "CASCADE" });
-      Application.belongsTo(models.Recruitment, { foreignKey: "recruitment_id", onDelete: "CASCADE" });
-    };
-  
     return Application;
   };
   
