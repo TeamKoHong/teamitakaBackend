@@ -18,6 +18,11 @@ const draftRoutes = require("./routes/draftRoutes");  // draftRoutes 추가
 const scrapRoutes = require("./routes/scrapRoutes");  // scrapRoutes 추가
 const applicationRoutes = require("./routes/applicationRoutes"); 
 
+const swaggerUi = require('swagger-ui-express');
+const yaml = require('yamljs');
+const path = require('path');
+const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -55,5 +60,8 @@ app.get('/health', async (req, res) => {
     res.status(503).json({ status: 'ERROR', database: 'disconnected', error: error.message });
   }
 });
+
+// swagger 라우트 추가
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 module.exports = app;
