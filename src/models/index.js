@@ -135,6 +135,10 @@ db.Recruitment.associate = (models) => {
     foreignKey: "recruitment_id",
     onDelete: "CASCADE",
   });
+  db.Recruitment.hasMany(db.Application, { 
+    foreignKey: "recruitment_id", 
+    onDelete: "CASCADE" });
+
 };
 
 db.Review.associate = (models) => {
