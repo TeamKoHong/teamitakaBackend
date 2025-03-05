@@ -29,6 +29,7 @@ db.Todo = require("./Todo")(sequelize, Sequelize.DataTypes);
 db.University = require("./University")(sequelize, Sequelize.DataTypes);
 db.User = require("./User")(sequelize, Sequelize.DataTypes);
 db.VerifiedEmail = require("./VerifiedEmail")(sequelize, Sequelize.DataTypes);
+db.ProjectPost = require("./ProjectPost")(sequelize, Sequelize.DataTypes);
 
 // 모델 간 관계 설정
 db.Application.associate = (models) => {
@@ -113,6 +114,9 @@ db.Project.associate = (models) => {
     foreignKey: "project_id",
     onDelete: "CASCADE",
   });
+  db.Project.hasMany(db.ProjectPost, { 
+    foreignKey: "project_id", 
+    onDelete: "CASCADE" });
 };
 
 db.ProjectMembers.associate = (models) => {
@@ -126,6 +130,10 @@ db.ProjectMembers.associate = (models) => {
   });
 };
 
+db.ProjectPost.belongsTo(db.Project, { foreignKey: "project_id" });
+db.ProjectPost.belongsTo(db.User, { foreignKey: "user_id" });
+
+
 db.Recruitment.associate = (models) => {
   db.Recruitment.belongsTo(models.User, {
     foreignKey: "user_id",
@@ -135,6 +143,10 @@ db.Recruitment.associate = (models) => {
     foreignKey: "recruitment_id",
     onDelete: "CASCADE",
   });
+  db.Recruitment.hasMany(db.Application, { 
+    foreignKey: "recruitment_id", 
+    onDelete: "CASCADE" });
+
 };
 
 db.Review.associate = (models) => {

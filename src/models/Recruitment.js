@@ -46,6 +46,7 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: DataTypes.NOW,
       },
+      
     },
     {
       timestamps: true,
