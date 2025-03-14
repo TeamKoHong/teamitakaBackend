@@ -20,6 +20,7 @@ db.Like = require("./Like")(sequelize, Sequelize.DataTypes);
 db.Notification = require("./Notification")(sequelize, Sequelize.DataTypes);
 db.Project = require("./Project")(sequelize, Sequelize.DataTypes);
 db.ProjectMembers = require("./ProjectMembers")(sequelize, Sequelize.DataTypes);
+db.ProjectPost = require("./ProjectPost")(sequelize, Sequelize.DataTypes);
 db.Recruitment = require("./Recruitment")(sequelize, Sequelize.DataTypes);
 db.Review = require("./Review")(sequelize, Sequelize.DataTypes);
 db.Scrap = require("./Scrap")(sequelize, Sequelize.DataTypes);
@@ -29,7 +30,9 @@ db.Todo = require("./Todo")(sequelize, Sequelize.DataTypes);
 db.University = require("./University")(sequelize, Sequelize.DataTypes);
 db.User = require("./User")(sequelize, Sequelize.DataTypes);
 db.VerifiedEmail = require("./VerifiedEmail")(sequelize, Sequelize.DataTypes);
-db.ProjectPost = require("./ProjectPost")(sequelize, Sequelize.DataTypes);
+db.Vote = require("./Vote")(sequelize, Sequelize.DataTypes);
+db.VoteOption = require("./VoteOption")(sequelize, Sequelize.DataTypes);
+db.VoteResponse = require("./VoteResponse")(sequelize, Sequelize.DataTypes);
 
 // 모델 간 관계 설정
 db.Application.associate = (models) => {
@@ -181,6 +184,47 @@ db.Todo.associate = (models) => {
 db.University.associate = (models) => {
   db.University.hasMany(models.College, {
     foreignKey: "UniversityID",
+    onDelete: "CASCADE",
+  });
+};
+
+db.Vote.associate = (models) => {
+  db.Vote.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Vote.hasMany(models.VoteOption, {
+    foreignKey: "vote_id",
+    onDelete: "CASCADE",
+  });
+  db.Vote.hasMany(models.VoteResponse, {
+    foreignKey: "vote_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.VoteOption.associate = (models) => {
+  db.VoteOption.belongsTo(models.Vote, {
+    foreignKey: "vote_id",
+    onDelete: "CASCADE",
+  });
+  db.VoteOption.hasMany(models.VoteResponse, {
+    foreignKey: "option_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.VoteResponse.associate = (models) => {
+  db.VoteResponse.belongsTo(models.Vote, {
+    foreignKey: "vote_id",
+    onDelete: "CASCADE",
+  });
+  db.VoteResponse.belongsTo(models.VoteOption, {
+    foreignKey: "option_id",
+    onDelete: "CASCADE",
+  });
+  db.VoteResponse.belongsTo(models.User, {
+    foreignKey: "user_id",
     onDelete: "CASCADE",
   });
 };
