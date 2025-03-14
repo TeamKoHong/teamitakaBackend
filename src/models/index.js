@@ -230,6 +230,13 @@ db.VoteResponse.associate = (models) => {
   });
 };
 
+db.Schedule.associate = (models) => {
+  db.Schedule.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+};
+
 // 모델 간 관계 설정 실행
 Object.values(db).forEach((model) => {
   if (model && model.associate) {
