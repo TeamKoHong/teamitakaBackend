@@ -1,0 +1,45 @@
+const { DataTypes } = require('sequelize');
+
+module.exports = (sequelize) => {
+  const Vote = sequelize.define(
+    'Vote',
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
+      project_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+          model: 'Projects',
+          key: 'project_id',
+        },
+        onDelete: 'CASCADE',
+      },
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      description: {
+        type: DataTypes.TEXT,
+      },
+      start_date: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      end_date: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+    },
+    {
+      tableName: 'Votes',
+      freezeTableName: true,
+      timestamps: true,
+    }
+  );
+
+  return Vote;
+};
