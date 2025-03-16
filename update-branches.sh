@@ -11,18 +11,26 @@ for branch in $(git branch | grep -v "dev\|main" | sed 's/^\*//g' | sed 's/^[[:s
     echo "--------------------------------"
     echo "Processing branch: $branch"
     git checkout "$branch"
+    git fetch origin "$branch"  # 깃허브의 브랜치 상태 가져오기
     git merge dev --no-edit
     if [ $? -eq 0 ]; then
         echo "Successfully merged dev into $branch"
     else
-        echo "Conflict detected in $branch. Aborting merge..."
+        echo "Conflict detected in $branch. Attempting to resolve..."
         git merge --abort
-        echo "Please resolve conflicts manually in $branch"
+        # 깃허브 상태와 동기화 후 재시도
+        git reset --hard "origin/$branch"
+        git merge dev --no-edit
+        if [ $? -eq 0 ]; then
+            echo "Resolved by resetting to origin and merging dev into $branch"
+        else
+            echo "Still failed. Please resolve conflicts manually in $branch"
+        fi
     fi
 done
 
-# 3. 모든 브랜치를 깃허브에 푸시 (선택 사항)
+# 3. 모든 브랜치를 깃허브에 푸시
 echo "Pushing all updated branches to origin..."
-git push origin --all
+git push origin --all --force  # 강제로 푸시해서 동기화 보장
 
 echo "Done!"
