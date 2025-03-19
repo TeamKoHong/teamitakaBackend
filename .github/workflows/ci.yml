@@ -116,9 +116,10 @@ jobs:
             }
           echo "✅ Container -> Cloud SQL Proxy connection successful"
 
-      - name: Reset Database (Drop and Recreate Schema)
+      # 수정된 단계: 데이터베이스가 항상 존재하도록 보장
+      - name: Ensure Database Exists
         run: |
-          echo "Resetting database by dropping and recreating schema..."
+          echo "Ensuring database exists..."
           docker run --network host \
             -e DB_USER=${{ env.DB_USER }} \
             -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
@@ -126,8 +127,9 @@ jobs:
             -e DB_HOST=${{ env.DB_HOST }} \
             -e DB_PORT=${{ env.DB_PORT }} \
             teamitaka-app \
-            bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'DROP SCHEMA IF EXISTS \`${{ env.DB_NAME }}\`;' && mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'CREATE SCHEMA \`${{ env.DB_NAME }}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;' && echo 'Database schema reset completed'"
+            bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'CREATE DATABASE IF NOT EXISTS \`${{ env.DB_NAME }}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;' && echo 'Database created or already exists'"
 
+      # 수정된 단계: --debug 옵션 추가로 디버깅 강화
       - name: Run Sequelize migrations in Docker
         run: |
           echo "Running migration via container with Auth Proxy for deployment..."
