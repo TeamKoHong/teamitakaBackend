@@ -116,7 +116,6 @@ jobs:
             }
           echo "✅ Container -> Cloud SQL Proxy connection successful"
 
-      # 수정된 단계: 데이터베이스가 항상 존재하도록 보장
       - name: Ensure Database Exists
         run: |
           echo "Ensuring database exists..."
@@ -127,17 +126,43 @@ jobs:
             -e DB_HOST=${{ env.DB_HOST }} \
             -e DB_PORT=${{ env.DB_PORT }} \
             teamitaka-app \
-            bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'CREATE DATABASE IF NOT EXISTS \`${{ env.DB_NAME }}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;' && echo 'Database created or already exists'"
+            bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'CREATE DATABASE IF NOT EXISTS \`${{ env.DB_NAME }}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;' && echo 'Database created or already exists' || { echo 'Failed to create database'; exit 1; }"
 
-      # 수정된 단계: --debug 옵션 추가로 디버깅 강화
-      - name: Run Sequelize migrations in Docker
+      - name: Verify Database Existence
+        run: |
+          echo "Verifying database existence..."
+          docker run --network host \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_PORT=${{ env.DB_PORT }} \
+            teamitaka-app \
+            bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'USE \`${{ env.DB_NAME }}\`;' && echo 'Database exists' || { echo 'Database does not exist'; exit 1; }"
+
+      - name: Undo All Migrations
+        run: |
+          echo "Undoing all previous migrations..."
+          docker run --network host \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_PORT=${{ env.DB_PORT }} \
+            teamitaka-app \
+            bash -c "npx sequelize-cli db:migrate:undo:all --debug && echo 'All migrations undone' || { echo 'Failed to undo migrations'; exit 1; }"
+
+      - name: Run Sequelize Migrations
         run: |
           echo "Running migration via container with Auth Proxy for deployment..."
           docker run --network host \
-            -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            -e NODE_ENV=production \
+            -e DB_USER=${{ env.DB_USER }} \
+            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            -e DB_NAME=${{ env.DB_NAME }} \
+            -e DB_HOST=${{ env.DB_HOST }} \
+            -e DB_PORT=${{ env.DB_PORT }} \
             teamitaka-app \
-            bash -c "npx sequelize-cli db:migrate --url ${{ env.DATABASE_URL }} --debug"
+            bash -c "npx sequelize-cli db:migrate --debug && echo 'Migrations completed' || { echo 'Failed to run migrations'; exit 1; }"
 
       - name: Check Migration Status
         run: |
@@ -197,7 +222,7 @@ jobs:
           }
           
           echo "⏳ Waiting for server..."
-          sleep 20  # 시간 늘려서 확실히
+          sleep 20
           
           echo "🔍 Checking health..."
           for i in {1..5}; do
@@ -208,7 +233,7 @@ jobs:
               break
             else
               echo "⚠️ Health failed, retrying... (Attempt $i)"
-              docker logs teamitaka-prod  # 컨테이너 로그 출력
+              docker logs teamitaka-prod
               sleep 5
             fi
             if [ "$i" -eq 5 ]; then
