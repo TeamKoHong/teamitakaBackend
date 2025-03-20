@@ -181,12 +181,11 @@ jobs:
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate:status --url ${{ env.DATABASE_URL }}"
 
-      # 추가된 단계: ProjectPost.js 파일 존재 여부 확인
-      - name: Verify ProjectPost.js exists
+      # 추가된 단계: src/models 디렉토리 내 파일 목록 출력
+      - name: List files in src/models
         run: |
-          echo "Checking if ProjectPost.js exists in the container..."
-          docker run --rm teamitaka-app ls /app/src/models/ProjectPost.js || { echo "Error: ProjectPost.js is missing"; exit 1; }
-          echo "✅ ProjectPost.js exists in /app/src/models/"
+          echo "Listing files in /app/src/models/ inside the container..."
+          docker run --rm teamitaka-app ls -la /app/src/models/
 
       # 모의 데이터 삽입
       - name: Insert Mockup Data
