@@ -17,7 +17,7 @@ async function loadCSV(filePath) {
         }
         results.push({ uniName, collegeName, deptName });
       })
-      .on("end", resolve)
+      .on("end", () => resolve(results))
       .on("error", (error) => {
         console.error(`🚨 Error reading CSV file at ${filePath}:`, error.message);
         reject(error);
