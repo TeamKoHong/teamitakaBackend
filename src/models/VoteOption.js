@@ -1,4 +1,6 @@
-//투표 선택지
+const { DataTypes } = require('sequelize');
+
+// 투표 선택지
 module.exports = (sequelize) => {
     const VoteOption = sequelize.define(
       'VoteOption',
