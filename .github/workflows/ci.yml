@@ -16,16 +16,19 @@ jobs:
       contents: read
 
     steps:
+      # 코드 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      # Node.js 환경 설정
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
+      # 서비스 계정 키 준비
       - name: Prepare Service Account Key
         run: |
           cat <<EOF > sa-key.json
@@ -33,11 +36,13 @@ jobs:
           EOF
           echo "Service Account JSON saved to sa-key.json"
 
+      # Cloud SQL Proxy 다운로드
       - name: Download Cloud SQL Proxy
         run: |
           wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
           chmod +x cloud_sql_proxy
 
+      # Cloud SQL Proxy 시작
       - name: Start Cloud SQL Proxy
         run: |
           ./cloud_sql_proxy \
@@ -53,6 +58,7 @@ jobs:
           echo "✅ Proxy running on 3307"
           cat proxy.log
 
+      # Cloud SQL 연결 테스트 (호스트)
       - name: Test Cloud SQL Connection (host)
         run: |
           sudo apt-get update
@@ -69,14 +75,17 @@ jobs:
           }
           echo "✅ Cloud SQL Proxy is accessible on 127.0.0.1:3307"
 
+      # Docker Buildx 설정
       - name: Install Docker (Buildx)
         uses: docker/setup-buildx-action@v3
 
+      # Docker 이미지 빌드
       - name: Build Docker Image
         run: |
           docker build -t teamitaka-app -f Dockerfile.prod .
         working-directory: .
 
+      # 데이터베이스 환경 변수 설정
       - name: Set Database Environment
         run: |
           DB_NAME_VALUE=${{ secrets.DB_NAME }}
@@ -95,6 +104,7 @@ jobs:
           echo "NODE_ENV=production" >> $GITHUB_ENV
           echo "Determined DATABASE_URL: ${{ env.DATABASE_URL }}"
 
+      # 환경 변수 디버깅 출력
       - name: Debug - Print Environment
         run: |
           echo "INSTANCE_CONNECTION_NAME=${{ secrets.INSTANCE_CONNECTION_NAME }}"
@@ -106,6 +116,7 @@ jobs:
           echo "DATABASE_URL=${{ env.DATABASE_URL }}"
           echo "NODE_ENV=${{ env.NODE_ENV }}"
 
+      # Cloud SQL 연결 테스트 (Docker)
       - name: Test Cloud SQL Connection (docker)
         run: |
           echo "Testing connection from container to Proxy at 127.0.0.1:3307..."
@@ -116,6 +127,7 @@ jobs:
             }
           echo "✅ Container -> Cloud SQL Proxy connection successful"
 
+      # 데이터베이스 생성 확인
       - name: Ensure Database Exists
         run: |
           echo "Ensuring database exists..."
@@ -128,6 +140,7 @@ jobs:
             teamitaka-app \
             bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'CREATE DATABASE IF NOT EXISTS \`${{ env.DB_NAME }}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;' && echo 'Database created or already exists' || { echo 'Failed to create database'; exit 1; }"
 
+      # 데이터베이스 존재 확인
       - name: Verify Database Existence
         run: |
           echo "Verifying database existence..."
@@ -140,6 +153,7 @@ jobs:
             teamitaka-app \
             bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'USE \`${{ env.DB_NAME }}\`;' && echo 'Database exists' || { echo 'Database does not exist'; exit 1; }"
 
+      # 기존 마이그레이션 되돌리기
       - name: Undo All Migrations
         run: |
           echo "Undoing all previous migrations..."
@@ -148,6 +162,7 @@ jobs:
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate:undo:all --url ${{ env.DATABASE_URL }} --debug && echo 'All migrations undone' || { echo 'Failed to undo migrations'; exit 1; }"
 
+      # Sequelize 마이그레이션 실행
       - name: Run Sequelize Migrations
         run: |
           echo "Running migration via container with Auth Proxy for deployment..."
@@ -156,6 +171,7 @@ jobs:
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate --url ${{ env.DATABASE_URL }} --debug && echo 'Migrations completed' || { echo 'Failed to run migrations'; exit 1; }"
 
+      # 마이그레이션 상태 확인
       - name: Check Migration Status
         run: |
           echo "Checking migration status for deployment..."
@@ -172,6 +188,7 @@ jobs:
           docker run --rm teamitaka-app ls /app/src/models/ProjectPost.js || { echo "Error: ProjectPost.js is missing"; exit 1; }
           echo "✅ ProjectPost.js exists in /app/src/models/"
 
+      # 모의 데이터 삽입
       - name: Insert Mockup Data
         run: |
           echo "🔍 Starting mockup data insertion process..."
@@ -183,6 +200,7 @@ jobs:
             node src/scripts/loadMockupData.js --users --recruitments --projects --verbose
           echo "✅ Mockup data insertion completed"
 
+      # 대학, 학부, 학과 데이터 삽입
       - name: Insert Universities, Colleges, Departments Data
         run: |
           echo "🔍 Inserting Universities, Colleges, Departments data into DB from CSV for deployment..."
@@ -194,6 +212,7 @@ jobs:
             node src/scripts/insertCSV.js
           echo "✅ Universities, Colleges, Departments CSV Insert Completed"
 
+      # 애플리케이션 배포 및 테스트
       - name: Deploy and Test Application
         run: |
           echo "🚀 Starting Application..."
@@ -242,5 +261,6 @@ jobs:
             fi
           done
 
+      # Cloud SQL Proxy 종료
       - name: Stop Cloud SQL Proxy
         run: pkill cloud_sql_proxy || true
