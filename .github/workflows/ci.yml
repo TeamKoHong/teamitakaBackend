@@ -79,11 +79,18 @@ jobs:
       - name: Install Docker (Buildx)
         uses: docker/setup-buildx-action@v3
 
-      # Docker 이미지 빌드
+      # Docker 이미지 빌드 (캐시 무시)
       - name: Build Docker Image
         run: |
-          docker build -t teamitaka-app -f Dockerfile.prod .
+          docker build -t teamitaka-app -f Dockerfile.prod --no-cache .
         working-directory: .
+
+      # ProjectPost.js 파일 존재 여부 확인
+      - name: Verify ProjectPost.js exists
+        run: |
+          echo "Checking if ProjectPost.js exists in the container..."
+          docker run --rm teamitaka-app ls /app/src/models/ProjectPost.js || { echo "Error: ProjectPost.js is missing"; exit 1; }
+          echo "✅ ProjectPost.js exists in /app/src/models/"
 
       # 데이터베이스 환경 변수 설정
       - name: Set Database Environment
@@ -180,13 +187,6 @@ jobs:
             -e NODE_ENV=production \
             teamitaka-app \
             bash -c "npx sequelize-cli db:migrate:status --url ${{ env.DATABASE_URL }}"
-
-      # ProjectPost.js 파일 존재 여부 확인 (새로 추가된 단계)
-      - name: Verify ProjectPost.js exists
-        run: |
-          echo "Checking if ProjectPost.js exists in the container..."
-          docker run --rm teamitaka-app ls /app/src/models/ProjectPost.js || { echo "Error: ProjectPost.js is missing"; exit 1; }
-          echo "✅ ProjectPost.js exists in /app/src/models/"
 
       # 모의 데이터 삽입
       - name: Insert Mockup Data
