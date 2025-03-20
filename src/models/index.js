@@ -10,7 +10,6 @@ db.sequelize = sequelize;
 // ✅ 모델 불러오기
 db.Admin = require("./Admin")(sequelize, Sequelize.DataTypes);
 db.Application = require("./Application")(sequelize, Sequelize.DataTypes);
-db.Campus = require("./Campus")(sequelize, Sequelize.DataTypes);
 db.College = require("./College")(sequelize, Sequelize.DataTypes);
 db.Comment = require("./Comment")(sequelize, Sequelize.DataTypes);
 db.Department = require("./Department")(sequelize, Sequelize.DataTypes);
@@ -41,24 +40,9 @@ db.Application.associate = (models) => {
   db.Application.belongsTo(models.Recruitment, { foreignKey: "recruitment_id", onDelete: "CASCADE" });
 };
 
-db.Campus.associate = (models) => {
-  db.Campus.belongsTo(models.University, {
-    foreignKey: "UniversityID",
-    onDelete: "CASCADE",
-  });
-  db.Campus.hasMany(models.College, {
-    foreignKey: "CampusID",
-    onDelete: "CASCADE",
-  });
-};
-
 db.College.associate = (models) => {
   db.College.belongsTo(models.University, {
     foreignKey: "UniversityID",
-    onDelete: "CASCADE",
-  });
-  db.College.belongsTo(models.Campus, {
-    foreignKey: "CampusID",
     onDelete: "CASCADE",
   });
   db.College.hasMany(models.Department, {
@@ -137,7 +121,6 @@ db.ProjectMembers.associate = (models) => {
 db.ProjectPost.belongsTo(db.Project, { foreignKey: "project_id" });
 db.ProjectPost.belongsTo(db.User, { foreignKey: "user_id" });
 
-
 db.Recruitment.associate = (models) => {
   db.Recruitment.belongsTo(models.User, {
     foreignKey: "user_id",
@@ -150,7 +133,6 @@ db.Recruitment.associate = (models) => {
   db.Recruitment.hasMany(db.Application, { 
     foreignKey: "recruitment_id", 
     onDelete: "CASCADE" });
-
 };
 
 db.Review.associate = (models) => {
