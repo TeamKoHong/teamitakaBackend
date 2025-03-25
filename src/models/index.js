@@ -16,7 +16,6 @@ db.Comment = require("./Comment")(sequelize, Sequelize.DataTypes);
 db.Department = require("./Department")(sequelize, Sequelize.DataTypes);
 db.Hashtag = require("./Hashtag")(sequelize, Sequelize.DataTypes);
 db.Keyword = require("./Keyword")(sequelize, Sequelize.DataTypes);
-db.Like = require("./Like")(sequelize, Sequelize.DataTypes);
 db.Notification = require("./Notification")(sequelize, Sequelize.DataTypes);
 db.Project = require("./Project")(sequelize, Sequelize.DataTypes);
 db.ProjectMembers = require("./ProjectMembers")(sequelize, Sequelize.DataTypes);
@@ -84,11 +83,6 @@ db.Hashtag.associate = (models) => {
     through: "recruitment_hashtags",
     foreignKey: "hashtag_id",
   });
-};
-
-db.Like.associate = (models) => {
-  db.Like.belongsTo(models.User, { foreignKey: "user_id" });
-  db.Like.belongsTo(models.Recruitment, { foreignKey: "recruitment_id" });
 };
 
 db.Project.beforeCreate((project, options) => {
