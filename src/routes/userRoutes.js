@@ -12,6 +12,6 @@ router.post("/", userController.createUser);
 // 추가 가능 예시:
 // router.get("/:id", userController.getUserById);
 // router.put("/:id", userController.updateUser);
-// router.delete("/:id", userController.deleteUser);
+router.delete("/:id", userController.deleteUser);
 
 module.exports = router;

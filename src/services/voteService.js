@@ -26,4 +26,8 @@ const submitVote = async (voteId, data) => {
     });
 };
 
-module.exports = { createVote, getVotesByProject, getVoteById, submitVote };
+module.exports = { 
+    createVote, 
+    getVotesByProject, 
+    getVoteById, 
+    submitVote };

@@ -30,3 +30,15 @@ exports.createUser = async (req, res) => {
     return res.status(500).json({ error: "Failed to create user" });
   }
 };
+
+//탈퇴
+exports.deleteUser = async (req, res) => {
+  try {
+    const user_id = req.params.id;
+    const result = await userService.deleteUser(user_id);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("deleteUser Error:", error);
+    return res.status(404).json({ error: error.message });
+  }
+};
