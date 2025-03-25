@@ -7,18 +7,6 @@ const createProject = async (data) => {
   const recruitment = await Recruitment.findByPk(recruitment_id);
   if (!recruitment) throw new Error("유효한 모집공고가 필요합니다.");
 
-  const newProject = await Project.create({
-    title,
-    description,
-    user_id,
-    recruitment_id,
-    start_date,
-    end_date,
-    status: status || "예정",
-    role,
-  });
-
-  return newProject;
 };
 
 const getAllProjects = async () => {
@@ -50,6 +38,15 @@ const getProjectById = async (project_id) => {
   return project;
 };
 
+const getCompletedProjects = async (req, res) => {
+  try {
+    const projects = await Project.findAll({ where: { status: "완료" } });
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ message: "완료된 프로젝트 조회 실패" });
+  }
+};
+
 const updateProject = async (project_id, updateData) => {
   const project = await Project.findByPk(project_id);
   if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
@@ -63,16 +60,10 @@ const updateProject = async (project_id, updateData) => {
   return project;
 };
 
-const deleteProject = async (project_id) => {
-  const project = await Project.findByPk(project_id);
-  if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
-  await project.destroy();
-};
 
 module.exports = {
-  createProject,
   getAllProjects,
   getProjectById,
   updateProject,
-  deleteProject,
+  getCompletedProjects,
 };
