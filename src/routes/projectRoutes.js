@@ -11,6 +11,7 @@ router.get("/projects", projectController.getAllProjects);
 
 // 특정 프로젝트 조회
 router.get("/projects/:project_id", projectController.getProjectById);
+router.get("/projects/completed", projectController.getCompletedProjects);
 
 // 프로젝트 수정
 router.put("/projects/:project_id", authMiddleware, projectController.updateProject);
