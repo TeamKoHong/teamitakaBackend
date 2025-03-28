@@ -16,9 +16,6 @@ router.get("/projects/completed", projectController.getCompletedProjects);
 // 프로젝트 수정
 router.put("/projects/:project_id", authMiddleware, projectController.updateProject);
 
-// 프로젝트 삭제
-router.delete("/projects/:project_id", authMiddleware, projectController.deleteProject);
-
 // ✅ 할 일 CRUD
 router.get("/projects/:project_id/todo", todoController.getTodos);
 router.post("/projects/:project_id/todo", authMiddleware, todoController.addTodo);
