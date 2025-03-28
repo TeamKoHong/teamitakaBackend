@@ -6,20 +6,25 @@ const createProject = async (data) => {
   // 모집공고 존재 여부 확인
   const recruitment = await Recruitment.findByPk(recruitment_id);
   if (!recruitment) throw new Error("유효한 모집공고가 필요합니다.");
-
 };
 
+// getAllProjects
 const getAllProjects = async (req, res) => {
   try {
     const projects = await Project.findAll({
       order: [["createdAt", "DESC"]],
       include: [
-        { model: User, as: "User", attributes: ["username"] },
+        { model: User, as: "User", attributes: ["username"] },  // 프로젝트 생성자
         { model: Recruitment, as: "Recruitment", attributes: ["title"] },
+        {
+          model: User,
+          as: "Members",  // 프로젝트 팀원들
+          attributes: ["username"],
+          through: { attributes: ["role"] },  // 팀원 역할 정보도 포함
+        },
       ],
     });
 
-    // ✅ 이 줄이 없으면 Postman은 계속 로딩됨!
     return res.status(200).json(projects);
   } catch (err) {
     console.error("🔥 Sequelize Error:", err.message);
@@ -27,26 +32,40 @@ const getAllProjects = async (req, res) => {
   }
 };
 
+// getProjectById
+const getProjectById = async (req, res) => {
+  try {
+    const { project_id } = req.params;
+    console.log("Requested project_id: ", project_id);  // 파라미터 확인
+    const project = await Project.findByPk(project_id, {
+      logging: console.log, // SQL 쿼리를 로깅
+      include: [
+        { model: User, as: "User", attributes: ["username"] },
+        { model: Recruitment, as: "Recruitment", attributes: ["title"] },
+        { model: Todo },
+        { model: Timeline },
+        {
+          model: User,
+          as: "Members",  // 팀원들
+          attributes: ["username"],
+          through: { attributes: ["role"] },
+        },
+      ],
+    });
 
-const getProjectById = async (project_id) => {
-  const project = await Project.findByPk(project_id, {
-    include: [
-      { model: User, attributes: ["username"] },
-      { model: Recruitment, attributes: ["title"] },
-      { model: Todo },
-      { model: Timeline },
-      {
-        model: User,
-        as: "Members",
-        through: { attributes: ["role"] },
-      },
-    ],
-  });
+    if (!project) {
+      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
 
-  if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
-  return project;
+    return res.status(200).json(project);
+  } catch (err) {
+    console.error("🔥 Sequelize Error:", err.message);
+    return res.status(500).json({ message: "서버 오류", error: err.message });
+  }
 };
 
+
+// getCompletedProjects
 const getCompletedProjects = async (req, res) => {
   try {
     const projects = await Project.findAll({ where: { status: "완료" } });
@@ -56,6 +75,7 @@ const getCompletedProjects = async (req, res) => {
   }
 };
 
+// updateProject
 const updateProject = async (project_id, updateData) => {
   const project = await Project.findByPk(project_id);
   if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
@@ -68,7 +88,6 @@ const updateProject = async (project_id, updateData) => {
   await project.update(updateData);
   return project;
 };
-
 
 module.exports = {
   getAllProjects,

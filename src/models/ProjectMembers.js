@@ -44,6 +44,7 @@ module.exports = (sequelize) => {
       },
     },
     {
+      tableName: "projectmembers",  // 테이블 이름 명시
       freezeTableName: true,
       timestamps: true,
     }

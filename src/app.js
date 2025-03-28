@@ -36,7 +36,7 @@ app.use("/api/univcert", univCertRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/recruitment", recruitmentRoutes);
 app.use("/api/comment", commentRoutes);
-app.use("/api/project", projectRoutes);
+app.use("/api/projects", projectRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/profiles", profileRoutes);
 app.use("/api/reviews", reviewRoutes); // ✅ 리뷰 라우트 추가
