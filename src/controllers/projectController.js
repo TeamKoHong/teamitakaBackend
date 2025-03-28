@@ -9,22 +9,22 @@ const createProject = async (data) => {
 
 };
 
-const getAllProjects = async () => {
-  return await Project.findAll({
-    order: [["createdAt", "DESC"]],
-    include: [
-      {
-        model: User,
-        as: "User", // 👈 이 alias와 위와 매칭돼야 함!
-        attributes: ["username"],
-      },
-      {
-        model: Recruitment,
-        as: "Recruitment", // 👈 이것도 마찬가지
-        attributes: ["title"],
-      },
-    ],
-  });
+const getAllProjects = async (req, res) => {
+  try {
+    const projects = await Project.findAll({
+      order: [["createdAt", "DESC"]],
+      include: [
+        { model: User, as: "User", attributes: ["username"] },
+        { model: Recruitment, as: "Recruitment", attributes: ["title"] },
+      ],
+    });
+
+    // ✅ 이 줄이 없으면 Postman은 계속 로딩됨!
+    return res.status(200).json(projects);
+  } catch (err) {
+    console.error("🔥 Sequelize Error:", err.message);
+    return res.status(500).json({ message: "프로젝트 조회 실패", error: err.message });
+  }
 };
 
 
