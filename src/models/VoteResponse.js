@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 
 //어떤 옵션을 선택했는지 저장장
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
     const VoteResponse = sequelize.define(
       'VoteResponse',
       {
