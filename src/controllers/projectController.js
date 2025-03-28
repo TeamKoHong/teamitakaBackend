@@ -11,7 +11,7 @@ const createProject = async (data) => {
 
 const getAllProjects = async () => {
   return await Project.findAll({
-    order: [["created_at", "DESC"]],
+    order: [["createdAt", "DESC"]],
     include: [
       { model: User, attributes: ["username"] },
       { model: Recruitment, attributes: ["title"] },
