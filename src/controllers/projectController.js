@@ -13,11 +13,20 @@ const getAllProjects = async () => {
   return await Project.findAll({
     order: [["createdAt", "DESC"]],
     include: [
-      { model: User, attributes: ["username"] },
-      { model: Recruitment, attributes: ["title"] },
+      {
+        model: User,
+        as: "User", // 👈 이 alias와 위와 매칭돼야 함!
+        attributes: ["username"],
+      },
+      {
+        model: Recruitment,
+        as: "Recruitment", // 👈 이것도 마찬가지
+        attributes: ["title"],
+      },
     ],
   });
 };
+
 
 const getProjectById = async (project_id) => {
   const project = await Project.findByPk(project_id, {
