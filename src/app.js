@@ -26,6 +26,8 @@ const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // URL-encoded 데이터 파싱
+
 app.use(morgan("dev"));
 
 // 라우트 등록
