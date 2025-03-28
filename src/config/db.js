@@ -17,7 +17,9 @@ const sequelize = new Sequelize(databaseUrl, {
     connectTimeout: 10000,
   },
   host: "127.0.0.1",
-});
+  define: {
+    underscored: false
+}});
 
 const connectDB = async () => {
   try {

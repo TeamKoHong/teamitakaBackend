@@ -78,28 +78,36 @@ db.Project.associate = (models) => {
   db.Project.belongsTo(models.Recruitment, {
     foreignKey: "recruitment_id",
     onDelete: "CASCADE",
+    as: "Recruitment", // ✅ alias 추가
   });
   db.Project.belongsTo(models.User, {
     foreignKey: "user_id",
     onDelete: "CASCADE",
+    as: "User", // ✅ alias 추가
   });
+
   db.Project.belongsToMany(models.User, {
     through: "ProjectMember",
     foreignKey: "project_id",
     otherKey: "user_id",
   });
+
   db.Project.hasMany(models.Todo, {
     foreignKey: "project_id",
     onDelete: "CASCADE",
   });
+
   db.Project.hasMany(models.Timeline, {
     foreignKey: "project_id",
     onDelete: "CASCADE",
   });
-  db.Project.hasMany(db.ProjectPost, { 
-    foreignKey: "project_id", 
-    onDelete: "CASCADE" });
+
+  db.Project.hasMany(db.ProjectPost, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
 };
+
 
 db.ProjectMembers.associate = (models) => {
   db.ProjectMembers.belongsTo(models.Project, {
