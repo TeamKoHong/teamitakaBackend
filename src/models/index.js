@@ -80,17 +80,20 @@ db.Project.associate = (models) => {
     onDelete: "CASCADE",
     as: "Recruitment", // ✅ alias 추가
   });
-  db.Project.belongsTo(models.User, {
-    foreignKey: "user_id",
-    onDelete: "CASCADE",
-    as: "User", // ✅ alias 추가
-  });
+// 프로젝트 생성자와 관계 설정
+db.Project.belongsTo(db.User, {
+  as: "User",  // 생성자
+  foreignKey: "user_id",
+  onDelete: "CASCADE",
+});
 
-  db.Project.belongsToMany(models.User, {
-    through: "ProjectMember",
-    foreignKey: "project_id",
-    otherKey: "user_id",
-  });
+// 프로젝트 팀원과 관계 설정
+db.Project.belongsToMany(db.User, {
+  as: "Members",  // 팀원
+  through: "ProjectMember",
+  foreignKey: "project_id",
+  otherKey: "user_id",
+});
 
   db.Project.hasMany(models.Todo, {
     foreignKey: "project_id",

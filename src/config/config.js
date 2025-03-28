@@ -1,10 +1,11 @@
+require("dotenv").config(); // .env 파일을 로드합니다.
+
 module.exports = {
   development: {
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
-    port: process.env.PORT,
     dialect: "mysql",
     charset: process.env.DB_CHARSET,
     collate: "utf8mb4_bin",
@@ -18,7 +19,6 @@ module.exports = {
     password: process.env.GCP_DB_PASSWORD,
     database: process.env.GCP_DB_NAME,
     host: process.env.GCP_DB_HOST,
-    port: process.env.GCP_DB_PORT,
     dialect: "mysql",
     charset: process.env.DB_CHARSET,
     collate: "utf8mb4_bin",
@@ -36,7 +36,7 @@ module.exports = {
   admin: {
     email: process.env.ADMIN_EMAIL,
     password: process.env.ADMIN_PASSWORD,
-    passwordHash: process.env.ADMIN_PASSWORD_HASH,
+    passwordHash: process.env.ADMIN_PASSWORD_HASH, // 안전하게 해시된 비밀번호
   },
 
   // DSN 형식으로 데이터베이스 URL 생성 (필요 시 Sequelize CLI 사용)
@@ -45,9 +45,9 @@ module.exports = {
     if (!config) {
       throw new Error(`Environment ${env} not found in config`);
     }
-    if (!config.username || !config.password || !config.host || !config.port || !config.database) {
+    if (!config.username || !config.password || !config.host || !config.database) {
       throw new Error(`Missing required database config for environment ${env}`);
     }
-    return `mysql://${config.username}:${encodeURIComponent(config.password)}@${config.host}:${config.port}/${config.database}`;
+    return `mysql://${config.username}:${encodeURIComponent(config.password)}@${config.host}:3306/${config.database}`;
   },
 };
