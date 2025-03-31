@@ -125,8 +125,11 @@ db.ProjectMembers.associate = (models) => {
   });
 };
 
-db.ProjectPost.belongsTo(db.Project, { foreignKey: "project_id" });
-db.ProjectPost.belongsTo(db.User, { foreignKey: "user_id" });
+db.ProjectPost.belongsTo(db.Project, { 
+  foreignKey: "project_id" });
+
+  db.ProjectPost.belongsTo(db.User, { 
+  foreignKey: "user_id" });
 
 db.Recruitment.associate = (models) => {
   db.Recruitment.belongsTo(models.User, {

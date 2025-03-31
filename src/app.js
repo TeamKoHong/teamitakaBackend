@@ -12,6 +12,7 @@ const univCertRoutes = require("./routes/univCertRoutes");
 const userRoutes = require("./routes/userRoutes");
 const recruitmentRoutes = require("./routes/recruitmentRoutes");
 const commentRoutes = require("./routes/commentRoutes");
+const projectPostRoutes = require("./routes/projectPostRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const profileRoutes = require("./routes/profileRoutes");//프로필
@@ -40,6 +41,7 @@ app.use("/api/univcert", univCertRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/recruitment", recruitmentRoutes);
 app.use("/api/comment", commentRoutes);
+app.use("/api/projectPosts", projectPostRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/profiles", profileRoutes);
