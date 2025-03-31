@@ -64,7 +64,11 @@ exports.login = async (req, res) => {
     }
 
     // 3️⃣ 비밀번호 확인
+    console.log("요청된 이메일:", email);
+    console.log("요청된 비밀번호:", password);
+    console.log("DB 비밀번호 해시:", user.password);
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("비교 결과:", isMatch); // ← false로 찍히면 해시 문제
     if (!isMatch) {
       return res.status(401).json({ error: "비밀번호가 일치하지 않습니다." });
     }
