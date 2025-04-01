@@ -4,24 +4,25 @@ const { handleError } = require("../utils/errorHandler");
 const createPost = async (req, res) => {
   try {
     const { project_id } = req.params;
-    const user_id = req.user.user_id;
+    
+    // req.admin 사용으로 변경
+    if (!req.admin || !req.admin.user_id) {
+      return res.status(401).json({ error: "인증된 관리자가 필요합니다." });
+    }
+    const user_id = req.admin.user_id; // req.user 대신 req.admin 사용
+
     const { title, content } = req.body;
 
-    // 제목과 내용이 없는 경우 400 에러 반환
     if (!title || !content) {
       return res.status(400).json({ error: "제목과 내용은 필수 항목입니다." });
     }
 
-    // 게시물 생성
     const post = await projectPostService.createPost(user_id, project_id, title, content);
-
-    // 생성된 게시물 반환
     res.status(201).json(post);
   } catch (error) {
     handleError(res, error);
   }
 };
-
 
 const getPostsByProject = async (req, res) => {
   try {

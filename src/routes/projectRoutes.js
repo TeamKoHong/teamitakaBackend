@@ -5,6 +5,7 @@ const todoController = require("../controllers/todoController");
 const timelineController = require("../controllers/timelineController");
 const memberController = require("../controllers/memberController");
 const authMiddleware = require("../middlewares/authMiddleware");
+const projectPostController = require("../controllers/projectPostController");
 
 // 전체 프로젝트 조회
 router.get("/", projectController.getAllProjects);
@@ -32,4 +33,5 @@ router.delete("/:project_id/timeline/:event_id", authMiddleware, timelineControl
 router.get("/:project_id/members", memberController.getMembers);
 router.put("/:project_id/members", authMiddleware, memberController.updateMemberRole);
 
+router.post("/:project_id/posts", projectPostController.createPost);
 module.exports = router;
