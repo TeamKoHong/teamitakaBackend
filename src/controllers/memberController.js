@@ -1,18 +1,20 @@
-const { ProjectMember, User } = require("../models");
+const models = require("../models"); // 전체 모델 객체 가져오기
 const { handleError } = require("../utils/errorHandler");
 
-// ✅ 팀원 목록 조회
 const getMembers = async (req, res) => {
+  const { ProjectMembers, User } = models; // models에서 구조 분해
+  console.log("ProjectMembers 모델:", ProjectMembers);
+  console.log("User 모델:", User);
   try {
     const { project_id } = req.params;
-
-    const members = await ProjectMember.findAll({
+    console.log("요청된 project_id:", project_id);
+    const members = await ProjectMembers.findAll({
       where: { project_id },
       include: [{ model: User, attributes: ["username", "email"] }],
     });
-
     res.status(200).json(members);
   } catch (error) {
+    console.error("멤버 조회 오류:", error.message);
     handleError(res, error);
   }
 };
