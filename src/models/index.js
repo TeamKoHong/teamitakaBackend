@@ -237,4 +237,5 @@ Object.values(db).forEach((model) => {
   }
 });
 
+console.log("로드된 모델:", Object.keys(db)); // 디버깅
 module.exports = db;
