@@ -13,7 +13,12 @@ const getAllRecruitments = async (req, res) => {
 const getRecruitmentById = async (req, res) => {
   try {
     const { recruitment_id } = req.params;
-    const recruitment = await recruitmentService.getRecruitmentById(recruitment_id);
+    const cookies = req.cookies || {};
+    const recruitment = await recruitmentService.getRecruitmentById(
+      recruitment_id,
+      cookies,
+      (name, value, options) => res.cookie(name, value, options)
+    );
     if (!recruitment) return res.status(404).json({ message: "모집공고를 찾을 수 없습니다." });
     res.status(200).json(recruitment);
   } catch (error) {
