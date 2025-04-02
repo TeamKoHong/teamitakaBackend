@@ -624,4 +624,5 @@ module.exports = {
       await queryInterface.dropTable("Universities", { transaction });
     });
   },
+
 };
