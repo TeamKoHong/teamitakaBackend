@@ -525,11 +525,79 @@ module.exports = {
         },
         { charset: "utf8mb4", collate: "utf8mb4_bin", transaction }
       );
+      // 1. Likes 테이블 DROP (이미 생성된 후 제거되도록 처리)
+      await queryInterface.dropTable("Likes", { transaction });
+
+      // 2. recruitment_hashtags 테이블 생성
+      await queryInterface.createTable(
+        "recruitment_hashtags",
+        {
+          recruitment_id: {
+            type: Sequelize.CHAR(36).BINARY,
+            allowNull: false,
+            references: {
+              model: "Recruitments",
+              key: "recruitment_id",
+            },
+            onDelete: "CASCADE",
+          },
+          hashtag_id: {
+            type: Sequelize.CHAR(36).BINARY,
+            allowNull: false,
+            references: {
+              model: "Hashtags",
+              key: "id",
+            },
+            onDelete: "CASCADE",
+          },
+          createdAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.fn("NOW"),
+          },
+          updatedAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.fn("NOW"),
+          },
+        },
+        { transaction }
+      );
+
+      // 3. recruitment_hashtags 보완용 외래키 제약 조건 강제 추가
+      const tableInfo = await queryInterface.describeTable("recruitment_hashtags");
+      if (tableInfo.hashtag_id.type !== "CHAR(36)") {
+        await queryInterface.changeColumn(
+          "recruitment_hashtags",
+          "hashtag_id",
+          { type: Sequelize.CHAR(36), allowNull: false },
+          { transaction }
+        );
+      }
+      try {
+        await queryInterface.addConstraint("recruitment_hashtags", {
+          fields: ["hashtag_id"],
+          type: "foreign key",
+          name: "recruitment_hashtags_ibfk_2",
+          references: {
+            table: "Hashtags",
+            field: "id",
+          },
+          onDelete: "CASCADE",
+          transaction,
+        });
+      } catch (err) {
+        console.log("Foreign key recruitment_hashtags_ibfk_2 already exists or failed, skipping...");
+      }
+
+      // Recruitments 테이블의 views, photo 컬럼은 이미 포함되어 있으므로 생략
+      // Reviews, Todos, ProjectMembers 테이블도 이미 포함되어 있음
     });
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.dropTable("recruitment_hashtags", { transaction });
       await queryInterface.dropTable("Schedules", { transaction });
       await queryInterface.dropTable("VoteResponses", { transaction });
       await queryInterface.dropTable("VoteOptions", { transaction });
@@ -542,7 +610,6 @@ module.exports = {
       await queryInterface.dropTable("Reviews", { transaction });
       await queryInterface.dropTable("Profiles", { transaction });
       await queryInterface.dropTable("Notifications", { transaction });
-      await queryInterface.dropTable("Likes", { transaction });
       await queryInterface.dropTable("Comments", { transaction });
       await queryInterface.dropTable("Applications", { transaction });
       await queryInterface.dropTable("Projects", { transaction });

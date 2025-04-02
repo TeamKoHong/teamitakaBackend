@@ -1,40 +1,24 @@
-"use strict";
+const jwt = require("jsonwebtoken");
 
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    const tableInfo = await queryInterface.describeTable("recruitment_hashtags");
-    if (tableInfo.hashtag_id.type !== "CHAR(36)") {
-      await queryInterface.changeColumn("recruitment_hashtags", "hashtag_id", {
-        type: Sequelize.CHAR(36),
-        allowNull: false,
-      });
-    }
-    // 외래 키가 이미 존재하는지 확인 후 추가
-    try {
-      await queryInterface.addConstraint("recruitment_hashtags", {
-        fields: ["hashtag_id"],
-        type: "foreign key",
-        name: "recruitment_hashtags_ibfk_2",
-        references: {
-          table: "hashtags",
-          field: "hashtag_id",
-        },
-        onDelete: "CASCADE",
-      });
-    } catch (err) {
-      console.log("Foreign key recruitment_hashtags_ibfk_2 already exists or failed, skipping...");
-    }
-  },
+module.exports = (req, res, next) => {
+  const token = req.header("Authorization");
 
-  down: async (queryInterface, Sequelize) => {
-    try {
-      await queryInterface.removeConstraint("recruitment_hashtags", "recruitment_hashtags_ibfk_2");
-    } catch (err) {
-      console.log("Constraint recruitment_hashtags_ibfk_2 does not exist, skipping...");
+  if (!token) {
+    return res.status(401).json({ error: "인증이 필요합니다." });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // 관리자 체크는 선택적으로 유지
+    if (!decoded.isAdmin) {
+      return res.status(403).json({ error: "관리자 권한이 없습니다." });
     }
-    await queryInterface.changeColumn("recruitment_hashtags", "hashtag_id", {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    });
-  },
+
+    req.user = decoded; // req.admin 대신 req.user로 변경
+    next();
+  } catch (error) {
+    console.error("🚨 Auth Middleware Error:", error);
+    return res.status(401).json({ error: error.message || "잘못된 토큰입니다." });
+  }
 };
