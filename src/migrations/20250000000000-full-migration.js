@@ -146,6 +146,7 @@ module.exports = {
             onDelete: "CASCADE",
           },
           photo: { type: Sequelize.STRING(255), allowNull: true },
+          views: { type: Sequelize.INTEGER, defaultValue: 0, allowNull: false },
           createdAt: { type: Sequelize.DATE, allowNull: false, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
           updatedAt: { type: Sequelize.DATE, allowNull: false, defaultValue: Sequelize.literal("CURRENT_TIMESTAMP") },
         },
