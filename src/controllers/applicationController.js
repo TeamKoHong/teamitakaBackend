@@ -14,11 +14,11 @@ const applyToRecruitment = async (req, res) => {
 
 const getApplicants = async (req, res) => {
   try {
-    const { recruitment_id } = req.params;
+    const { recruitment_id } = req.params;  // URL 경로에서 recruitment_id 파라미터 받기
     const applicants = await applicationService.getApplicants(recruitment_id);
-    res.status(200).json(applicants);
+    res.status(200).json(applicants);  // 정상 응답 반환
   } catch (error) {
-    handleError(res, error);
+    handleError(res, error);  // 에러 처리
   }
 };
 

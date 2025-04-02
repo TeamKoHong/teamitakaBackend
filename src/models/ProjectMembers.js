@@ -15,7 +15,7 @@ module.exports = (sequelize) => {
         allowNull: false,
         references: {
           model: "Projects",
-          key: "project_id",
+          key: "pr oject_id",
         },
         onDelete: "CASCADE",
       },
@@ -44,6 +44,7 @@ module.exports = (sequelize) => {
       },
     },
     {
+      tableName: "projectmembers",  // 테이블 이름 명시
       freezeTableName: true,
       timestamps: true,
     }

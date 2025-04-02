@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 "use strict";
 
 const { sequelize } = require("../config/db");
@@ -66,6 +68,7 @@ db.Hashtag.associate = (models) => {
   db.Hashtag.belongsToMany(models.Recruitment, {
     through: "recruitment_hashtags",
     foreignKey: "hashtag_id",
+    otherKey: "recruitment_id",
   });
 };
 
@@ -78,12 +81,15 @@ db.Project.associate = (models) => {
   db.Project.belongsTo(models.Recruitment, {
     foreignKey: "recruitment_id",
     onDelete: "CASCADE",
+    as: "Recruitment",
   });
-  db.Project.belongsTo(models.User, {
+  db.Project.belongsTo(db.User, {
+    as: "User",
     foreignKey: "user_id",
     onDelete: "CASCADE",
   });
-  db.Project.belongsToMany(models.User, {
+  db.Project.belongsToMany(db.User, {
+    as: "Members",
     through: "ProjectMember",
     foreignKey: "project_id",
     otherKey: "user_id",
@@ -96,9 +102,10 @@ db.Project.associate = (models) => {
     foreignKey: "project_id",
     onDelete: "CASCADE",
   });
-  db.Project.hasMany(db.ProjectPost, { 
-    foreignKey: "project_id", 
-    onDelete: "CASCADE" });
+  db.Project.hasMany(db.ProjectPost, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
 };
 
 db.ProjectMembers.associate = (models) => {
@@ -112,8 +119,13 @@ db.ProjectMembers.associate = (models) => {
   });
 };
 
-db.ProjectPost.belongsTo(db.Project, { foreignKey: "project_id" });
-db.ProjectPost.belongsTo(db.User, { foreignKey: "user_id" });
+db.ProjectPost.belongsTo(db.Project, { 
+  foreignKey: "project_id" 
+});
+
+db.ProjectPost.belongsTo(db.User, { 
+  foreignKey: "user_id" 
+});
 
 db.Recruitment.associate = (models) => {
   db.Recruitment.belongsTo(models.User, {
@@ -126,7 +138,13 @@ db.Recruitment.associate = (models) => {
   });
   db.Recruitment.hasMany(db.Application, { 
     foreignKey: "recruitment_id", 
-    onDelete: "CASCADE" });
+    onDelete: "CASCADE" 
+  });
+  db.Recruitment.belongsToMany(models.Hashtag, {
+    through: "recruitment_hashtags",
+    foreignKey: "recruitment_id",
+    otherKey: "hashtag_id",
+  });
 };
 
 db.Review.associate = (models) => {
@@ -221,4 +239,5 @@ Object.values(db).forEach((model) => {
   }
 });
 
+console.log("로드된 모델:", Object.keys(db)); // 디버깅
 module.exports = db;
