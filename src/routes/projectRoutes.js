@@ -5,31 +5,33 @@ const todoController = require("../controllers/todoController");
 const timelineController = require("../controllers/timelineController");
 const memberController = require("../controllers/memberController");
 const authMiddleware = require("../middlewares/authMiddleware");
+const projectPostController = require("../controllers/projectPostController");
 
 // 전체 프로젝트 조회
-router.get("/projects", projectController.getAllProjects);
+router.get("/", projectController.getAllProjects);
 
 // 특정 프로젝트 조회
-router.get("/projects/:project_id", projectController.getProjectById);
-router.get("/projects/completed", projectController.getCompletedProjects);
+router.get("/:project_id", projectController.getProjectById);
+router.get("/completed", projectController.getCompletedProjects);
 
 // 프로젝트 수정
-router.put("/projects/:project_id", authMiddleware, projectController.updateProject);
+router.put("/:project_id", authMiddleware, projectController.updateProject);
 
 // ✅ 할 일 CRUD
-router.get("/projects/:project_id/todo", todoController.getTodos);
-router.post("/projects/:project_id/todo", authMiddleware, todoController.addTodo);
-router.put("/projects/:project_id/todo/:todo_id", authMiddleware, todoController.updateTodo);
-router.delete("/projects/:project_id/todo/:todo_id", authMiddleware, todoController.deleteTodo);
+router.get("/:project_id/todo", todoController.getTodos);
+router.post("/:project_id/todo", authMiddleware, todoController.addTodo);
+router.put("/:project_id/todo/:todo_id", authMiddleware, todoController.updateTodo);
+router.delete("/:project_id/todo/:todo_id", authMiddleware, todoController.deleteTodo);
 
 // ✅ 타임라인 CRUD
-router.get("/projects/:project_id/timeline", timelineController.getTimeline);
-router.post("/projects/:project_id/timeline", authMiddleware, timelineController.addTimelineEvent);
-router.put("/projects/:project_id/timeline/:event_id", authMiddleware, timelineController.updateTimelineEvent);
-router.delete("/projects/:project_id/timeline/:event_id", authMiddleware, timelineController.deleteTimelineEvent);
+router.get("/:project_id/timeline", timelineController.getTimeline);
+router.post("/:project_id/timeline", authMiddleware, timelineController.addTimelineEvent);
+router.put("/:project_id/timeline/:event_id", authMiddleware, timelineController.updateTimelineEvent);
+router.delete("/:project_id/timeline/:event_id", authMiddleware, timelineController.deleteTimelineEvent);
 
 // ✅ 팀원 조회/추가
-router.get("/projects/:project_id/members", memberController.getMembers);
-router.put("/projects/:project_id/members", authMiddleware, memberController.updateMemberRole);
+router.get("/:project_id/members", memberController.getMembers);
+router.put("/:project_id/members", authMiddleware, memberController.updateMemberRole);
 
+router.post("/:project_id/posts", projectPostController.createPost);
 module.exports = router;
