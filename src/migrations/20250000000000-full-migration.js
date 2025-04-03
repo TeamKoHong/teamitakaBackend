@@ -597,8 +597,6 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      await queryInterface.dropTable("recruitment_hashtags", { transaction });
-      await queryInterface.dropTable("Schedules", { transaction });
       await queryInterface.dropTable("VoteResponses", { transaction });
       await queryInterface.dropTable("VoteOptions", { transaction });
       await queryInterface.dropTable("Votes", { transaction });
@@ -606,10 +604,10 @@ module.exports = {
       await queryInterface.dropTable("Timelines", { transaction });
       await queryInterface.dropTable("ProjectMembers", { transaction });
       await queryInterface.dropTable("Todos", { transaction });
-      await queryInterface.dropTable("Hashtags", { transaction });
       await queryInterface.dropTable("Reviews", { transaction });
       await queryInterface.dropTable("Profiles", { transaction });
       await queryInterface.dropTable("Notifications", { transaction });
+      await queryInterface.dropTable("Likes", { transaction }); // 만약 다시 추가되면
       await queryInterface.dropTable("Comments", { transaction });
       await queryInterface.dropTable("Applications", { transaction });
       await queryInterface.dropTable("Projects", { transaction });
@@ -622,6 +620,9 @@ module.exports = {
       await queryInterface.dropTable("Departments", { transaction });
       await queryInterface.dropTable("Colleges", { transaction });
       await queryInterface.dropTable("Universities", { transaction });
+      await queryInterface.dropTable("Hashtags", { transaction });
+      await queryInterface.dropTable("recruitment_hashtags", { transaction });
+      await queryInterface.dropTable("Schedules", { transaction });      
     });
   },
 
