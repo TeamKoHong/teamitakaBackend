@@ -16,90 +16,51 @@ jobs:
       contents: read
 
     steps:
-      # 코드 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # Node.js 환경 설정
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      # 서비스 계정 키 준비
       - name: Prepare Service Account Key
         run: |
           cat <<EOF > sa-key.json
           ${{ secrets.GCP_SA_KEY }}
           EOF
-          echo "Service Account JSON saved to sa-key.json"
 
-      # Cloud SQL Proxy 다운로드
       - name: Download Cloud SQL Proxy
         run: |
           wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
           chmod +x cloud_sql_proxy
 
-      # Cloud SQL Proxy 시작
       - name: Start Cloud SQL Proxy
         run: |
           ./cloud_sql_proxy \
             -instances="${{ secrets.INSTANCE_CONNECTION_NAME }}=tcp:127.0.0.1:3307" \
-            -credential_file=sa-key.json \
-            > proxy.log 2>&1 &
+            -credential_file=sa-key.json > proxy.log 2>&1 &
           sleep 5
-          if ! nc -z 127.0.0.1 3307; then
-            echo "⚠️ Proxy failed to start!"
-            cat proxy.log
-            exit 1
-          fi
-          echo "✅ Proxy running on 3307"
-          cat proxy.log
+          nc -z 127.0.0.1 3307 || { echo "⚠️ Proxy failed to start!"; cat proxy.log; exit 1; }
 
-      # Cloud SQL 연결 테스트 (호스트)
-      - name: Test Cloud SQL Connection (host)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y netcat-openbsd
-          echo "Testing connection to local Proxy at 127.0.0.1:3307..."
-          for i in {1..10}; do
-            nc -zv 127.0.0.1 3307 && break
-            echo "Attempt $i failed, retrying in 2 seconds..."
-            sleep 2
-          done || {
-            echo "⚠️ Failed to connect to local Proxy after 10 attempts"
-            cat proxy.log
-            exit 1
-          }
-          echo "✅ Cloud SQL Proxy is accessible on 127.0.0.1:3307"
-
-      # Docker Buildx 설정
       - name: Install Docker (Buildx)
         uses: docker/setup-buildx-action@v3
 
-      # Docker 이미지 빌드 (캐시 무시)
       - name: Build Docker Image
         run: |
           docker build -t teamitaka-app -f Dockerfile.prod --no-cache .
         working-directory: .
 
-      # ProjectPost.js 파일 존재 여부 확인
       - name: Verify ProjectPost.js exists
         run: |
-          echo "Checking if ProjectPost.js exists in the container..."
-          docker run --rm teamitaka-app ls /app/src/models/ProjectPost.js || { echo "Error: ProjectPost.js is missing"; exit 1; }
-          echo "✅ ProjectPost.js exists in /app/src/models/"
+          docker run --rm teamitaka-app ls /app/src/models/ProjectPost.js || exit 1
 
-      # 데이터베이스 환경 변수 설정
       - name: Set Database Environment
         run: |
           DB_NAME_VALUE=${{ secrets.DB_NAME }}
-          if [ -z "$DB_NAME_VALUE" ]; then
-            echo "Warning: DB_NAME not found in secrets, using default 'teamitaka_db'"
-            DB_NAME_VALUE="teamitaka_db"
-          fi
+          [ -z "$DB_NAME_VALUE" ] && DB_NAME_VALUE="teamitaka_db"
           echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3307/${DB_NAME_VALUE}" >> $GITHUB_ENV
           echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
@@ -109,158 +70,66 @@ jobs:
           echo "DB_DIALECT=mysql" >> $GITHUB_ENV
           echo "DB_CHARSET=utf8mb4" >> $GITHUB_ENV
           echo "NODE_ENV=production" >> $GITHUB_ENV
-          echo "Determined DATABASE_URL: ${{ env.DATABASE_URL }}"
 
-      # 환경 변수 디버깅 출력
-      - name: Debug - Print Environment
-        run: |
-          echo "INSTANCE_CONNECTION_NAME=${{ secrets.INSTANCE_CONNECTION_NAME }}"
-          echo "DB_HOST=${{ env.DB_HOST }}"
-          echo "DB_PORT=${{ env.DB_PORT }}"
-          echo "DB_USER=${{ env.DB_USER }}"
-          echo "DB_PASSWORD=${{ env.DB_PASSWORD }}"
-          echo "DB_NAME=${{ env.DB_NAME }}"
-          echo "DATABASE_URL=${{ env.DATABASE_URL }}"
-          echo "NODE_ENV=${{ env.NODE_ENV }}"
-
-      # Cloud SQL 연결 테스트 (Docker)
       - name: Test Cloud SQL Connection (docker)
         run: |
-          echo "Testing connection from container to Proxy at 127.0.0.1:3307..."
-          docker run --rm --network host \
-            teamitaka-app nc -zv 127.0.0.1 3307 || {
-              echo "⚠️ Failed to connect from container"
-              exit 1
-            }
-          echo "✅ Container -> Cloud SQL Proxy connection successful"
+          docker run --rm --network host teamitaka-app nc -zv 127.0.0.1 3307 || exit 1
 
-      # 데이터베이스 생성 확인
       - name: Ensure Database Exists
         run: |
-          echo "Ensuring database exists..."
           docker run --network host \
             -e DB_USER=${{ env.DB_USER }} \
             -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
             -e DB_NAME=${{ env.DB_NAME }} \
-            -e DB_HOST=${{ env.DB_HOST }} \
-            -e DB_PORT=${{ env.DB_PORT }} \
             teamitaka-app \
-            bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'CREATE DATABASE IF NOT EXISTS \`${{ env.DB_NAME }}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;' && echo 'Database created or already exists' || { echo 'Failed to create database'; exit 1; }"
+            bash -c "mysql -h 127.0.0.1 -P 3307 -u $DB_USER -p$DB_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;'"
 
-      # 데이터베이스 존재 확인
       - name: Verify Database Existence
         run: |
-          echo "Verifying database existence..."
           docker run --network host \
             -e DB_USER=${{ env.DB_USER }} \
             -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
             -e DB_NAME=${{ env.DB_NAME }} \
-            -e DB_HOST=${{ env.DB_HOST }} \
-            -e DB_PORT=${{ env.DB_PORT }} \
             teamitaka-app \
-            bash -c "mysql -h ${{ env.DB_HOST }} -P ${{ env.DB_PORT }} -u ${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'USE \`${{ env.DB_NAME }}\`;' && echo 'Database exists' || { echo 'Database does not exist'; exit 1; }"
+            bash -c "mysql -h 127.0.0.1 -P 3307 -u $DB_USER -p$DB_PASSWORD -e 'USE \`$DB_NAME\`;'"
 
-      # 기존 마이그레이션 되돌리기
-      - name: Undo All Migrations
+      - name: Reset Migrations using reset-migrations.sh
         run: |
-          echo "Undoing all previous migrations..."
           docker run --network host \
+            -v ${{ github.workspace }}/reset-migrations.sh:/app/reset-migrations.sh \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
             teamitaka-app \
-            bash -c "npx sequelize-cli db:migrate:undo:all --url ${{ env.DATABASE_URL }} --debug && echo 'All migrations undone' || { echo 'Failed to undo migrations'; exit 1; }"
+            bash /app/reset-migrations.sh
 
-      # Sequelize 마이그레이션 실행
-      - name: Run Sequelize Migrations
-        run: |
-          echo "Running migration via container with Auth Proxy for deployment..."
-          docker run --network host \
-            -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            teamitaka-app \
-            bash -c "npx sequelize-cli db:migrate --url ${{ env.DATABASE_URL }} --debug && echo 'Migrations completed' || { echo 'Failed to run migrations'; exit 1; }"
-
-      # 마이그레이션 상태 확인
-      - name: Check Migration Status
-        run: |
-          echo "Checking migration status for deployment..."
-          docker run --network host \
-            -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            -e NODE_ENV=production \
-            teamitaka-app \
-            bash -c "npx sequelize-cli db:migrate:status --url ${{ env.DATABASE_URL }}"
-
-      # 모의 데이터 삽입
       - name: Insert Mockup Data
         run: |
-          echo "🔍 Starting mockup data insertion process..."
           docker run --network host \
             -v ${GITHUB_WORKSPACE}/src/data:/app/data \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            -e NODE_ENV=production \
             teamitaka-app \
             node src/scripts/loadMockupData.js --users --recruitments --projects --verbose
-          echo "✅ Mockup data insertion completed"
 
-      # 대학, 학부, 학과 데이터 삽입
-      - name: Insert Universities, Colleges, Departments Data
+      - name: Insert CSV Data (Universities, Colleges, Departments)
         run: |
-          echo "🔍 Inserting Universities, Colleges, Departments data into DB from CSV for deployment..."
           docker run --network host \
             -v ${GITHUB_WORKSPACE}/seeders:/app/seeders \
             -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            -e NODE_ENV=production \
             teamitaka-app \
             node src/scripts/insertCSV.js
-          echo "✅ Universities, Colleges, Departments CSV Insert Completed"
 
-      # 애플리케이션 배포 및 테스트
       - name: Deploy and Test Application
         run: |
-          echo "🚀 Starting Application..."
           docker run -d --network host \
             --name teamitaka-prod \
             -e DATABASE_URL="${{ env.DATABASE_URL }}" \
             -e NODE_ENV=production \
             -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            teamitaka-app \
-            npm run start
-          echo "✅ App container started"
-          
-          echo "⏳ Waiting for DB..."
-          for i in {1..60}; do
-            if mysqladmin ping -h 127.0.0.1 -P 3307 --silent -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }}; then
-              echo "✅ DB is ready"
-              break
-            fi
-            echo "DB not ready, retrying..."
-            sleep 10
-          done || {
-            echo "⚠️ DB timeout"
+            teamitaka-app npm run start
+          sleep 20
+          curl -s http://127.0.0.1:3000/health || {
             docker logs teamitaka-prod
             exit 1
           }
-          
-          echo "⏳ Waiting for server..."
-          sleep 20
-          
-          echo "🔍 Checking health..."
-          for i in {1..5}; do
-            RESPONSE=$(curl -s http://127.0.0.1:3000/health 2>&1 || echo "Curl failed with error: $?")
-            echo "Response: $RESPONSE"
-            if [ -n "$RESPONSE" ] && [ "$RESPONSE" != "Curl failed with error: $?" ]; then
-              echo "✅ Health OK: $RESPONSE"
-              break
-            else
-              echo "⚠️ Health failed, retrying... (Attempt $i)"
-              docker logs teamitaka-prod
-              sleep 5
-            fi
-            if [ "$i" -eq 5 ]; then
-              echo "⚠️ Health check failed after 5 tries"
-              docker logs teamitaka-prod
-              exit 1
-            fi
-          done
 
-      # Cloud SQL Proxy 종료
       - name: Stop Cloud SQL Proxy
         run: pkill cloud_sql_proxy || true
