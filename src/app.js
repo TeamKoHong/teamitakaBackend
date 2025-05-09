@@ -17,6 +17,7 @@ const reviewRoutes = require("./routes/reviewRoutes"); // ✅ 리뷰 라우트 �
 const draftRoutes = require("./routes/draftRoutes");  // draftRoutes 추가
 const scrapRoutes = require("./routes/scrapRoutes");  // scrapRoutes 추가
 const applicationRoutes = require("./routes/applicationRoutes"); 
+const voteRoutes = require("./routes/voteRoutes");
 
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('yamljs');
@@ -43,6 +44,7 @@ app.use("/api/reviews", reviewRoutes); // ✅ 리뷰 라우트 추가
 app.use("/api/drafts", draftRoutes);    // draftRoutes 라우트 추가
 app.use("/api/scraps", scrapRoutes); 
 app.use("/api/applications", applicationRoutes); 
+app.use("/api", voteRoutes);
 
 // 기본 라우트
 app.get("/", (req, res) => {

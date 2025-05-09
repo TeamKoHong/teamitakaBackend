@@ -4,7 +4,7 @@ module.exports = (sequelize) => {
   const Vote = sequelize.define(
     'Vote',
     {
-      id: {
+      vote_id: {                               // ✅ 올바른 기본 키 컬럼명
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
@@ -38,6 +38,8 @@ module.exports = (sequelize) => {
       tableName: 'Votes',
       freezeTableName: true,
       timestamps: true,
+      // ✅ 아래를 통해 id 필드 자동 생성 방지 (선택)
+      id: false,
     }
   );
 

@@ -17,4 +17,14 @@ router.patch("/:application_id/approve", authMiddleware, applicationController.a
 // ✅ 모집공고 지원 거절
 router.patch("/applications/:application_id/reject", authMiddleware, applicationController.rejectApplication);
 
+//지원자수조회
+router.get("/:recruitment_id/count", authMiddleware, async (req, res) => {
+    try {
+      const { recruitment_id } = req.params;
+      const count = await applicationController.getApplicationCount(recruitment_id);
+      res.json({ recruitment_id, application_count: count });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 module.exports = router;
