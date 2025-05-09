@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 "use strict";
 
 const { sequelize } = require("../config/db");
@@ -10,13 +12,11 @@ db.sequelize = sequelize;
 // ✅ 모델 불러오기
 db.Admin = require("./Admin")(sequelize, Sequelize.DataTypes);
 db.Application = require("./Application")(sequelize, Sequelize.DataTypes);
-db.Campus = require("./Campus")(sequelize, Sequelize.DataTypes);
 db.College = require("./College")(sequelize, Sequelize.DataTypes);
 db.Comment = require("./Comment")(sequelize, Sequelize.DataTypes);
 db.Department = require("./Department")(sequelize, Sequelize.DataTypes);
 db.Hashtag = require("./Hashtag")(sequelize, Sequelize.DataTypes);
 db.Keyword = require("./Keyword")(sequelize, Sequelize.DataTypes);
-db.Like = require("./Like")(sequelize, Sequelize.DataTypes);
 db.Notification = require("./Notification")(sequelize, Sequelize.DataTypes);
 db.Project = require("./Project")(sequelize, Sequelize.DataTypes);
 db.ProjectMembers = require("./ProjectMembers")(sequelize, Sequelize.DataTypes);
@@ -41,24 +41,9 @@ db.Application.associate = (models) => {
   db.Application.belongsTo(models.Recruitment, { foreignKey: "recruitment_id", onDelete: "CASCADE" });
 };
 
-db.Campus.associate = (models) => {
-  db.Campus.belongsTo(models.University, {
-    foreignKey: "UniversityID",
-    onDelete: "CASCADE",
-  });
-  db.Campus.hasMany(models.College, {
-    foreignKey: "CampusID",
-    onDelete: "CASCADE",
-  });
-};
-
 db.College.associate = (models) => {
   db.College.belongsTo(models.University, {
     foreignKey: "UniversityID",
-    onDelete: "CASCADE",
-  });
-  db.College.belongsTo(models.Campus, {
-    foreignKey: "CampusID",
     onDelete: "CASCADE",
   });
   db.College.hasMany(models.Department, {
@@ -83,12 +68,8 @@ db.Hashtag.associate = (models) => {
   db.Hashtag.belongsToMany(models.Recruitment, {
     through: "recruitment_hashtags",
     foreignKey: "hashtag_id",
+    otherKey: "recruitment_id",
   });
-};
-
-db.Like.associate = (models) => {
-  db.Like.belongsTo(models.User, { foreignKey: "user_id" });
-  db.Like.belongsTo(models.Recruitment, { foreignKey: "recruitment_id" });
 };
 
 db.Project.beforeCreate((project, options) => {
@@ -100,12 +81,15 @@ db.Project.associate = (models) => {
   db.Project.belongsTo(models.Recruitment, {
     foreignKey: "recruitment_id",
     onDelete: "CASCADE",
+    as: "Recruitment",
   });
-  db.Project.belongsTo(models.User, {
+  db.Project.belongsTo(db.User, {
+    as: "User",
     foreignKey: "user_id",
     onDelete: "CASCADE",
   });
-  db.Project.belongsToMany(models.User, {
+  db.Project.belongsToMany(db.User, {
+    as: "Members",
     through: "ProjectMember",
     foreignKey: "project_id",
     otherKey: "user_id",
@@ -118,9 +102,10 @@ db.Project.associate = (models) => {
     foreignKey: "project_id",
     onDelete: "CASCADE",
   });
-  db.Project.hasMany(db.ProjectPost, { 
-    foreignKey: "project_id", 
-    onDelete: "CASCADE" });
+  db.Project.hasMany(db.ProjectPost, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
 };
 
 db.ProjectMembers.associate = (models) => {
@@ -134,9 +119,13 @@ db.ProjectMembers.associate = (models) => {
   });
 };
 
-db.ProjectPost.belongsTo(db.Project, { foreignKey: "project_id" });
-db.ProjectPost.belongsTo(db.User, { foreignKey: "user_id" });
+db.ProjectPost.belongsTo(db.Project, { 
+  foreignKey: "project_id" 
+});
 
+db.ProjectPost.belongsTo(db.User, { 
+  foreignKey: "user_id" 
+});
 
 db.Recruitment.associate = (models) => {
   db.Recruitment.belongsTo(models.User, {
@@ -149,8 +138,13 @@ db.Recruitment.associate = (models) => {
   });
   db.Recruitment.hasMany(db.Application, { 
     foreignKey: "recruitment_id", 
-    onDelete: "CASCADE" });
-
+    onDelete: "CASCADE" 
+  });
+  db.Recruitment.belongsToMany(models.Hashtag, {
+    through: "recruitment_hashtags",
+    foreignKey: "recruitment_id",
+    otherKey: "hashtag_id",
+  });
 };
 
 db.Review.associate = (models) => {
@@ -245,4 +239,5 @@ Object.values(db).forEach((model) => {
   }
 });
 
+console.log("로드된 모델:", Object.keys(db)); // 디버깅
 module.exports = db;

@@ -47,7 +47,7 @@ class ProfileService {
                 model: ProjectMembers,
                 where: { user_id }
             },
-            attributes: ["project_id", "title", "description", "created_at"]
+            attributes: ["project_id", "title", "description", "createdAt"]
         });
     }
 }

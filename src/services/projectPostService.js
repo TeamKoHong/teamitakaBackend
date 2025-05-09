@@ -15,15 +15,15 @@ const createPost = async (user_id, project_id, title, content) => {
 const getPostsByProject = async (project_id) => {
   return await ProjectPost.findAll({
     where: { project_id },
-    include: [{ model: User, attributes: ["username", "profile_image"] }],
+    include: [{ model: User, attributes: ["username", "profileImageUrl"] }],
     order: [["createdAt", "DESC"]],
   });
 };
 
 const getPostById = async (post_id) => {
   return await ProjectPost.findByPk(post_id, {
-    include: [{ model: User, attributes: ["username", "profile_image"] }],
+    include: [{ model: User, attributes: ["username", "profileImageUrl"] }],
   });
 };
 
-module.exports = { createPost, getPostsByProject, getPostById, updatePost, deletePost };
+module.exports = { createPost, getPostsByProject, getPostById};

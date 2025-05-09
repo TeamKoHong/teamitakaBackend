@@ -1,18 +1,19 @@
+# 💥 보안 파일
 .env
+.env.*
+sa-key.json
+
+# 🔐 시크릿 스크립트
 /src/scripts/hashPassword.js
 
-.env.docker
-
-# Prisma 관련 불필요한 파일들
+# 🔁 DB 시딩 및 결과물
 prisma/migrations/
 prisma/migration_lock.toml
+backup.sql
+
+# 🧪 로그 및 캐시
 node_modules/
 npm-debug.log
 yarn-error.log
-
 .DS_Store
-backup.sql
-
 coverage/
-
-##
