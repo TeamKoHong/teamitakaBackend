@@ -1,20 +1,32 @@
-const searchService = require("../services/searchService");
-const { handleError } = require("../utils/errorHandler");
+const { Recruitment, User, Project } = require("../models");
+const { Op } = require("sequelize");
 
-const search = async (req, res) => {
-  try {
-    const { q } = req.query;
-    if (!q) {
-      return res.status(400).json({ message: "검색어를 입력해주세요." });
-    }
+const searchKeyword = async (q) => {
+  const keyword = `%${q}%`;
 
-    const results = await searchService.searchKeyword(q);
-    res.json(results);
-  } catch (error) {
-    handleError(res, error);
-  }
+  // 모집공고, 사용자, 프로젝트 검색
+  const [recruitments, users, projects] = await Promise.all([
+    Recruitment.findAll({
+      where: { title: { [Op.like]: keyword } },
+      attributes: ["recruitment_id", "title", "status"],
+    }),
+    User.findAll({
+      where: { username: { [Op.like]: keyword } },
+      attributes: ["user_id", "username", "email"],
+    }),
+    Project.findAll({
+      where: { title: { [Op.like]: keyword } },
+      attributes: ["project_id", "title", "status"],
+    }),
+  ]);
+
+  return {
+    recruitments,
+    users,
+    projects,
+  };
 };
 
 module.exports = {
-  search,
+  searchKeyword,
 };
