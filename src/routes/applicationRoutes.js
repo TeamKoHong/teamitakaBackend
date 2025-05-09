@@ -12,7 +12,7 @@ router.post("/applications/:recruitment_id", authMiddleware, applicationControll
 router.get("/applications/:recruitment_id", authMiddleware, applicationController.getApplicants);
 
 // ✅ 모집공고 지원 승인
-router.patch("/applications/:application_id/approve", authMiddleware, applicationController.approveApplication);
+router.patch("/:application_id/approve", authMiddleware, applicationController.approveApplication);
 
 // ✅ 모집공고 지원 거절
 router.patch("/applications/:application_id/reject", authMiddleware, applicationController.rejectApplication);
