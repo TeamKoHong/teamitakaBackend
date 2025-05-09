@@ -14,6 +14,12 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: "❌ 모든 필드를 입력해주세요." });
     }
 
+    // 비밀번호 유효성 검사 추가
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ error: passwordValidation.message });
+    }
+
     // 중복 이메일 체크
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
@@ -25,7 +31,7 @@ exports.register = async (req, res) => {
 
     // 새 유저 생성 (uuid 추가)
     const newUser = await User.create({
-      uuid: uuidv4(), // ✅ UUID 생성
+      uuid: uuidv4(),
       username,
       email,
       password: hashedPassword,
@@ -35,8 +41,8 @@ exports.register = async (req, res) => {
     return res.status(201).json({
       message: "✅ 회원가입 성공!",
       user: {
-        user_id: newUser.user_id, // ✅ 자동 증가 값
-        uuid: newUser.uuid, // ✅ UUID 포함
+        user_id: newUser.user_id,
+        uuid: newUser.uuid,
         username: newUser.username,
         email: newUser.email,
         createdAt: newUser.createdAt,
@@ -64,7 +70,11 @@ exports.login = async (req, res) => {
     }
 
     // 3️⃣ 비밀번호 확인
+    console.log("요청된 이메일:", email);
+    console.log("요청된 비밀번호:", password);
+    console.log("DB 비밀번호 해시:", user.password);
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("비교 결과:", isMatch); // ← false로 찍히면 해시 문제
     if (!isMatch) {
       return res.status(401).json({ error: "비밀번호가 일치하지 않습니다." });
     }

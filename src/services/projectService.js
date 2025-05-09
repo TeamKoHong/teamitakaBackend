@@ -1,9 +1,8 @@
-const { Project, Recruitment, User, Todo, Timeline, ProjectMember } = require("../models");
+const { Project, Recruitment, User, Todo, Timeline } = require("../models");
 
 const createProject = async (data) => {
   const { title, description, user_id, recruitment_id, start_date, end_date, status, role } = data;
 
-  // 모집공고 존재 여부 확인
   const recruitment = await Recruitment.findByPk(recruitment_id);
   if (!recruitment) throw new Error("유효한 모집공고가 필요합니다.");
 
@@ -23,7 +22,7 @@ const createProject = async (data) => {
 
 const getAllProjects = async () => {
   return await Project.findAll({
-    order: [["created_at", "DESC"]],
+    order: [["createdAt", "DESC"]],
     include: [
       { model: User, attributes: ["username"] },
       { model: Recruitment, attributes: ["title"] },
@@ -50,11 +49,14 @@ const getProjectById = async (project_id) => {
   return project;
 };
 
+const getCompletedProjects = async () => {
+  return await Project.findAll({ where: { status: "완료" } });
+};
+
 const updateProject = async (project_id, updateData) => {
   const project = await Project.findByPk(project_id);
   if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
 
-  // status가 "완료"일 경우, end_date가 없으면 현재 날짜로 설정
   if (updateData.status === "완료" && !project.end_date) {
     updateData.end_date = new Date();
   }
@@ -63,16 +65,10 @@ const updateProject = async (project_id, updateData) => {
   return project;
 };
 
-const deleteProject = async (project_id) => {
-  const project = await Project.findByPk(project_id);
-  if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
-  await project.destroy();
-};
 
 module.exports = {
-  createProject,
   getAllProjects,
   getProjectById,
+  getCompletedProjects,
   updateProject,
-  deleteProject,
 };

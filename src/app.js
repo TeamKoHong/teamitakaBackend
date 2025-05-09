@@ -1,6 +1,9 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser"); // 추가
 const { sequelize } = require("./models"); // Sequelize 인스턴스 가져오기
 
 const adminRoutes = require("./routes/adminRoutes");
@@ -10,6 +13,7 @@ const univCertRoutes = require("./routes/univCertRoutes");
 const userRoutes = require("./routes/userRoutes");
 const recruitmentRoutes = require("./routes/recruitmentRoutes");
 const commentRoutes = require("./routes/commentRoutes");
+const projectPostRoutes = require("./routes/projectPostRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const profileRoutes = require("./routes/profileRoutes");//프로필
@@ -27,6 +31,8 @@ const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // URL-encoded 데이터 파싱
+app.use(cookieParser()); // 추가
 app.use(morgan("dev"));
 
 // 라우트 등록
@@ -35,9 +41,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/dev", devRoutes);
 app.use("/api/univcert", univCertRoutes);
 app.use("/api/user", userRoutes);
-app.use("/api/recruitment", recruitmentRoutes);
+app.use("/api/recruitments", recruitmentRoutes);
 app.use("/api/comment", commentRoutes);
-app.use("/api/project", projectRoutes);
+app.use("/api/projects", projectPostRoutes);
+app.use("/api/projects", projectRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/profiles", profileRoutes);
 app.use("/api/reviews", reviewRoutes); // ✅ 리뷰 라우트 추가
