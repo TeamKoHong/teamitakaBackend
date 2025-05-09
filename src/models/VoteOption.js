@@ -1,29 +1,20 @@
-
-//투표 선택지
-
-const { DataTypes } = require("sequelize");
+const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-    const VoteOption = sequelize.define(
-      'VoteOption',
-      {
-        option_id: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
-          primaryKey: true,
-        },
-        vote_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          references: {
-            model: 'Votes',
-            key: 'vote_id',
-          },
-          onDelete: 'CASCADE',
-        },
-        option_text: {
-          type: DataTypes.STRING,
-          allowNull: false,
+  const VoteOption = sequelize.define(
+    'VoteOption',
+    {
+      option_id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
+      vote_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+          model: 'Votes',
+          key: 'vote_id',
         },
         onDelete: 'CASCADE',
       },
