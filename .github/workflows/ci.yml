@@ -90,6 +90,20 @@ jobs:
           echo "DB_DIALECT=mysql" >> $GITHUB_ENV
           echo "DB_CHARSET=utf8mb4" >> $GITHUB_ENV
           echo "NODE_ENV=production" >> $GITHUB_ENV
+      
+      - name: Wait for MySQL to be ready (robust)
+        run: |
+          for i in {1..30}; do
+            docker run --rm --network cloudsql-net mysql:8 \
+              bash -c "mysqladmin ping -hcloudsql-proxy -u${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} --silent"
+            if [ $? -eq 0 ]; then
+              echo '✅ MySQL is ready!'
+              break
+            fi
+            echo '⏳ Waiting for MySQL...'
+            sleep 2
+          done
+
 
       # 10. DB 생성
       - name: Ensure Database Exists
