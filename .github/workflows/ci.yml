@@ -44,9 +44,14 @@ jobs:
             --address 0.0.0.0 \
             --port 3306 \
             ${{ secrets.INSTANCE_CONNECTION_NAME }}
-          echo "✅ Cloud SQL Proxy running on cloudsql-net"
 
-      # ✅ Cloud SQL Proxy 준비될 때까지 대기 + 실패 시 로그 출력
+      - name: Debug Cloud SQL Proxy Status
+        run: |
+          echo "🔍 cloudsql-proxy 상태 확인"
+          docker ps -a
+          echo "🔍 cloudsql-proxy 로그 출력"
+          docker logs cloudsql-proxy || echo "⚠️ 로그 조회 실패"
+
       - name: Wait for MySQL to be ready
         run: |
           for i in {1..30}; do
