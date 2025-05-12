@@ -46,20 +46,27 @@ jobs:
             ${{ secrets.INSTANCE_CONNECTION_NAME }}
           echo "✅ Cloud SQL Proxy running on cloudsql-net"
 
-      # ✅ 여기 추가: Cloud SQL Proxy 연결 가능해질 때까지 대기
+      # ✅ Cloud SQL Proxy 준비될 때까지 대기 + 실패 시 로그 출력
       - name: Wait for MySQL to be ready
         run: |
           for i in {1..30}; do
+            echo "⏳ Waiting for MySQL (attempt $i)..."
             docker run --rm --network cloudsql-net mysql:8 \
-              bash -c "mysqladmin ping -hcloudsql-proxy -P3306 --protocol=tcp -u${{ secrets.DB_USER }} -p'${{ secrets.DB_PASSWORD }}' --silent"
+              bash -c "mysql -hcloudsql-proxy -P3306 --protocol=tcp -u${{ secrets.DB_USER }} -p'${{ secrets.DB_PASSWORD }}' -e 'SELECT 1;'"
             STATUS=$?
             if [ $STATUS -eq 0 ]; then
               echo "✅ MySQL is ready!"
               break
             fi
-            echo "⏳ Waiting for MySQL (attempt $i)..."
-            sleep 2
+            sleep 3
           done
+
+          if [ $STATUS -ne 0 ]; then
+            echo "❌ MySQL connection failed after 30 attempts."
+            echo "🔍 Cloud SQL Proxy logs:"
+            docker logs cloudsql-proxy || echo "(failed to get logs)"
+            exit 1
+          fi
 
       - name: Build Docker Image
         run: |
