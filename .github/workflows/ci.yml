@@ -134,12 +134,13 @@ jobs:
         run: |
           docker run -d --network cloudsql-net \
             --name teamitaka-prod \
+            - p 4000:4000 \
             -e DATABASE_URL="${{ env.DATABASE_URL }}" \
             -e NODE_ENV=production \
             -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
             teamitaka-app npm run start
-          sleep 20
-          curl -s http://localhost:4000/health || {
+          sleep 30
+          curl -s --fail http://localhost:4000/health || {
             docker logs teamitaka-prod
             exit 1
           }
