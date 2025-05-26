@@ -9,11 +9,10 @@ npx sequelize-cli db:drop --url "$DATABASE_URL" || {
 }
 echo "✅ All tables dropped successfully."
 
-# ✨✨✨ 새로 추가된 단계: 데이터베이스 생성 ✨✨✨
-echo "➕ [2/4] Creating the database: $DB_NAME..." # $DB_NAME 변수명을 로그에 명시하여 확인 가능
-# DB_NAME 환경 변수는 'teamitaka_database' 값을 가지고 있습니다.
-# --database 옵션으로 명시적으로 데이터베이스 이름을 전달합니다.
-npx sequelize-cli db:create --database "$DB_NAME" --url "$DATABASE_URL" || {
+# ✨✨✨ 수정된 단계: --database 인자 제거 ✨✨✨
+echo "➕ [2/4] Creating the database via URL parsing..." # 로그 메시지도 명확하게 변경
+# `db:create`는 `--database` 인자를 인식하지 못하므로, `DATABASE_URL`에서 데이터베이스 이름을 파싱합니다.
+npx sequelize-cli db:create --url "$DATABASE_URL" || {
   echo "❌ Failed to create database"
   exit 1
 }
