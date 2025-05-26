@@ -139,7 +139,7 @@ jobs:
             -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
             teamitaka-app npm run start
           sleep 20
-          curl -s http://localhost:3000/health || {
+          curl -s http://localhost:4000/health || {
             docker logs teamitaka-prod
             exit 1
           }
