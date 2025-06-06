@@ -204,4 +204,5 @@ jobs:
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             NODE_ENV=production
             DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}
-            cloud_sql_instances: '${{ secrets.INSTANCE_CONNECTION_NAME }}'
+          # 이 부분을 이렇게 수정하세요. 'env_vars'와 같은 레벨에 있어야 합니다.
+          cloud_sql_instances: ${{ secrets.INSTANCE_CONNECTION_NAME }}
