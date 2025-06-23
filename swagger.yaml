@@ -487,7 +487,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   # 모집공고 초안 관련 엔드포인트
-  /recruitment/draft:
+  /drafts/recruitment/draft:
     post:
       summary: 모집공고 임시저장
       description: 모집공고를 임시저장합니다.
@@ -889,7 +889,7 @@ paths:
         - bearerAuth: []
 
   # 모집공고 관련 엔드포인트
-  /recruitment:
+  /recruitments:
     get:
       summary: 전체 모집공고 조회
       description: 모든 모집공고 목록을 조회합니다.
@@ -932,7 +932,7 @@ paths:
                 $ref: '#/components/schemas/Error'
       security:
         - bearerAuth: []
-  /recruitment/{recruitment_id}:
+  /recruitments/{recruitment_id}:
     get:
       summary: 특정 모집공고 조회
       description: 특정 모집공고의 상세 정보를 조회합니다.
@@ -1651,7 +1651,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   # 사용자 관련 엔드포인트
-  /users:
+  /user:
     get:
       summary: 전체 사용자 조회
       description: 모든 사용자 목록을 조회합니다.
@@ -2010,3 +2010,185 @@ components:
         - reviewer_id
         - reviewee_id
         - project_id
+
+    # 모집공고 초안 스키마
+    RecruitmentDraft:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 초안 ID
+        title:
+          type: string
+          description: 모집공고 제목
+        content:
+          type: string
+          description: 모집공고 내용
+        author_id:
+          type: integer
+          description: 작성자 ID
+        status:
+          type: string
+          enum: [draft]
+          description: 초안 상태
+        createdAt:
+          type: string
+          format: date-time
+          description: 생성 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - title
+        - content
+        - author_id
+
+    # 댓글 스키마
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 댓글 ID
+        content:
+          type: string
+          description: 댓글 내용
+        recruitment_id:
+          type: integer
+          description: 모집공고 ID
+        user_id:
+          type: integer
+          description: 작성자 ID
+        createdAt:
+          type: string
+          format: date-time
+          description: 작성 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - content
+        - recruitment_id
+        - user_id
+
+    # 프로젝트 멤버 스키마
+    ProjectMember:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 멤버 ID
+        project_id:
+          type: integer
+          description: 프로젝트 ID
+        user_id:
+          type: integer
+          description: 사용자 ID
+        role:
+          type: string
+          description: 팀원 역할
+        createdAt:
+          type: string
+          format: date-time
+          description: 추가 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - project_id
+        - user_id
+
+    # 평점 스키마
+    Rating:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 평점 ID
+        user_id:
+          type: integer
+          description: 사용자 ID
+        average_rating:
+          type: number
+          format: float
+          description: 평균 평점
+        total_reviews:
+          type: integer
+          description: 총 리뷰 수
+        createdAt:
+          type: string
+          format: date-time
+          description: 생성 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - user_id
+
+    # 타임라인 스키마
+    Timeline:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 이벤트 ID
+        project_id:
+          type: integer
+          description: 프로젝트 ID
+        event:
+          type: string
+          description: 이벤트 내용
+        date:
+          type: string
+          format: date
+          description: 이벤트 날짜
+        createdAt:
+          type: string
+          format: date-time
+          description: 생성 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - project_id
+        - event
+        - date
+
+    # 할 일 스키마
+    Todo:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 할 일 ID
+        project_id:
+          type: integer
+          description: 프로젝트 ID
+        content:
+          type: string
+          description: 할 일 내용
+        is_completed:
+          type: boolean
+          description: 완료 여부
+        createdAt:
+          type: string
+          format: date-time
+          description: 생성 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - project_id
+        - content
