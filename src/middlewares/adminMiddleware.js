@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
+const { jwtSecret } = require("../config/authConfig");
 
 const adminMiddleware = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
@@ -9,7 +9,7 @@ const adminMiddleware = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, jwtSecret);
 
     if (decoded.role !== "ADMIN") {
       return res.status(403).json({ message: "🚫 관리자 권한이 필요합니다." });

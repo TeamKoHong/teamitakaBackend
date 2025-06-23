@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { jwtSecret } = require("../config/authConfig");
 
 module.exports = (req, res, next) => {
   const token = req.header("Authorization");
@@ -8,7 +9,7 @@ module.exports = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, jwtSecret);
 
     // 관리자 체크는 선택적으로 유지
     if (!decoded.isAdmin) {
