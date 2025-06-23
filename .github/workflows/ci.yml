@@ -32,6 +32,13 @@ jobs:
         with:
           node-version: 18
 
+      - name: Fail early if INSTANCE_CONNECTION_NAME is empty
+        run: |
+          if [ -z "${{ secrets.INSTANCE_CONNECTION_NAME }}" ]; then
+            echo "❌ INSTANCE_CONNECTION_NAME is not set. Please check your repository secrets."
+            exit 1
+          fi
+
       - name: Create GCP Service Account Key File
         run: |
           echo "${{ secrets.GCP_SA_KEY }}" > sa-key.json
