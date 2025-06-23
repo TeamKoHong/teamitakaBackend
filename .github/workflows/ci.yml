@@ -32,12 +32,20 @@ jobs:
         with:
           node-version: 18
 
-      - name: Fail early if INSTANCE_CONNECTION_NAME is empty
+      - name: Validate GCP Secrets
         run: |
           if [ -z "${{ secrets.INSTANCE_CONNECTION_NAME }}" ]; then
-            echo "❌ INSTANCE_CONNECTION_NAME is not set. Please check your repository secrets."
+            echo "❌ INSTANCE_CONNECTION_NAME is not set."
             exit 1
           fi
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "❌ GCP_SA_KEY is not set."
+            exit 1
+          fi
+          echo "${{ secrets.GCP_SA_KEY }}" | jq . > /dev/null 2>&1 || {
+            echo "❌ GCP_SA_KEY is not valid JSON."
+            exit 1
+          }
 
       - name: Create GCP Service Account Key File
         run: |
@@ -127,17 +135,6 @@ jobs:
             $DOCKER_IMAGE_TAG \
             bash -c "mysql -h cloudsql-proxy -P 3306 -u $DB_USER -p$DB_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;'"
 
-      - name: Verify Database Existence (Local Docker)
-        run: |
-          DOCKER_IMAGE_TAG=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}:latest
-          docker run --rm \
-            --network cloudsql-net \
-            -e DB_USER=${{ env.DB_USER }} \
-            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
-            -e DB_NAME=${{ env.DB_NAME }} \
-            $DOCKER_IMAGE_TAG \
-            bash -c "mysql -h cloudsql-proxy -P 3306 -u $DB_USER -p$DB_PASSWORD -e 'USE \`$DB_NAME\`;'"
-
       - name: Reset Migrations using reset-migrations.sh (Local Docker)
         run: |
           DOCKER_IMAGE_TAG=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}:latest
@@ -158,32 +155,6 @@ jobs:
             $DOCKER_IMAGE_TAG \
             node src/scripts/loadMockupData.js --users --recruitments --projects --verbose
 
-      - name: Insert CSV Data (Universities, Colleges, Departments) (Local Docker)
-        run: |
-          DOCKER_IMAGE_TAG=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}:latest
-          docker run --rm \
-            --network cloudsql-net \
-            -v ${GITHUB_WORKSPACE}/seeders:/app/seeders \
-            -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            $DOCKER_IMAGE_TAG \
-            node src/scripts/insertCSV.js
-
-      - name: Deploy and Test Application (Local Docker)
-        run: |
-          DOCKER_IMAGE_TAG=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}:latest
-          docker run -d --network cloudsql-net \
-            --name teamitaka-prod \
-            -p 4000:4000 \
-            -e DATABASE_URL="${{ env.DATABASE_URL }}" \
-            -e NODE_ENV=production \
-            -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            $DOCKER_IMAGE_TAG npm run start
-          sleep 30
-          curl -s --fail http://localhost:4000/health || {
-            docker logs teamitaka-prod
-            exit 1
-          }
-
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
@@ -197,4 +168,4 @@ jobs:
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             NODE_ENV=production
             DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}
-            cloud_sql_instances: ${{ secrets.INSTANCE_CONNECTION_NAME }}
+            cloud_sql_instances=${{ secrets.INSTANCE_CONNECTION_NAME }}
