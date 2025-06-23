@@ -28,17 +28,17 @@ jobs:
         with:
           node-version: 18
 
-      # 3. GCP 서비스 계정 키 저장 및 JSON 유효성 검사
-      - name: Save GCP Service Account Key (raw JSON)
+      # 3. GCP 서비스 계정 키 디코딩 및 유효성 검사
+      - name: Decode and Validate GCP Service Account Key
         run: |
-          echo "${{ secrets.GCP_SA_KEY_BASE64 }}" > sa-key.json
+          echo "${{ secrets.GCP_SA_KEY_BASE64 }}" | base64 -d > sa-key.json
           echo "🔍 Validating sa-key.json format..."
           jq . sa-key.json > /dev/null 2>&1
           if [[ $? -ne 0 ]]; then
-            echo "❌ sa-key.json is not valid JSON. Check your secret format."
+            echo "❌ sa-key.json is not valid JSON. Check your base64 secret format."
             exit 1
           fi
-          echo "✅ GCP service account key saved and validated."
+          echo "✅ GCP service account key decoded and validated."
 
       # 4. Docker 전용 네트워크 생성
       - name: Create Docker Network
@@ -150,7 +150,7 @@ jobs:
             exit 1
           }
 
-      # 15. Proxy 및 네트워크 정리
+      # 15. 정리
       - name: Stop Cloud SQL Proxy
         run: docker stop cloudsql-proxy && docker rm cloudsql-proxy || true
 
