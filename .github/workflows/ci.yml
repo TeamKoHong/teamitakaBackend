@@ -58,6 +58,12 @@ jobs:
       - name: Deploy to Cloud Run
         id: deploy
         run: |
+          echo "🔍 Checking environment variables..."
+          echo "GCP_DB_HOST: ${{ secrets.GCP_DB_HOST }}"
+          echo "GCP_DB_USER: ${{ secrets.GCP_DB_USER }}"
+          echo "GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}"
+          echo "GCP_DB_PORT: ${{ secrets.GCP_DB_PORT }}"
+          
           gcloud run deploy ${{ env.IMAGE_NAME }} \
             --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
             --platform managed \
