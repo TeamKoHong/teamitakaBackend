@@ -72,7 +72,13 @@ jobs:
             DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:3306/${{ secrets.DB_NAME }}
           flags: '--allow-unauthenticated --add-cloudsql-instances=${{ secrets.INSTANCE_CONNECTION_NAME }}'
 
-      # 8. 헬스체크
+      # 8. 환경 변수 확인
+      - name: Verify Environment Variables
+        run: |
+          echo "🔍 Checking Cloud Run service environment variables..."
+          gcloud run services describe ${{ env.IMAGE_NAME }} --region=${{ env.GCP_REGION }} --format="value(spec.template.spec.containers[0].env[].name,spec.template.spec.containers[0].env[].value)" | grep -E "(DATABASE_URL|GCP_DB_|NODE_ENV)" || echo "No environment variables found"
+
+      # 9. 헬스체크
       - name: Health Check
         run: |
           echo "🔍 Cloud Run service URL: ${{ steps.deploy.outputs.url }}"
