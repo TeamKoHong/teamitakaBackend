@@ -14,13 +14,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
+
+    env:
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_REGION: us-central1
+      IMAGE_NAME: teamitaka-backend
 
     steps:
       # 1. 코드 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       # 2. Node.js 설치
       - name: Set up Node.js
@@ -28,131 +32,46 @@ jobs:
         with:
           node-version: 18
 
-      # 3. GCP 서비스 계정 키 디코딩 및 유효성 검사
-      - name: Decode and Validate GCP Service Account Key
-        run: |
-          echo "${{ secrets.GCP_SA_KEY_BASE64 }}" | base64 -d > sa-key.json
-          echo "🔍 Validating sa-key.json format..."
-          jq . sa-key.json > /dev/null 2>&1
-          if [[ $? -ne 0 ]]; then
-            echo "❌ sa-key.json is not valid JSON. Check your base64 secret format."
-            exit 1
-          fi
-          echo "✅ GCP service account key decoded and validated."
+      # 3. Google Cloud 인증
+      - name: Authenticate to Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      # 4. Docker 전용 네트워크 생성
-      - name: Create Docker Network
-        run: docker network create cloudsql-net
+      # 4. Docker Buildx 설정
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      # 5. Cloud SQL Proxy v2 시작
-      - name: Start Cloud SQL Proxy (Docker v2)
-        run: |
-          docker run -d --name cloudsql-proxy \
-            --network cloudsql-net \
-            -v ${{ github.workspace }}/sa-key.json:/config/sa-key.json \
-            gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.7.2 \
-            --credentials-file=/config/sa-key.json \
-            --address 0.0.0.0 \
-            --port 3306 \
-            ${{ secrets.INSTANCE_CONNECTION_NAME }}
+      # 5. Docker 인증 설정
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
-      # 6. Docker 이미지 빌드
-      - name: Build Docker Image
+      # 6. Docker 이미지 빌드 및 푸시
+      - name: Build and Push Docker Image
         run: |
-          docker build -t teamitaka-app -f Dockerfile.prod --no-cache .
-        working-directory: .
+          DOCKER_IMAGE_TAG=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}:latest
+          docker build -t $DOCKER_IMAGE_TAG -f Dockerfile.prod .
+          docker push $DOCKER_IMAGE_TAG
 
-      # 7. ProjectPost.js 존재 확인
-      - name: Verify ProjectPost.js exists
-        run: |
-          docker run --rm teamitaka-app ls /app/src/models/ProjectPost.js || exit 1
+      # 7. Cloud Run 배포
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: ${{ env.IMAGE_NAME }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}:latest
+          env_vars: |
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            NODE_ENV=production
+            DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}
 
-      # 8. DB 환경변수 설정
-      - name: Set Database Environment
+      # 8. 헬스체크
+      - name: Health Check
         run: |
-          DB_NAME_VALUE=${{ secrets.DB_NAME }}
-          [ -z "$DB_NAME_VALUE" ] && DB_NAME_VALUE="teamitaka_db"
-          echo "DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@cloudsql-proxy:3306/${DB_NAME_VALUE}" >> $GITHUB_ENV
-          echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
-          echo "DB_NAME=${DB_NAME_VALUE}" >> $GITHUB_ENV
-          echo "DB_HOST=cloudsql-proxy" >> $GITHUB_ENV
-          echo "DB_PORT=3306" >> $GITHUB_ENV
-          echo "DB_DIALECT=mysql" >> $GITHUB_ENV
-          echo "DB_CHARSET=utf8mb4" >> $GITHUB_ENV
-          echo "NODE_ENV=production" >> $GITHUB_ENV
-
-      # 9. DB 생성
-      - name: Ensure Database Exists
-        run: |
-          docker run --rm \
-            --network cloudsql-net \
-            -e DB_USER=${{ env.DB_USER }} \
-            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
-            -e DB_NAME=${{ env.DB_NAME }} \
-            teamitaka-app \
-            bash -c "mysql -h cloudsql-proxy -P 3306 -u $DB_USER -p$DB_PASSWORD -e 'CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;'"
-
-      # 10. DB 존재 확인
-      - name: Verify Database Existence
-        run: |
-          docker run --rm \
-            --network cloudsql-net \
-            -e DB_USER=${{ env.DB_USER }} \
-            -e DB_PASSWORD=${{ env.DB_PASSWORD }} \
-            -e DB_NAME=${{ env.DB_NAME }} \
-            teamitaka-app \
-            bash -c "mysql -h cloudsql-proxy -P 3306 -u $DB_USER -p$DB_PASSWORD -e 'USE \`$DB_NAME\`;'"
-
-      # 11. 마이그레이션 리셋
-      - name: Reset Migrations using reset-migrations.sh
-        run: |
-          docker run --rm \
-            --network cloudsql-net \
-            -v ${{ github.workspace }}/reset-migrations.sh:/app/reset-migrations.sh \
-            -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            teamitaka-app \
-            bash /app/reset-migrations.sh
-
-      # 12. Mock 데이터 삽입
-      - name: Insert Mockup Data
-        run: |
-          docker run --rm \
-            --network cloudsql-net \
-            -v ${GITHUB_WORKSPACE}/src/data:/app/data \
-            -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            teamitaka-app \
-            node src/scripts/loadMockupData.js --users --recruitments --projects --verbose
-
-      # 13. 대학/학과 CSV 삽입
-      - name: Insert CSV Data (Universities, Colleges, Departments)
-        run: |
-          docker run --rm \
-            --network cloudsql-net \
-            -v ${GITHUB_WORKSPACE}/seeders:/app/seeders \
-            -e DATABASE_URL=${{ env.DATABASE_URL }} \
-            teamitaka-app \
-            node src/scripts/insertCSV.js
-
-      # 14. 애플리케이션 배포 및 헬스체크
-      - name: Deploy and Test Application
-        run: |
-          docker run -d --network cloudsql-net \
-            --name teamitaka-prod \
-            -p 4000:4000 \
-            -e DATABASE_URL="${{ env.DATABASE_URL }}" \
-            -e NODE_ENV=production \
-            -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            teamitaka-app npm run start
           sleep 30
-          curl -s --fail http://localhost:4000/health || {
-            docker logs teamitaka-prod
-            exit 1
-          }
-
-      # 15. 정리
-      - name: Stop Cloud SQL Proxy
-        run: docker stop cloudsql-proxy && docker rm cloudsql-proxy || true
-
-      - name: Remove Docker Network
-        run: docker network rm cloudsql-net || true
+          curl -f ${{ steps.deploy.outputs.url }}/health || exit 1
