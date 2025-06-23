@@ -29,37 +29,45 @@ const dbConfig = {
   }
 };
 
-// 필수 환경변수 확인
-if (!dbConfig.host || !dbConfig.user || !dbConfig.password || !dbConfig.database) {
-  console.error("❌ Required database environment variables are missing!");
-  console.error("Required: GCP_DB_HOST, GCP_DB_USER, GCP_DB_PASSWORD, GCP_DB_NAME");
-  console.error("Available environment variables:", Object.keys(process.env).filter(key => key.includes('DB')));
-  process.exit(1);
+// 필수 환경변수 확인 (앱 시작 시에는 에러를 발생시키지 않음)
+const hasRequiredEnvVars = dbConfig.host && dbConfig.user && dbConfig.password && dbConfig.database;
+
+if (!hasRequiredEnvVars) {
+  console.warn("⚠️  Required database environment variables are missing!");
+  console.warn("Required: GCP_DB_HOST, GCP_DB_USER, GCP_DB_PASSWORD, GCP_DB_NAME");
+  console.warn("Available environment variables:", Object.keys(process.env).filter(key => key.includes('DB')));
+  console.warn("Database connection will fail when attempted.");
 }
 
-console.log("🔗 Creating Sequelize connection with config:", {
-  host: dbConfig.host,
-  user: dbConfig.user,
-  database: dbConfig.database,
-  port: dbConfig.port
-});
-
+// Sequelize 인스턴스 생성 (환경변수가 없어도 생성)
 const sequelize = new Sequelize(
-  dbConfig.database,
-  dbConfig.user,
-  dbConfig.password,
+  dbConfig.database || 'dummy',
+  dbConfig.user || 'dummy',
+  dbConfig.password || 'dummy',
   {
-    host: dbConfig.host,
+    host: dbConfig.host || 'localhost',
     port: dbConfig.port,
     dialect: dbConfig.dialect,
-    logging: dbConfig.logging,
+    logging: hasRequiredEnvVars ? dbConfig.logging : false, // 환경변수가 없으면 로깅 비활성화
     dialectOptions: dbConfig.dialectOptions,
     define: dbConfig.define
   }
 );
 
 const connectDB = async () => {
+  if (!hasRequiredEnvVars) {
+    console.error("❌ Cannot connect to database: Required environment variables are missing");
+    return false;
+  }
+
   try {
+    console.log("🔗 Creating Sequelize connection with config:", {
+      host: dbConfig.host,
+      user: dbConfig.user,
+      database: dbConfig.database,
+      port: dbConfig.port
+    });
+    
     await sequelize.authenticate();
     console.log("✅ Database connection established.");
     return true;
