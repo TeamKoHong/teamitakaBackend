@@ -32,28 +32,30 @@ jobs:
         with:
           node-version: 18
 
-      - name: 🔒 Validate GCP Secrets (Fail Early)
+      - name: 🔒 Validate GCP Secrets (Safe Check)
         run: |
           echo "🔍 Checking INSTANCE_CONNECTION_NAME..."
-          if [[ -z "${{ secrets.INSTANCE_CONNECTION_NAME }}" ]]; then
+          INSTANCE_CONN="${{ secrets.INSTANCE_CONNECTION_NAME }}"
+          if [[ -z "$INSTANCE_CONN" ]]; then
             echo "❌ INSTANCE_CONNECTION_NAME is not set or empty."
             exit 1
           fi
-
+        
           echo "🔍 Checking GCP_SA_KEY..."
-          if [[ -z "${{ secrets.GCP_SA_KEY }}" ]]; then
+          GCP_KEY="${{ secrets.GCP_SA_KEY }}"
+          if [[ -z "$GCP_KEY" ]]; then
             echo "❌ GCP_SA_KEY is not set or empty."
             exit 1
           fi
-
+        
           echo "🔍 Validating GCP_SA_KEY as JSON..."
-          echo '${{ secrets.GCP_SA_KEY }}' | jq . > /dev/null 2>&1
+          echo "$GCP_KEY" | jq . > /dev/null 2>&1
           if [[ $? -ne 0 ]]; then
             echo "❌ GCP_SA_KEY is not valid JSON. Check your GitHub Secret format."
             exit 1
           fi
-
-          echo "✅ All GCP secrets are valid."
+        
+          echo "✅ All GCP secrets are valid."        
 
       - name: Create GCP Service Account Key File
         run: |
