@@ -69,9 +69,20 @@ jobs:
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             NODE_ENV=production
             DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:3306/${{ secrets.DB_NAME }}
+          flags: '--allow-unauthenticated'
 
       # 8. 헬스체크
       - name: Health Check
         run: |
-          sleep 30
-          curl -f ${{ steps.deploy.outputs.url }}/health || exit 1
+          echo "🔍 Cloud Run service URL: ${{ steps.deploy.outputs.url }}"
+          echo "⏳ Waiting for service to be ready..."
+          sleep 60
+          echo "🏥 Attempting health check..."
+          curl -v -f "${{ steps.deploy.outputs.url }}/health" || {
+            echo "❌ Health check failed. Checking service status..."
+            gcloud run services describe ${{ env.IMAGE_NAME }} --region=${{ env.GCP_REGION }} --format="value(status.url)"
+            echo "🔍 Service logs:"
+            gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=${{ env.IMAGE_NAME }}" --limit=20 --format="value(timestamp,textPayload)"
+            exit 1
+          }
+          echo "✅ Health check passed!"
