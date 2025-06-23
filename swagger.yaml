@@ -399,7 +399,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   # 댓글 관련 엔드포인트
-  /recruitments/{recruitment_id}/comment:
+  /comment/{recruitment_id}:
     get:
       summary: 모집공고 댓글 조회
       description: 특정 모집공고에 달린 댓글 목록을 조회합니다.
