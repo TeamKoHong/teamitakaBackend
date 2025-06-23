@@ -63,9 +63,10 @@ jobs:
           region: ${{ env.GCP_REGION }}
           image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}:latest
           env_vars: |
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_NAME=${{ secrets.DB_NAME }}
+            GCP_DB_USER=${{ secrets.DB_USER }}
+            GCP_DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            GCP_DB_NAME=${{ secrets.DB_NAME }}
+            GCP_DB_HOST=localhost
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             NODE_ENV=production
             DATABASE_URL=mysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:3306/${{ secrets.DB_NAME }}

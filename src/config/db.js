@@ -16,7 +16,6 @@ const sequelize = new Sequelize(databaseUrl, {
     ssl: false, // Cloud SQL Proxy가 SSL 처리
     connectTimeout: 10000,
   },
-  host: "127.0.0.1",
   define: {
     underscored: false
 }});
