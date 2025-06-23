@@ -28,11 +28,11 @@ jobs:
         with:
           node-version: 18
 
-      # 3. Authenticate with gcloud
+      # 3. Authenticate with gcloud (원본 JSON 사용)
       - name: Authenticate with gcloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY_BASE64 }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       # 4. Set up gcloud CLI
       - name: Set up Cloud SDK
