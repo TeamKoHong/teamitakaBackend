@@ -25,6 +25,11 @@ Teamitaka 백엔드 API 서버입니다.
 - **프로덕션**: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app/api-docs/swagger.json
 - **로컬**: http://localhost:3000/api-docs/swagger.json
 
+### ✅ 최근 수정사항 (2025년 6월 23일)
+- **스키마 오류 수정**: 누락된 `Project`, `Application`, `User` 등 스키마 추가
+- **서버 URL 수정**: `/api` 접두사 추가로 실제 라우트와 일치
+- **API 엔드포인트 정상화**: 모든 API가 정상적으로 작동
+
 ## 🔧 기술 스택
 
 - **Runtime**: Node.js 18
