@@ -19,7 +19,11 @@
     "seed:test": "dotenv -e .env.test -- npx sequelize-cli db:seed:all",
     "rollback:dev": "dotenv -e .env.development -- npx sequelize-cli db:migrate:undo",
     "rollback:prod": "dotenv -e .env.production -- npx sequelize-cli db:migrate:undo",
-    "rollback:test": "dotenv -e .env.test -- npx sequelize-cli db:migrate:undo"
+    "rollback:test": "dotenv -e .env.test -- npx sequelize-cli db:migrate:undo",
+    "db:init": "node scripts/init-db.js",
+    "db:init:dev": "NODE_ENV=development node scripts/init-db.js",
+    "db:init:prod": "NODE_ENV=production node scripts/init-db.js",
+    "db:reset": "NODE_ENV=development node scripts/init-db.js"
   },
   "jest": {
     "roots": [
