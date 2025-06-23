@@ -54,9 +54,9 @@ tags:
     description: 대학 인증 시스템 API
 
 servers:
-  - url: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app
+  - url: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app/api
     description: 프로덕션 서버
-  - url: http://localhost:3000
+  - url: http://localhost:3000/api
     description: 로컬 개발 서버
 
 paths:
@@ -1788,4 +1788,225 @@ components:
         - token
         - user
 
-    # 기존 스키마들...
+    # 사용자 관련 스키마
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 사용자 ID
+        email:
+          type: string
+          format: email
+          description: 사용자 이메일
+        name:
+          type: string
+          description: 사용자 이름
+        univName:
+          type: string
+          description: 대학 이름
+        certified_email:
+          type: string
+          description: 인증된 이메일
+        certified_date:
+          type: string
+          format: date-time
+          description: 인증 날짜
+        createdAt:
+          type: string
+          format: date-time
+          description: 생성 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - email
+        - name
+
+    UserRegister:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: 사용자 이메일
+        password:
+          type: string
+          description: 비밀번호
+        name:
+          type: string
+          description: 사용자 이름
+      required:
+        - email
+        - password
+        - name
+
+    # 프로젝트 관련 스키마
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 프로젝트 ID
+        title:
+          type: string
+          description: 프로젝트 제목
+        description:
+          type: string
+          description: 프로젝트 설명
+        status:
+          type: string
+          enum: [active, completed, paused]
+          description: 프로젝트 상태
+        startDate:
+          type: string
+          format: date
+          description: 시작 날짜
+        endDate:
+          type: string
+          format: date
+          description: 종료 날짜
+        createdAt:
+          type: string
+          format: date-time
+          description: 생성 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - title
+        - description
+
+    # 지원 관련 스키마
+    Application:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 지원 ID
+        recruitment_id:
+          type: integer
+          description: 모집공고 ID
+        user_id:
+          type: integer
+          description: 지원자 ID
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          description: 지원 상태
+        message:
+          type: string
+          description: 지원 메시지
+        createdAt:
+          type: string
+          format: date-time
+          description: 지원 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - recruitment_id
+        - user_id
+        - status
+
+    # 모집공고 관련 스키마
+    Recruitment:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 모집공고 ID
+        title:
+          type: string
+          description: 모집공고 제목
+        content:
+          type: string
+          description: 모집공고 내용
+        author_id:
+          type: integer
+          description: 작성자 ID
+        status:
+          type: string
+          enum: [active, closed, draft]
+          description: 모집공고 상태
+        deadline:
+          type: string
+          format: date-time
+          description: 마감일
+        createdAt:
+          type: string
+          format: date-time
+          description: 생성 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - title
+        - content
+        - author_id
+
+    # 리뷰 관련 스키마
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 리뷰 ID
+        reviewer_id:
+          type: integer
+          description: 리뷰어 ID
+        reviewee_id:
+          type: integer
+          description: 피리뷰어 ID
+        project_id:
+          type: integer
+          description: 프로젝트 ID
+        ability_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 능력 평점
+        effort_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 노력 평점
+        dedication_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 헌신 평점
+        communication_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 소통 평점
+        reflection_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: 성찰 평점
+        comment:
+          type: string
+          description: 리뷰 코멘트
+        createdAt:
+          type: string
+          format: date-time
+          description: 생성 날짜
+        updatedAt:
+          type: string
+          format: date-time
+          description: 수정 날짜
+      required:
+        - id
+        - reviewer_id
+        - reviewee_id
+        - project_id
