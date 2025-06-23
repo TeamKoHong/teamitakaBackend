@@ -59,10 +59,10 @@ jobs:
         id: deploy
         run: |
           echo "🔍 Checking environment variables..."
-          echo "GCP_DB_HOST: ${{ secrets.GCP_DB_HOST }}"
-          echo "GCP_DB_USER: ${{ secrets.GCP_DB_USER }}"
-          echo "GCP_DB_NAME: ${{ secrets.GCP_DB_NAME }}"
-          echo "GCP_DB_PORT: ${{ secrets.GCP_DB_PORT }}"
+          echo "DB_HOST: ${{ secrets.DB_HOST }}"
+          echo "DB_USER: ${{ secrets.DB_USER }}"
+          echo "DB_NAME: ${{ secrets.DB_NAME }}"
+          echo "DB_PORT: ${{ secrets.DB_PORT }}"
           
           gcloud run deploy ${{ env.IMAGE_NAME }} \
             --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
@@ -70,7 +70,7 @@ jobs:
             --region us-central1 \
             --allow-unauthenticated \
             --add-cloudsql-instances ${{ secrets.INSTANCE_CONNECTION_NAME }} \
-            --set-env-vars "NODE_ENV=production,JWT_SECRET=${{ secrets.JWT_SECRET }},GCP_DB_HOST=${{ secrets.GCP_DB_HOST }},GCP_DB_USER=${{ secrets.GCP_DB_USER }},GCP_DB_PASSWORD=${{ secrets.GCP_DB_PASSWORD }},GCP_DB_NAME=${{ secrets.GCP_DB_NAME }},GCP_DB_PORT=${{ secrets.GCP_DB_PORT }}" \
+            --set-env-vars "NODE_ENV=production,JWT_SECRET=${{ secrets.JWT_SECRET }},DB_HOST=${{ secrets.DB_HOST }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }},DB_PORT=${{ secrets.DB_PORT }}" \
             --format "value(status.url)" > service_url.txt
           
           echo "service_url=$(cat service_url.txt)" >> $GITHUB_OUTPUT
@@ -90,11 +90,11 @@ jobs:
             gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=${{ env.IMAGE_NAME }}" --limit=20 --format="value(timestamp,textPayload)"
             echo "❌ Deployment failed: Application cannot connect to database"
             echo "💡 Please check GitHub Secrets for database environment variables:"
-            echo "   - GCP_DB_HOST"
-            echo "   - GCP_DB_USER" 
-            echo "   - GCP_DB_PASSWORD"
-            echo "   - GCP_DB_NAME"
-            echo "   - GCP_DB_PORT (optional)"
+            echo "   - DB_HOST"
+            echo "   - DB_USER" 
+            echo "   - DB_PASSWORD"
+            echo "   - DB_NAME"
+            echo "   - DB_PORT (optional)"
             exit 1
           }
           echo "✅ Health check passed! Database connection successful."
