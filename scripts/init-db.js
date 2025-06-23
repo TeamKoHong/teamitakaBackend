@@ -29,8 +29,8 @@ const initDatabase = async () => {
       console.log('🛠️  Development/Test environment detected');
       console.log('🔄 Running full initialization with seed data');
       
-      // 개발/테스트: 테이블 재생성 + 시드 데이터
-      await sequelize.sync({ force: true });
+      // 개발/테스트: 외래키 제약조건을 고려한 안전한 초기화
+      await safeDatabaseReset();
       console.log('✅ Development tables created');
       
       // 3. 시드 데이터 생성
@@ -44,6 +44,49 @@ const initDatabase = async () => {
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
     process.exit(1);
+  }
+};
+
+const safeDatabaseReset = async () => {
+  console.log('🔄 Safely resetting database...');
+  
+  try {
+    // 1. 외래키 제약조건 비활성화
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
+    console.log('✅ Foreign key checks disabled');
+    
+    // 2. 기존 데이터만 삭제 (테이블은 유지)
+    const tables = [
+      'VoteResponses', 'VoteOptions', 'Votes', 'VerifiedEmails', 'Todos',
+      'Searches', 'Scraps', 'Schedules', 'Reviews', 'ProjectPosts',
+      'projectmembers', 'Applications', 'Comments', 'Recruitments', 'Projects', 'Users'
+    ];
+    
+    for (const table of tables) {
+      try {
+        await sequelize.query(`DELETE FROM \`${table}\`;`);
+        console.log(`✅ Cleared table: ${table}`);
+      } catch (error) {
+        console.log(`⚠️  Could not clear table ${table}: ${error.message}`);
+      }
+    }
+    
+    // 3. 외래키 제약조건 다시 활성화
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
+    console.log('✅ Foreign key checks re-enabled');
+    
+    // 4. 테이블 구조 동기화 (필요한 경우에만)
+    await sequelize.sync({ force: false, alter: true });
+    console.log('✅ Tables synchronized');
+    
+  } catch (error) {
+    // 오류 발생 시 외래키 제약조건 복구
+    try {
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
+    } catch (e) {
+      console.warn('⚠️  Could not re-enable foreign key checks:', e.message);
+    }
+    throw error;
   }
 };
 
