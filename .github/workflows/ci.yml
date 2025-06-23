@@ -42,17 +42,15 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-          create_credentials_file: false
-          export_environment_variables: true
+          token_format: access_token # ✅ 핵심 수정!
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
 
-      # 🔑 Docker 인증 추가
       - name: Configure Docker credentials
         uses: docker/login-action@v3
         with:
           registry: ${{ env.GCP_REGION }}-docker.pkg.dev
           username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
+          password: ${{ steps.auth.outputs.access_token }} # ✅ auth step의 토큰 사용
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -70,7 +68,6 @@ jobs:
             --address 0.0.0.0 \
             --port 3306 \
             ${{ secrets.INSTANCE_CONNECTION_NAME }}
-          echo "✅ Cloud SQL Proxy running on cloudsql-net"
 
       - name: Build and Push Docker Image to Artifact Registry
         run: |
