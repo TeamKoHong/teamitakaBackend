@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../models");
 const { validatePassword } = require("../utils/passwordValidator");
 const { v4: uuidv4 } = require("uuid"); // ✅ UUID 생성 모듈 추가
+const { jwtSecret } = require("../config/authConfig");
 
 exports.register = async (req, res) => {
   try {
@@ -82,7 +83,7 @@ exports.login = async (req, res) => {
     // 4️⃣ JWT 토큰 발급
     const token = jwt.sign(
       { userId: user.user_id, email: user.email, role: user.role }, // 역할 포함
-      process.env.JWT_SECRET,
+      jwtSecret,
       { expiresIn: "1d" }
     );
 

@@ -30,7 +30,7 @@ module.exports = {
   // 공통 설정 (Development/Production 모두 사용 가능)
   auth: {
     univcertApiKey: process.env.UNIVCERT_API_KEY,
-    jwtSecret: process.env.JWT_SECRET,
+    jwtSecret: process.env.JWT_SECRET || "teamitaka-default-jwt-secret-key-2024",
   },
 
   admin: {

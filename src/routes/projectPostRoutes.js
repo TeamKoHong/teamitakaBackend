@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const projectPostController = require("../controllers/projectPostController");
 const adminAuth = require("../middlewares/authMiddleware");
+const { jwtSecret } = require("../config/authConfig");
+
 // 인증 미들웨어 정의
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -11,7 +13,7 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: "인증 토큰이 필요합니다." });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  jwt.verify(token, jwtSecret, (err, user) => {
     if (err) {
       return res.status(403).json({ error: "유효하지 않은 토큰입니다." });
     }
