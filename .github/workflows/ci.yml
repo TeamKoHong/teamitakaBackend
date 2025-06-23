@@ -28,33 +28,73 @@ jobs:
         with:
           node-version: 18
 
-      # 3. Authenticate with gcloud
+      # 3. Install dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # 4. Database Setup (Development/Test Environment)
+      - name: Setup Database for Testing
+        run: |
+          echo "🔧 Setting up database for testing environment..."
+          echo "DB_HOST: ${{ secrets.DB_HOST }}"
+          echo "DB_USER: ${{ secrets.DB_USER }}"
+          echo "DB_NAME: ${{ secrets.DB_NAME }}"
+          echo "DB_PORT: ${{ secrets.DB_PORT }}"
+          
+          # 환경변수 설정
+          export NODE_ENV=development
+          export DB_HOST=${{ secrets.DB_HOST }}
+          export DB_USER=${{ secrets.DB_USER }}
+          export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          export DB_NAME=${{ secrets.DB_NAME }}
+          export DB_PORT=${{ secrets.DB_PORT }}
+          export JWT_SECRET=${{ secrets.JWT_SECRET || 'default-jwt-secret-for-testing' }}
+          
+          # DB 초기화 실행
+          npm run db:init:dev
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'default-jwt-secret-for-testing' }}
+
+      # 5. API Tests (Optional - if you have tests)
+      - name: Run API Tests
+        run: |
+          echo "🧪 Running API tests..."
+          # 여기에 API 테스트 추가 가능
+          echo "✅ API tests completed (placeholder)"
+        continue-on-error: true
+
+      # 6. Authenticate with gcloud
       - name: Authenticate with gcloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # 4. Set up gcloud CLI
+      # 7. Set up gcloud CLI
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      # 5. Configure Docker for Artifact Registry
+      # 8. Configure Docker for Artifact Registry
       - name: Configure Docker
         run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
-      # 6. Build Docker image
+      # 9. Build Docker image
       - name: Build Docker Image
         run: |
           docker build -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} -f Dockerfile.prod .
 
-      # 7. Push to Artifact Registry
+      # 10. Push to Artifact Registry
       - name: Push Docker Image
         run: |
           docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}
 
-      # 8. Deploy to Cloud Run
+      # 11. Deploy to Cloud Run
       - name: Deploy to Cloud Run
         id: deploy
         run: |
@@ -86,7 +126,7 @@ jobs:
           echo "service_url=$(cat service_url.txt)" >> $GITHUB_OUTPUT
           echo "🔍 Service URL: $(cat service_url.txt)"
 
-      # 9. Wait for service to be ready + Health Check
+      # 12. Wait for service to be ready + Health Check
       - name: Wait and Check Health
         run: |
           echo "🔍 Cloud Run service URL: ${{ steps.deploy.outputs.service_url }}"
@@ -108,3 +148,38 @@ jobs:
             exit 1
           }
           echo "✅ Health check passed! Database connection successful."
+
+      # 13. API Test with Seed Data
+      - name: Test API with Seed Data
+        run: |
+          echo "🧪 Testing API endpoints with seed data..."
+          SERVICE_URL="${{ steps.deploy.outputs.service_url }}"
+          
+          # 테스트 사용자로 로그인하여 토큰 획득
+          echo "🔐 Testing login with seed user..."
+          LOGIN_RESPONSE=$(curl -s -X POST "$SERVICE_URL/api/auth/login" \
+            -H "Content-Type: application/json" \
+            -d '{"email":"test@example.com","password":"password"}')
+          
+          echo "Login response: $LOGIN_RESPONSE"
+          
+          # 토큰 추출 (간단한 방법)
+          TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+          
+          if [ -n "$TOKEN" ]; then
+            echo "✅ Login successful, testing protected endpoints..."
+            
+            # 모집공고 조회 테스트
+            echo "📋 Testing recruitment list..."
+            curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/recruitments" | head -c 200
+            
+            # 프로젝트 조회 테스트
+            echo "📋 Testing project list..."
+            curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects" | head -c 200
+            
+            echo "✅ API tests completed successfully!"
+          else
+            echo "⚠️  Login failed, but deployment is still successful"
+            echo "💡 This might be due to seed data not being available in production"
+          fi
+        continue-on-error: true

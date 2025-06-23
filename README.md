@@ -119,14 +119,43 @@ DB_PORT=3306
 JWT_SECRET=your_jwt_secret  # 선택사항 (기본값 제공)
 ```
 
-### 3. 데이터베이스 마이그레이션
+### 3. 데이터베이스 초기화
 ```bash
-npm run migrate:dev
+# 개발 환경 (테이블 생성 + 시드 데이터)
+npm run db:init:dev
+
+# 프로덕션 환경 (테이블 생성만)
+npm run db:init:prod
+
+# DB 리셋 (개발용)
+npm run db:reset
 ```
 
 ### 4. 서버 실행
 ```bash
 npm run dev
+```
+
+## 🗄️ 데이터베이스 관리
+
+### 자동 초기화
+- **개발 환경**: 테이블 생성 + 테스트 데이터 자동 생성
+- **프로덕션 환경**: 안전한 테이블 동기화만 수행
+- **CI/CD**: 배포 시 자동으로 DB 초기화
+
+### 시드 데이터
+다음 테스트 데이터가 자동으로 생성됩니다:
+- **테스트 사용자**: `test@example.com` / `password`
+- **테스트 모집공고**: "테스트 모집공고"
+- **테스트 프로젝트**: "테스트 프로젝트"
+- **테스트 댓글, 지원, 리뷰** 등
+
+### 수동 DB 관리
+```bash
+# Sequelize CLI 사용
+npm run migrate:dev      # 마이그레이션 실행
+npm run seed:dev         # 시드 데이터 생성
+npm run rollback:dev     # 마이그레이션 롤백
 ```
 
 ## 📦 배포

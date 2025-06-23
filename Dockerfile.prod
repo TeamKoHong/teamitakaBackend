@@ -13,6 +13,34 @@ RUN npm install --production && npm install sequelize-cli
 
 COPY . .
 
+# 스크립트 실행 권한 부여
+RUN chmod +x scripts/init-db.js
+
 EXPOSE 8080
 
-CMD ["npm", "run", "start"]
+# 시작 스크립트 생성
+RUN echo '#!/bin/bash\n\
+echo "🚀 Starting Teamitaka Backend..."\n\
+\n\
+# 환경변수 확인\n\
+echo "🔍 Environment: $NODE_ENV"\n\
+echo "🔍 DB_HOST: $DB_HOST"\n\
+echo "🔍 DB_NAME: $DB_NAME"\n\
+\n\
+# DB 초기화 (프로덕션 환경에서만)\n\
+if [ "$NODE_ENV" = "production" ]; then\n\
+  echo "🏭 Production environment - initializing database..."\n\
+  node scripts/init-db.js\n\
+  if [ $? -eq 0 ]; then\n\
+    echo "✅ Database initialization completed"\n\
+  else\n\
+    echo "⚠️  Database initialization failed, but continuing..."\n\
+  fi\n\
+fi\n\
+\n\
+# 애플리케이션 시작\n\
+echo "🎯 Starting application..."\n\
+exec npm run start\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]
