@@ -5,7 +5,15 @@ Teamitaka 백엔드 API 서버입니다.
 ## 🚀 배포 상태
 
 - **프로덕션**: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app
-- **상태**: ✅ 배포 완료 (DB 연결 필요)
+- **상태**: ✅ **완전히 정상 작동**
+- **데이터베이스**: 🟢 **연결 성공**
+- **Health Check**: ✅ **정상**
+- **JWT 인증**: ✅ **정상 작동**
+
+### 🏥 Health Check
+- **엔드포인트**: `/health`
+- **상태**: `{"status":"OK","database":"connected"}`
+- **URL**: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app/health
 
 ## 📚 API 문서
 
@@ -23,10 +31,11 @@ Teamitaka 백엔드 API 서버입니다.
 - **Framework**: Express.js
 - **Database**: MySQL (Cloud SQL)
 - **ORM**: Sequelize
-- **Authentication**: JWT
+- **Authentication**: JWT (기본값 지원)
 - **Deployment**: Google Cloud Run
 - **Container**: Docker
 - **CI/CD**: GitHub Actions
+- **API Documentation**: Swagger/OpenAPI 3.0
 
 ## 🏗️ 프로젝트 구조
 
@@ -38,6 +47,17 @@ src/
 ├── middleware/      # 미들웨어
 └── app.js          # 메인 애플리케이션 파일
 ```
+
+## 🎯 빠른 시작
+
+### 1. API 문서 확인
+- Swagger UI: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app/api-docs
+
+### 2. 서버 상태 확인
+- Health Check: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app/health
+
+### 3. 기본 엔드포인트
+- 메인 페이지: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app/
 
 ## 🚀 주요 기능
 
@@ -89,7 +109,7 @@ DB_USER=your_username
 DB_PASSWORD=your_password
 DB_NAME=your_database
 DB_PORT=3306
-JWT_SECRET=your_jwt_secret
+JWT_SECRET=your_jwt_secret  # 선택사항 (기본값 제공)
 ```
 
 ### 3. 데이터베이스 마이그레이션
@@ -107,6 +127,8 @@ npm run dev
 ### 자동 배포 (GitHub Actions)
 - `dev` 브랜치에 푸시하면 자동으로 배포됩니다
 - 배포 상태는 GitHub Actions에서 확인 가능
+- **최신 배포**: ✅ 성공 (2024년 6월 23일)
+- **Health Check**: ✅ 통과
 
 ### 수동 배포
 ```bash
