@@ -84,9 +84,17 @@ jobs:
           sleep 60
           echo "🏥 Attempting health check..."
           curl -f "${{ steps.deploy.outputs.service_url }}/health" || {
-            echo "❌ Health check failed. Showing logs:"
-            gcloud run services describe ${{ env.IMAGE_NAME }} --region us-central1 --format="value(status.url)"
-            gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=${{ env.IMAGE_NAME }}" --limit=30 --format="value(timestamp,textPayload)"
+            echo "❌ Health check failed - Database connection is required for deployment success"
+            echo "📋 Service URL: ${{ steps.deploy.outputs.service_url }}"
+            echo "📋 Recent logs:"
+            gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=${{ env.IMAGE_NAME }}" --limit=20 --format="value(timestamp,textPayload)"
+            echo "❌ Deployment failed: Application cannot connect to database"
+            echo "💡 Please check GitHub Secrets for database environment variables:"
+            echo "   - GCP_DB_HOST"
+            echo "   - GCP_DB_USER" 
+            echo "   - GCP_DB_PASSWORD"
+            echo "   - GCP_DB_NAME"
+            echo "   - GCP_DB_PORT (optional)"
             exit 1
           }
-          echo "✅ Health check passed!"
+          echo "✅ Health check passed! Database connection successful."
