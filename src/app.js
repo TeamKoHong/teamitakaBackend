@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser"); // 추가
-const { sequelize } = require("./models"); // Sequelize 인스턴스 가져오기
+const { sequelize, connectDB } = require("./config/db"); // DB 연결 함수 import
 
 const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -70,5 +70,21 @@ app.get('/health', async (req, res) => {
 
 // swagger 라우트 추가
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// 앱 시작 시 DB 연결 시도
+const startApp = async () => {
+  console.log("🚀 Starting application...");
+  
+  // DB 연결 시도
+  const dbConnected = await connectDB();
+  if (!dbConnected) {
+    console.error("❌ Failed to connect to database. Application may not work properly.");
+  }
+  
+  console.log("✅ Application setup completed.");
+};
+
+// 앱 시작
+startApp();
 
 module.exports = app;
