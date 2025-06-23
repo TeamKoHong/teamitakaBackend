@@ -23,7 +23,10 @@
     "db:init": "node scripts/init-db.js",
     "db:init:dev": "NODE_ENV=development node scripts/init-db.js",
     "db:init:prod": "NODE_ENV=production node scripts/init-db.js",
-    "db:reset": "NODE_ENV=development node scripts/init-db.js"
+    "db:reset": "NODE_ENV=development node scripts/init-db.js",
+    "db:init:simple": "node scripts/init-db-simple.js",
+    "db:init:simple:dev": "NODE_ENV=development node scripts/init-db-simple.js",
+    "db:init:simple:prod": "NODE_ENV=production node scripts/init-db-simple.js"
   },
   "jest": {
     "roots": [

@@ -51,7 +51,7 @@ jobs:
           export JWT_SECRET=${{ secrets.JWT_SECRET || 'default-jwt-secret-for-testing' }}
           
           # DB 초기화 실행
-          npm run db:init:dev
+          npm run db:init:simple:dev
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_USER: ${{ secrets.DB_USER }}
