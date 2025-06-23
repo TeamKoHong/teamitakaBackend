@@ -5,19 +5,19 @@ const env = process.env.NODE_ENV || "development";
 
 console.log("🔍 Environment variables:");
 console.log("NODE_ENV:", env);
-console.log("GCP_DB_HOST:", process.env.GCP_DB_HOST);
-console.log("GCP_DB_USER:", process.env.GCP_DB_USER ? "SET" : "NOT SET");
-console.log("GCP_DB_PASSWORD:", process.env.GCP_DB_PASSWORD ? "SET" : "NOT SET");
-console.log("GCP_DB_NAME:", process.env.GCP_DB_NAME);
-console.log("GCP_DB_PORT:", process.env.GCP_DB_PORT || "3306");
+console.log("DB_HOST:", process.env.DB_HOST);
+console.log("DB_USER:", process.env.DB_USER ? "SET" : "NOT SET");
+console.log("DB_PASSWORD:", process.env.DB_PASSWORD ? "SET" : "NOT SET");
+console.log("DB_NAME:", process.env.DB_NAME);
+console.log("DB_PORT:", process.env.DB_PORT || "3306");
 
-// GCP_DB_* 환경변수들을 사용하여 연결 설정
+// DB_* 환경변수들을 사용하여 연결 설정
 const dbConfig = {
-  host: process.env.GCP_DB_HOST,
-  user: process.env.GCP_DB_USER,
-  password: process.env.GCP_DB_PASSWORD,
-  database: process.env.GCP_DB_NAME,
-  port: process.env.GCP_DB_PORT || 3306,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 3306,
   dialect: "mysql",
   logging: console.log, // 디버깅용 로깅 활성화
   dialectOptions: {
@@ -34,7 +34,7 @@ const hasRequiredEnvVars = dbConfig.host && dbConfig.user && dbConfig.password &
 
 if (!hasRequiredEnvVars) {
   console.warn("⚠️  Required database environment variables are missing!");
-  console.warn("Required: GCP_DB_HOST, GCP_DB_USER, GCP_DB_PASSWORD, GCP_DB_NAME");
+  console.warn("Required: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME");
   console.warn("Available environment variables:", Object.keys(process.env).filter(key => key.includes('DB')));
   console.warn("Database connection will fail when attempted.");
 }
