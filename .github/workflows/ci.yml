@@ -126,6 +126,21 @@ jobs:
           echo "service_url=$(cat service_url.txt)" >> $GITHUB_OUTPUT
           echo "🔍 Service URL: $(cat service_url.txt)"
 
+      # 11.5. Initialize DB Tables and Insert Sample Data (Production)
+      - name: Initialize DB Tables and Insert Sample Data (Production)
+        run: |
+          echo "🔧 Initializing DB tables and inserting sample data in production..."
+          docker run --rm \
+            -e NODE_ENV=production \
+            -e DB_HOST=${{ secrets.DB_HOST }} \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e DB_PORT=${{ secrets.DB_PORT }} \
+            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
+            node scripts/init-db.js
+
       # 12. Wait for service to be ready + Health Check
       - name: Wait and Check Health
         run: |
