@@ -32,6 +32,17 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # 4.1. Ensure Database Exists (Cloud SQL)
+      - name: Ensure Database Exists
+        run: |
+          echo "🔍 Ensuring database exists on Cloud SQL..."
+          mysql -h ${{ secrets.DB_HOST }} -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.DB_NAME }}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+
       # 4. Database Setup (Development/Test Environment)
       - name: Setup Database for Testing
         run: |
