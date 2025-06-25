@@ -16,7 +16,7 @@ module.exports = (sequelize) => {
       allowNull: false,
       references: {
         model: "Users",  // 유저 테이블 참조
-        key: "id",
+        key: "user_id",
       },
       onDelete: "CASCADE",
     },
@@ -25,11 +25,16 @@ module.exports = (sequelize) => {
       allowNull: false,
       references: {
         model: "Recruitments",  // 모집공고 테이블 참조
-        key: "id",
+        key: "recruitment_id",
       },
       onDelete: "CASCADE",
     },
   });
+  
+  Comment.associate = (models) => {
+    Comment.belongsTo(models.User, { foreignKey: 'user_id', targetKey: 'user_id' });
+    Comment.belongsTo(models.Recruitment, { foreignKey: 'recruitment_id', targetKey: 'recruitment_id' });
+  };
   
   return Comment;
 };
