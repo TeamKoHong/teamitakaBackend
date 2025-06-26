@@ -195,7 +195,7 @@ jobs:
           echo "⏳ Waiting for service to be ready..."
           sleep 60
           echo "🏥 Attempting health check..."
-          curl -f "${{ steps.deploy.outputs.service_url }}/health" || {
+          curl -f "${{ steps.deploy.outputs.service_url }}/api/health" || {
             echo "❌ Health check failed - Database connection is required for deployment success"
             echo "📋 Service URL: ${{ steps.deploy.outputs.service_url }}"
             echo "📋 Recent logs:"
