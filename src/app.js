@@ -41,7 +41,7 @@ app.use("/api/dev", devRoutes);
 app.use("/api/univcert", univCertRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/recruitments", recruitmentRoutes);
-app.use("/api/comment", commentRoutes);
+app.use("/api/comments", commentRoutes); // 복수형으로 수정
 app.use("/api/projects", projectPostRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/search", searchRoutes);
@@ -57,8 +57,8 @@ app.get("/", (req, res) => {
 });
 
 // 헬스체크 엔드포인트
-app.get('/health', async (req, res) => {
-  console.log('Received /health request'); // Debug log
+app.get('/api/health', async (req, res) => {
+  console.log('Received /api/health request'); // Debug log
   try {
     await sequelize.authenticate();
     res.status(200).json({ status: 'OK', database: 'connected' });
