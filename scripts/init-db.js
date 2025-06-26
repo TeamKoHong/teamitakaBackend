@@ -7,23 +7,46 @@ console.log('Environment:', process.env.NODE_ENV || 'development');
 
 const initDatabase = async () => {
   try {
-    // 1. Sequelize 설정 먼저 로드
-    console.log('🔧 Loading database configuration...');
-    const { sequelize } = require('../src/config/db');
+    // 1. 환경에 따라 적절한 환경변수 선택
+    const env = process.env.NODE_ENV || 'development';
+    const dbHost = env === 'production' ? process.env.GCP_DB_HOST : process.env.DB_HOST;
+    const dbUser = env === 'production' ? process.env.GCP_DB_USER : process.env.DB_USER;
+    const dbPassword = env === 'production' ? process.env.GCP_DB_PASSWORD : process.env.DB_PASSWORD;
+    const dbName = env === 'production' ? process.env.GCP_DB_NAME : process.env.DB_NAME;
+    const dbPort = process.env.DB_PORT || 3306;
+
+    console.log('🔍 Environment variables:');
+    console.log('NODE_ENV:', env);
+    console.log('DB_HOST:', dbHost);
+    console.log('DB_USER:', dbUser ? 'SET' : 'NOT SET');
+    console.log('DB_PASSWORD:', dbPassword ? 'SET' : 'NOT SET');
+    console.log('DB_NAME:', dbName);
+    console.log('DB_PORT:', dbPort);
+
+    // 2. Sequelize 인스턴스 직접 생성
+    const { Sequelize } = require('sequelize');
+    const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
+      host: dbHost,
+      port: dbPort,
+      dialect: 'mysql',
+      logging: false,
+      dialectOptions: {
+        ssl: false,
+        connectTimeout: 10000,
+      },
+    });
     
-    // 2. DB 연결 확인
+    // 3. DB 연결 확인
     console.log('🔗 Connecting to database...');
     await sequelize.authenticate();
     console.log('✅ Database connection established');
 
-    // 3. 모델 로딩 (안전하게)
+    // 4. 모델 로딩 (안전하게)
     console.log('📦 Loading models...');
     const models = require('../src/models');
     console.log('✅ Models loaded successfully');
 
-    // 4. 환경별 처리
-    const env = process.env.NODE_ENV || 'development';
-    
+    // 5. 환경별 처리
     if (env === 'production') {
       console.log('🏭 Production environment detected');
       console.log('⚠️  Running in production mode - only table creation');
@@ -40,11 +63,12 @@ const initDatabase = async () => {
       await safeDatabaseReset(sequelize);
       console.log('✅ Development tables created');
       
-      // 5. 시드 데이터 생성
+      // 6. 시드 데이터 생성
       await createSeedData(models);
       console.log('✅ Seed data created');
     }
 
+    await sequelize.close();
     console.log('🎉 Database initialization completed successfully!');
     process.exit(0);
     
