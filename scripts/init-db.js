@@ -144,8 +144,9 @@ const createSeedData = async (models) => {
   try {
     const { User, Project, Recruitment, Application, Comment, Review, Todo } = models;
     
-    // 1. 테스트 사용자 생성
+    // 1. 테스트 사용자 생성 (간단한 ID 사용)
     const testUser = await User.create({
+      user_id: '00000000-0000-0000-0000-000000000001', // 간단한 테스트용 ID
       username: 'testuser',
       email: 'test@example.com',
       password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // 'password'
@@ -161,6 +162,7 @@ const createSeedData = async (models) => {
 
     // 2. 테스트 모집공고 생성
     const testRecruitment = await Recruitment.create({
+      recruitment_id: '00000000-0000-0000-0000-000000000002', // 간단한 테스트용 ID
       title: '테스트 모집공고',
       description: '이것은 테스트용 모집공고입니다. API 테스트를 위해 생성되었습니다.',
       user_id: testUser.user_id,
@@ -171,6 +173,7 @@ const createSeedData = async (models) => {
 
     // 3. 테스트 프로젝트 생성
     const testProject = await Project.create({
+      project_id: '00000000-0000-0000-0000-000000000003', // 간단한 테스트용 ID
       title: '테스트 프로젝트',
       description: '이것은 테스트용 프로젝트입니다. API 테스트를 위해 생성되었습니다.',
       user_id: testUser.user_id,
@@ -183,6 +186,7 @@ const createSeedData = async (models) => {
 
     // 4. 테스트 댓글 생성
     const testComment = await Comment.create({
+      id: '00000000-0000-0000-0000-000000000004', // 간단한 테스트용 ID
       content: '이것은 테스트 댓글입니다.',
       recruitment_id: testRecruitment.recruitment_id,
       user_id: testUser.user_id
@@ -191,6 +195,7 @@ const createSeedData = async (models) => {
 
     // 5. 테스트 지원 생성
     const testApplication = await Application.create({
+      application_id: '00000000-0000-0000-0000-000000000005', // 간단한 테스트용 ID
       user_id: testUser.user_id,
       recruitment_id: testRecruitment.recruitment_id,
       status: 'PENDING'
@@ -199,6 +204,7 @@ const createSeedData = async (models) => {
 
     // 6. 테스트 리뷰 생성
     const testReview = await Review.create({
+      review_id: '00000000-0000-0000-0000-000000000006', // 간단한 테스트용 ID
       project_id: testProject.project_id,
       reviewer_id: testUser.user_id,
       reviewee_id: testUser.user_id, // 자기 자신에 대한 리뷰 (테스트용)
@@ -214,6 +220,7 @@ const createSeedData = async (models) => {
 
     // 7. 테스트 할 일 생성
     const testTodo = await Todo.create({
+      todo_id: '00000000-0000-0000-0000-000000000007', // 간단한 테스트용 ID
       project_id: testProject.project_id,
       content: '테스트 할 일입니다.',
       is_completed: false
@@ -221,6 +228,14 @@ const createSeedData = async (models) => {
     console.log('✅ Test todo created');
 
     console.log('🎉 All seed data created successfully!');
+    console.log('📋 Test IDs for API testing:');
+    console.log('   - User ID: 00000000-0000-0000-0000-000000000001');
+    console.log('   - Recruitment ID: 00000000-0000-0000-0000-000000000002');
+    console.log('   - Project ID: 00000000-0000-0000-0000-000000000003');
+    console.log('   - Comment ID: 00000000-0000-0000-0000-000000000004');
+    console.log('   - Application ID: 00000000-0000-0000-0000-000000000005');
+    console.log('   - Review ID: 00000000-0000-0000-0000-000000000006');
+    console.log('   - Todo ID: 00000000-0000-0000-0000-000000000007');
     
   } catch (error) {
     console.error('❌ Seed data creation failed:', error);
