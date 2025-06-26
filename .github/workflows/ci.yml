@@ -288,11 +288,22 @@ jobs:
               echo "⭐ Testing review endpoints..."
               FIRST_PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.[0].project_id' 2>/dev/null)
               if [ "$FIRST_PROJECT_ID" != "null" ] && [ -n "$FIRST_PROJECT_ID" ]; then
-                REVIEW_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/reviews/project/$FIRST_PROJECT_ID")
-                REVIEW_COUNT=$(echo $REVIEW_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-                echo "Reviews found: $REVIEW_COUNT"
-                echo "Review details:"
-                echo $REVIEW_RESPONSE | jq -r '.[] | "  - Overall Rating: \(.overall_rating), Comment: \(.comment), Created: \(.createdAt)"' 2>/dev/null || echo "  - No review details available"
+                REVIEW_RESPONSE=$(curl -s -w "%{http_code}" -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/reviews/project/$FIRST_PROJECT_ID")
+                HTTP_CODE="${REVIEW_RESPONSE: -3}"
+                REVIEW_BODY="${REVIEW_RESPONSE%???}"
+                
+                if [ "$HTTP_CODE" = "200" ]; then
+                  REVIEW_COUNT=$(echo $REVIEW_BODY | jq '. | length' 2>/dev/null || echo '0')
+                  echo "Reviews found: $REVIEW_COUNT"
+                  echo "Review details:"
+                  echo $REVIEW_BODY | jq -r '.[] | "  - Overall Rating: \(.overall_rating), Comment: \(.comment), Created: \(.createdAt)"' 2>/dev/null || echo "  - No review details available"
+                elif [ "$HTTP_CODE" = "401" ]; then
+                  echo "Reviews endpoint: Authentication required (401) - This is expected for protected endpoints"
+                  echo "Review details: Authentication required"
+                else
+                  echo "Reviews endpoint: HTTP $HTTP_CODE - Unexpected response"
+                  echo "Review details: Error occurred"
+                fi
               fi
             fi
             
@@ -352,14 +363,25 @@ jobs:
             
             # 11. 스크랩 조회 테스트
             echo "📌 Testing scrap endpoints..."
-            SCRAP_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/scraps/recruitments")
-            SCRAP_COUNT=$(echo $SCRAP_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-            echo "Scraps found: $SCRAP_COUNT"
-            if [ "$SCRAP_COUNT" -gt 0 ]; then
-              echo "Scrap details:"
-              echo $SCRAP_RESPONSE | jq -r '.[] | "  - Title: \(.title), Scraped: \(.createdAt)"' 2>/dev/null || echo "  - No scrap details available"
+            SCRAP_RESPONSE=$(curl -s -w "%{http_code}" -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/scraps/recruitments")
+            HTTP_CODE="${SCRAP_RESPONSE: -3}"
+            SCRAP_BODY="${SCRAP_RESPONSE%???}"
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              SCRAP_COUNT=$(echo $SCRAP_BODY | jq '. | length' 2>/dev/null || echo '0')
+              echo "Scraps found: $SCRAP_COUNT"
+              if [ "$SCRAP_COUNT" -gt 0 ]; then
+                echo "Scrap details:"
+                echo $SCRAP_BODY | jq -r '.[] | "  - Title: \(.title), Scraped: \(.createdAt)"' 2>/dev/null || echo "  - No scrap details available"
+              else
+                echo "  - No scraps found (this is expected for seed data)"
+              fi
+            elif [ "$HTTP_CODE" = "401" ]; then
+              echo "Scraps endpoint: Authentication required (401) - This is expected for protected endpoints"
+              echo "  - No scraps found (authentication required)"
             else
-              echo "  - No scraps found (this is expected for seed data)"
+              echo "Scraps endpoint: HTTP $HTTP_CODE - Unexpected response"
+              echo "  - Error occurred"
             fi
             
             # 12. 타임라인 조회 테스트 (첫 번째 프로젝트의 타임라인)
