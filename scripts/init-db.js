@@ -52,6 +52,7 @@ const initDatabase = async () => {
     models.Application = require('../src/models/Application')(sequelize, sequelize.Sequelize.DataTypes);
     models.Comment = require('../src/models/Comment')(sequelize, sequelize.Sequelize.DataTypes);
     models.Review = require('../src/models/Review')(sequelize, sequelize.Sequelize.DataTypes);
+    models.ProjectMembers = require('../src/models/ProjectMembers')(sequelize, sequelize.Sequelize.DataTypes);
     
     console.log('✅ Models loaded successfully');
 
@@ -105,7 +106,7 @@ const safeDatabaseReset = async (sequelize) => {
     const tables = [
       'VoteResponses', 'VoteOptions', 'Votes', 'VerifiedEmails', 'Todos',
       'Searches', 'Scraps', 'Schedules', 'Reviews', 'ProjectPosts',
-      'projectmembers', 'Applications', 'Comments', 'Recruitments', 'Projects', 'Users'
+      'ProjectMembers', 'Applications', 'Comments', 'Recruitments', 'Projects', 'Users'
     ];
     
     for (const table of tables) {
