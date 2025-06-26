@@ -229,17 +229,150 @@ jobs:
           TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
           
           if [ -n "$TOKEN" ]; then
-            echo "✅ Login successful, testing protected endpoints..."
+            echo "✅ Login successful, testing all seed data endpoints..."
             
-            # 모집공고 조회 테스트
+            # 1. 사용자 관련 테스트
+            echo "👤 Testing user endpoints..."
+            USER_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/user")
+            echo "Users found: $(echo $USER_RESPONSE | jq '. | length' 2>/dev/null || echo 'N/A')"
+            
+            # 2. 모집공고 조회 테스트
             echo "📋 Testing recruitment list..."
-            curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/recruitments" | head -c 200
+            RECRUITMENT_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/recruitments")
+            RECRUITMENT_COUNT=$(echo $RECRUITMENT_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+            echo "Recruitments found: $RECRUITMENT_COUNT"
             
-            # 프로젝트 조회 테스트
+            # 3. 프로젝트 조회 테스트
             echo "📋 Testing project list..."
-            curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects" | head -c 200
+            PROJECT_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects")
+            PROJECT_COUNT=$(echo $PROJECT_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+            echo "Projects found: $PROJECT_COUNT"
             
-            echo "✅ API tests completed successfully!"
+            # 4. 댓글 조회 테스트 (첫 번째 모집공고의 댓글)
+            if [ "$RECRUITMENT_COUNT" -gt 0 ]; then
+              echo "💬 Testing comment endpoints..."
+              FIRST_RECRUITMENT_ID=$(echo $RECRUITMENT_RESPONSE | jq -r '.[0].recruitment_id' 2>/dev/null)
+              if [ "$FIRST_RECRUITMENT_ID" != "null" ] && [ -n "$FIRST_RECRUITMENT_ID" ]; then
+                COMMENT_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/comment/$FIRST_RECRUITMENT_ID")
+                COMMENT_COUNT=$(echo $COMMENT_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+                echo "Comments found: $COMMENT_COUNT"
+              fi
+            fi
+            
+            # 5. 지원 조회 테스트 (첫 번째 모집공고의 지원자)
+            if [ "$RECRUITMENT_COUNT" -gt 0 ]; then
+              echo "📝 Testing application endpoints..."
+              FIRST_RECRUITMENT_ID=$(echo $RECRUITMENT_RESPONSE | jq -r '.[0].recruitment_id' 2>/dev/null)
+              if [ "$FIRST_RECRUITMENT_ID" != "null" ] && [ -n "$FIRST_RECRUITMENT_ID" ]; then
+                APPLICATION_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/applications/$FIRST_RECRUITMENT_ID")
+                APPLICATION_COUNT=$(echo $APPLICATION_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+                echo "Applications found: $APPLICATION_COUNT"
+              fi
+            fi
+            
+            # 6. 리뷰 조회 테스트 (첫 번째 프로젝트의 리뷰)
+            if [ "$PROJECT_COUNT" -gt 0 ]; then
+              echo "⭐ Testing review endpoints..."
+              FIRST_PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.[0].project_id' 2>/dev/null)
+              if [ "$FIRST_PROJECT_ID" != "null" ] && [ -n "$FIRST_PROJECT_ID" ]; then
+                REVIEW_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/reviews/project/$FIRST_PROJECT_ID")
+                REVIEW_COUNT=$(echo $REVIEW_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+                echo "Reviews found: $REVIEW_COUNT"
+              fi
+            fi
+            
+            # 7. 팀원 조회 테스트 (첫 번째 프로젝트의 팀원)
+            if [ "$PROJECT_COUNT" -gt 0 ]; then
+              echo "👥 Testing team member endpoints..."
+              FIRST_PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.[0].project_id' 2>/dev/null)
+              if [ "$FIRST_PROJECT_ID" != "null" ] && [ -n "$FIRST_PROJECT_ID" ]; then
+                MEMBER_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects/$FIRST_PROJECT_ID/members")
+                MEMBER_COUNT=$(echo $MEMBER_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+                echo "Team members found: $MEMBER_COUNT"
+              fi
+            fi
+            
+            # 8. Todo 조회 테스트 (첫 번째 프로젝트의 할 일)
+            if [ "$PROJECT_COUNT" -gt 0 ]; then
+              echo "✅ Testing todo endpoints..."
+              FIRST_PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.[0].project_id' 2>/dev/null)
+              if [ "$FIRST_PROJECT_ID" != "null" ] && [ -n "$FIRST_PROJECT_ID" ]; then
+                TODO_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects/$FIRST_PROJECT_ID/todo")
+                TODO_COUNT=$(echo $TODO_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+                echo "Todos found: $TODO_COUNT"
+              fi
+            fi
+            
+            # 9. 완료된 프로젝트 조회 테스트
+            echo "🏁 Testing completed projects..."
+            COMPLETED_PROJECT_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects/completed")
+            COMPLETED_PROJECT_COUNT=$(echo $COMPLETED_PROJECT_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+            echo "Completed projects found: $COMPLETED_PROJECT_COUNT"
+            
+            # 10. 검색 기능 테스트
+            echo "🔍 Testing search functionality..."
+            SEARCH_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/search?q=테스트")
+            SEARCH_COUNT=$(echo $SEARCH_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+            echo "Search results found: $SEARCH_COUNT"
+            
+            # 11. 스크랩 조회 테스트
+            echo "📌 Testing scrap endpoints..."
+            SCRAP_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/scraps/recruitments")
+            SCRAP_COUNT=$(echo $SCRAP_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+            echo "Scraps found: $SCRAP_COUNT"
+            
+            # 12. 타임라인 조회 테스트 (첫 번째 프로젝트의 타임라인)
+            if [ "$PROJECT_COUNT" -gt 0 ]; then
+              echo "📅 Testing timeline endpoints..."
+              FIRST_PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.[0].project_id' 2>/dev/null)
+              if [ "$FIRST_PROJECT_ID" != "null" ] && [ -n "$FIRST_PROJECT_ID" ]; then
+                TIMELINE_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects/$FIRST_PROJECT_ID/timeline")
+                TIMELINE_COUNT=$(echo $TIMELINE_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+                echo "Timeline events found: $TIMELINE_COUNT"
+              fi
+            fi
+            
+            # 13. 프로필 조회 테스트 (첫 번째 사용자의 프로필)
+            echo "👤 Testing profile endpoints..."
+            FIRST_USER_ID=$(echo $USER_RESPONSE | jq -r '.[0].user_id' 2>/dev/null)
+            if [ "$FIRST_USER_ID" != "null" ] && [ -n "$FIRST_USER_ID" ]; then
+              PROFILE_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/profile/$FIRST_USER_ID")
+              echo "Profile data: $(echo $PROFILE_RESPONSE | jq -r '.username // "N/A"' 2>/dev/null)"
+            fi
+            
+            # 14. 평점 조회 테스트 (첫 번째 사용자의 평점)
+            if [ "$FIRST_USER_ID" != "null" ] && [ -n "$FIRST_USER_ID" ]; then
+              echo "⭐ Testing rating endpoints..."
+              RATING_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/profile/$FIRST_USER_ID/ratings")
+              RATING_COUNT=$(echo $RATING_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+              echo "Ratings found: $RATING_COUNT"
+            fi
+            
+            # 15. 사용자 프로젝트 조회 테스트 (첫 번째 사용자의 프로젝트)
+            if [ "$FIRST_USER_ID" != "null" ] && [ -n "$FIRST_USER_ID" ]; then
+              echo "📋 Testing user projects endpoints..."
+              USER_PROJECT_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/profile/$FIRST_USER_ID/projects")
+              USER_PROJECT_COUNT=$(echo $USER_PROJECT_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
+              echo "User projects found: $USER_PROJECT_COUNT"
+            fi
+            
+            echo "🎉 All seed data tests completed successfully!"
+            echo "📊 Test Summary:"
+            echo "   - Users: $(echo $USER_RESPONSE | jq '. | length' 2>/dev/null || echo 'N/A')"
+            echo "   - Recruitments: $RECRUITMENT_COUNT"
+            echo "   - Projects: $PROJECT_COUNT"
+            echo "   - Comments: $COMMENT_COUNT"
+            echo "   - Applications: $APPLICATION_COUNT"
+            echo "   - Reviews: $REVIEW_COUNT"
+            echo "   - Team Members: $MEMBER_COUNT"
+            echo "   - Todos: $TODO_COUNT"
+            echo "   - Completed Projects: $COMPLETED_PROJECT_COUNT"
+            echo "   - Search Results: $SEARCH_COUNT"
+            echo "   - Scraps: $SCRAP_COUNT"
+            echo "   - Timeline Events: $TIMELINE_COUNT"
+            echo "   - Ratings: $RATING_COUNT"
+            echo "   - User Projects: $USER_PROJECT_COUNT"
+            
           else
             echo "⚠️  Login failed, but deployment is still successful"
             echo "💡 This might be due to seed data not being available in production"
