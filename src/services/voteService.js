@@ -15,7 +15,7 @@ const getVotesByProject = async (project_id) => {
 };
 
 const getVoteById = async (voteId) => {
-    return await Vote.findOne({ where: { id: voteId }, include: [VoteOption] });
+    return await Vote.findOne({ where: { vote_id: voteId }, include: [VoteOption] });
 };
 
 const submitVote = async (voteId, data) => {
