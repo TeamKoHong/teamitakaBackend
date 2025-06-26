@@ -1,30 +1,28 @@
-const commentService = require("../services/commentService");
-const { handleError } = require("../utils/errorHandler");
+const { Comment, User } = require("../models");
 
-const getComments = async (req, res) => {
-  try {
-    const { recruitment_id } = req.params;
-    const comments = await commentService.getComments(recruitment_id);
-    res.status(200).json(comments);
-  } catch (error) {
-    handleError(res, error);
-  }
+const getComments = async (recruitment_id) => {
+  return await Comment.findAll({
+    where: { recruitment_id },
+    include: [
+      { 
+        model: User, 
+        attributes: ["username", "avatar"],
+        as: "User"
+      }
+    ],
+    order: [["createdAt", "ASC"]]
+  });
 };
 
-const createComment = async (req, res) => {
-  try {
-    const { recruitment_id } = req.params;
-    const { content } = req.body;
-    const user_id = res.locals.user.user_id;
-
-    const newComment = await commentService.createComment(user_id, recruitment_id, content);
-    res.status(201).json(newComment);
-  } catch (error) {
-    handleError(res, error);
-  }
+const createComment = async (user_id, recruitment_id, content) => {
+  return await Comment.create({
+    user_id,
+    recruitment_id,
+    content
+  });
 };
 
 module.exports = {
   getComments,
   createComment,
-};
+}; 
