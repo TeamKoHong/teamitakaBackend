@@ -45,7 +45,7 @@ app.use("/api/comment", commentRoutes);
 app.use("/api/projects", projectPostRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/search", searchRoutes);
-app.use("/api/profiles", profileRoutes);
+app.use("/api/profile", profileRoutes);
 app.use("/api/reviews", reviewRoutes); // ✅ 리뷰 라우트 추가
 app.use("/api/drafts", draftRoutes);    // draftRoutes 라우트 추가
 app.use("/api/scraps", scrapRoutes); 

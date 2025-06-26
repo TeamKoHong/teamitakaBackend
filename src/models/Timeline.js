@@ -1,24 +1,37 @@
 module.exports = (sequelize, DataTypes) => {
-    const Todo = sequelize.define("Todo", {
-      todo_id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
+  const Timeline = sequelize.define("Timeline", {
+    timeline_id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    project_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: "Projects",
+        key: "project_id",
       },
-      project_id: {
-        type: DataTypes.UUID,
-        allowNull: false,
-      },
-      content: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      is_completed: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      },
-    });
-  
-    return Todo;
-  };
+      onDelete: "CASCADE",
+    },
+    event_title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    date: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+  }, {
+    tableName: "Timelines",
+    freezeTableName: true,
+    timestamps: true,
+  });
+
+  return Timeline;
+};
   
