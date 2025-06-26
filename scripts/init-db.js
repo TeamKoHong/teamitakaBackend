@@ -53,6 +53,7 @@ const initDatabase = async () => {
     models.Comment = require('../src/models/Comment')(sequelize, sequelize.Sequelize.DataTypes);
     models.Review = require('../src/models/Review')(sequelize, sequelize.Sequelize.DataTypes);
     models.ProjectMembers = require('../src/models/ProjectMembers')(sequelize, sequelize.Sequelize.DataTypes);
+    models.Todo = require('../src/models/Todo')(sequelize, sequelize.Sequelize.DataTypes);
     
     console.log('✅ Models loaded successfully');
 
@@ -141,7 +142,7 @@ const createSeedData = async (models) => {
   console.log('🌱 Creating seed data...');
   
   try {
-    const { User, Project, Recruitment, Application, Comment, Review } = models;
+    const { User, Project, Recruitment, Application, Comment, Review, Todo } = models;
     
     // 1. 테스트 사용자 생성
     const testUser = await User.create({
@@ -210,6 +211,14 @@ const createSeedData = async (models) => {
       comment: '테스트 리뷰입니다.'
     });
     console.log('✅ Test review created');
+
+    // 7. 테스트 할 일 생성
+    const testTodo = await Todo.create({
+      project_id: testProject.project_id,
+      content: '테스트 할 일입니다.',
+      is_completed: false
+    });
+    console.log('✅ Test todo created');
 
     console.log('🎉 All seed data created successfully!');
     
