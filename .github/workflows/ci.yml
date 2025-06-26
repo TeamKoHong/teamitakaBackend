@@ -149,10 +149,10 @@ jobs:
           echo "🗑️  Dropping all existing tables to reset database schema..."
           docker run --rm \
             -e NODE_ENV=production \
-            -e DB_HOST=${{ secrets.DB_HOST }} \
-            -e DB_USER=${{ secrets.DB_USER }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e GCP_DB_HOST=${{ secrets.DB_HOST }} \
+            -e GCP_DB_USER=${{ secrets.DB_USER }} \
+            -e GCP_DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e GCP_DB_NAME=${{ secrets.DB_NAME }} \
             -e DB_PORT=${{ secrets.DB_PORT }} \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
@@ -164,10 +164,10 @@ jobs:
           echo "🔧 Running migrations in production..."
           docker run --rm \
             -e NODE_ENV=production \
-            -e DB_HOST=${{ secrets.DB_HOST }} \
-            -e DB_USER=${{ secrets.DB_USER }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e GCP_DB_HOST=${{ secrets.DB_HOST }} \
+            -e GCP_DB_USER=${{ secrets.DB_USER }} \
+            -e GCP_DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e GCP_DB_NAME=${{ secrets.DB_NAME }} \
             -e DB_PORT=${{ secrets.DB_PORT }} \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
@@ -179,10 +179,10 @@ jobs:
           echo "🔧 Initializing DB tables and inserting sample data in production..."
           docker run --rm \
             -e NODE_ENV=production \
-            -e DB_HOST=${{ secrets.DB_HOST }} \
-            -e DB_USER=${{ secrets.DB_USER }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e GCP_DB_HOST=${{ secrets.DB_HOST }} \
+            -e GCP_DB_USER=${{ secrets.DB_USER }} \
+            -e GCP_DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e GCP_DB_NAME=${{ secrets.DB_NAME }} \
             -e DB_PORT=${{ secrets.DB_PORT }} \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
