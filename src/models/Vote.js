@@ -4,7 +4,7 @@ module.exports = (sequelize) => {
   const Vote = sequelize.define(
     'Vote',
     {
-      id: {
+      vote_id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
