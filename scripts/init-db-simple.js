@@ -56,14 +56,18 @@ const createSimpleSeedData = async (sequelize) => {
   try {
     // 간단한 테스트 사용자 생성 (직접 SQL 사용)
     const testUserResult = await sequelize.query(`
-      INSERT INTO Users (email, password, name, univName, certified_email, certified_date, createdAt, updatedAt)
+      INSERT INTO Users (user_id, username, email, password, userType, role, university, major, bio, skills, createdAt, updatedAt)
       VALUES (
+        UUID(),
+        'testuser',
         'test@example.com',
         '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-        '테스트 사용자',
+        'MEMBER',
+        'MEMBER',
         '테스트 대학교',
-        'test@test.ac.kr',
-        NOW(),
+        '컴퓨터공학과',
+        '테스트용 사용자입니다.',
+        'JavaScript, Python, React',
         NOW(),
         NOW()
       )
@@ -73,21 +77,22 @@ const createSimpleSeedData = async (sequelize) => {
 
     // 사용자 ID 가져오기
     const [users] = await sequelize.query(`
-      SELECT id FROM Users WHERE email = 'test@example.com' LIMIT 1
+      SELECT user_id FROM Users WHERE email = 'test@example.com' LIMIT 1
     `);
     
     if (users.length > 0) {
-      const userId = users[0].id;
+      const userId = users[0].user_id;
       
       // 간단한 테스트 모집공고 생성
       await sequelize.query(`
-        INSERT INTO Recruitments (title, content, author_id, status, deadline, createdAt, updatedAt)
+        INSERT INTO Recruitments (recruitment_id, title, description, user_id, status, views, createdAt, updatedAt)
         VALUES (
+          UUID(),
           '테스트 모집공고',
           '이것은 테스트용 모집공고입니다.',
-          ${userId},
-          'active',
-          DATE_ADD(NOW(), INTERVAL 30 DAY),
+          '${userId}',
+          'OPEN',
+          0,
           NOW(),
           NOW()
         )
@@ -95,21 +100,33 @@ const createSimpleSeedData = async (sequelize) => {
       `);
       console.log('✅ Test recruitment created/updated');
 
-      // 간단한 테스트 프로젝트 생성
-      await sequelize.query(`
-        INSERT INTO Projects (title, description, status, startDate, endDate, createdAt, updatedAt)
-        VALUES (
-          '테스트 프로젝트',
-          '이것은 테스트용 프로젝트입니다.',
-          'active',
-          NOW(),
-          DATE_ADD(NOW(), INTERVAL 60 DAY),
-          NOW(),
-          NOW()
-        )
-        ON DUPLICATE KEY UPDATE updatedAt = NOW()
+      // 모집공고 ID 가져오기
+      const [recruitments] = await sequelize.query(`
+        SELECT recruitment_id FROM Recruitments WHERE title = '테스트 모집공고' LIMIT 1
       `);
-      console.log('✅ Test project created/updated');
+      
+      if (recruitments.length > 0) {
+        const recruitmentId = recruitments[0].recruitment_id;
+        
+        // 간단한 테스트 프로젝트 생성
+        await sequelize.query(`
+          INSERT INTO Projects (project_id, title, description, user_id, recruitment_id, status, start_date, end_date, createdAt, updatedAt)
+          VALUES (
+            UUID(),
+            '테스트 프로젝트',
+            '이것은 테스트용 프로젝트입니다.',
+            '${userId}',
+            '${recruitmentId}',
+            '예정',
+            NOW(),
+            DATE_ADD(NOW(), INTERVAL 60 DAY),
+            NOW(),
+            NOW()
+          )
+          ON DUPLICATE KEY UPDATE updatedAt = NOW()
+        `);
+        console.log('✅ Test project created/updated');
+      }
     }
 
     console.log('🎉 Simple seed data created successfully!');
