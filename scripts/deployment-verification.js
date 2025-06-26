@@ -145,7 +145,7 @@ async function testAuthentication() {
 }
 
 // 3. 데이터베이스 연결 및 데이터 무결성 테스트
-async function testDatabaseIntegrity() {
+async function testDatabaseIntegrity(token) {
   log.header('3. 데이터베이스 무결성 테스트');
   
   // 사용자 데이터 확인
@@ -168,11 +168,27 @@ async function testDatabaseIntegrity() {
   
   // 특정 사용자 프로필 확인
   try {
-    const profileResponse = await axios.get(`${BASE_URL}/api/profile/${TEST_USER_ID}`, { timeout: 10000 });
+    let profileResponse;
+    if (token) {
+      // 토큰이 있으면 인증과 함께 요청
+      const trimmedToken = token.trim();
+      const authHeader = `Bearer ${trimmedToken}`;
+      profileResponse = await axios.get(`${BASE_URL}/api/profile/${TEST_USER_ID}`, { 
+        headers: { 'Authorization': authHeader },
+        timeout: 10000 
+      });
+    } else {
+      // 토큰이 없으면 인증 없이 요청 (실패할 수 있음)
+      profileResponse = await axios.get(`${BASE_URL}/api/profile/${TEST_USER_ID}`, { timeout: 10000 });
+    }
     const hasProfile = profileResponse.data && profileResponse.data.username;
     addResult('User Profile', hasProfile, `Username: ${profileResponse.data.username}`);
   } catch (error) {
-    addResult('User Profile', false, error.message);
+    if (error.response && error.response.status === 401) {
+      addResult('User Profile', false, 'Authentication required (401) - This is expected for protected endpoints');
+    } else {
+      addResult('User Profile', false, error.message);
+    }
   }
 }
 
@@ -182,7 +198,7 @@ async function testAPIEndpoints(token) {
   
   // 댓글 API (올바른 경로)
   try {
-    const commentsResponse = await axios.get(`${BASE_URL}/api/comment/${TEST_RECRUITMENT_ID}`, { timeout: 10000 });
+    const commentsResponse = await axios.get(`${BASE_URL}/api/comments/${TEST_RECRUITMENT_ID}`, { timeout: 10000 });
     const hasComments = commentsResponse.data && Array.isArray(commentsResponse.data);
     addResult('Comments API', hasComments, `Found ${commentsResponse.data.length} comments`);
   } catch (error) {
@@ -366,7 +382,7 @@ async function testRelationalData() {
   
   // 댓글 관계 데이터 (올바른 경로) - 댓글이 없어도 API는 정상 작동
   try {
-    const commentsResponse = await axios.get(`${BASE_URL}/api/comment/${TEST_RECRUITMENT_ID}`, { timeout: 10000 });
+    const commentsResponse = await axios.get(`${BASE_URL}/api/comments/${TEST_RECRUITMENT_ID}`, { timeout: 10000 });
     const comments = commentsResponse.data;
     
     // 댓글이 없어도 API가 정상 작동하면 성공으로 간주
@@ -404,7 +420,7 @@ async function testSecurity() {
   } catch (error) {
     const isUnauthorized = error.response && error.response.status === 401;
     addResult('Unauthorized Access', isUnauthorized, 
-      isUnauthorized ? 'Properly blocked' : `Unexpected status: ${error.response?.status}`);
+      isUnauthorized ? 'Properly blocked unauthorized access' : `Unexpected status: ${error.response?.status}`);
   }
   
   // 잘못된 토큰 테스트 - 현재는 인증이 필요하지 않음
@@ -415,9 +431,9 @@ async function testSecurity() {
     });
     addResult('Invalid Token', true, 'Invalid token ignored (current setting)');
   } catch (error) {
-    const isForbidden = error.response && error.response.status === 403;
-    addResult('Invalid Token', isForbidden, 
-      isForbidden ? 'Properly rejected' : `Unexpected status: ${error.response?.status}`);
+    const isUnauthorized = error.response && error.response.status === 401;
+    addResult('Invalid Token', isUnauthorized, 
+      isUnauthorized ? 'Properly rejected invalid token' : `Unexpected status: ${error.response?.status}`);
   }
 }
 
@@ -504,7 +520,7 @@ async function runAllTests() {
     }
     
     await checkServerEnvironment(); // 서버 환경변수 확인 추가
-    await testDatabaseIntegrity();
+    await testDatabaseIntegrity(token);
     await testAPIEndpoints(token);
     await testAPIEndpointsWithFetch(token);
     await testAPIEndpointsWithCurl(token);
