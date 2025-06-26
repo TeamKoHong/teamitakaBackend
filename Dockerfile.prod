@@ -26,6 +26,8 @@ echo "🚀 Starting Teamitaka Backend..."\n\
 echo "🔍 Environment: $NODE_ENV"\n\
 echo "🔍 DB_HOST: $DB_HOST"\n\
 echo "🔍 DB_NAME: $DB_NAME"\n\
+echo "🔍 PORT: $PORT"\n\
+echo "🔍 JWT_SECRET: ${JWT_SECRET:+SET}"\n\
 \n\
 # DB 초기화 (프로덕션 환경에서만)\n\
 if [ "$NODE_ENV" = "production" ]; then\n\
@@ -39,7 +41,7 @@ if [ "$NODE_ENV" = "production" ]; then\n\
 fi\n\
 \n\
 # 애플리케이션 시작\n\
-echo "🎯 Starting application..."\n\
+echo "🎯 Starting application on port ${PORT:-8080}..."\n\
 exec node index.js\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
