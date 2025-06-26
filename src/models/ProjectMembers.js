@@ -15,7 +15,7 @@ module.exports = (sequelize) => {
         allowNull: false,
         references: {
           model: "Projects",
-          key: "pr oject_id",
+          key: "project_id",
         },
         onDelete: "CASCADE",
       },

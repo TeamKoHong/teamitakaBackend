@@ -49,11 +49,15 @@ const initDatabase = async () => {
     // 5. 환경별 처리
     if (env === 'production') {
       console.log('🏭 Production environment detected');
-      console.log('⚠️  Running in production mode - only table creation');
+      console.log('🔄 Running production initialization with seed data');
       
-      // 프로덕션: 테이블 생성만 (force: false로 안전하게)
+      // 프로덕션: 테이블 생성 + 시드 데이터 삽입
       await sequelize.sync({ force: false, alter: true });
       console.log('✅ Production tables synchronized safely');
+      
+      // 시드 데이터 생성 (테스트용)
+      await createSeedData(models);
+      console.log('✅ Production seed data created');
       
     } else {
       console.log('🛠️  Development/Test environment detected');
