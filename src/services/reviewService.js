@@ -1,4 +1,4 @@
-const { Review } = require("../models");
+const { Review, User } = require("../models");
 
 class ReviewService {
   async createReview(data) {
@@ -8,7 +8,7 @@ class ReviewService {
   async getReviewsByUser(user_id) {
     return await Review.findAll({
       where: { reviewee_id: user_id },
-      include: [{ model: User, as: "Reviewer", attributes: ["name"] }],
+      include: [{ model: User, as: "Reviewer", attributes: ["username"] }],
     });
   }
 
@@ -16,8 +16,8 @@ class ReviewService {
     return await Review.findAll({
       where: { project_id },
       include: [
-        { model: User, as: "Reviewer", attributes: ["name"] },
-        { model: User, as: "Reviewee", attributes: ["name"] },
+        { model: User, as: "Reviewer", attributes: ["username"] },
+        { model: User, as: "Reviewee", attributes: ["username"] },
       ],
     });
   }
