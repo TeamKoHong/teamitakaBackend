@@ -217,27 +217,29 @@ jobs:
           echo "🧪 Testing API endpoints with seed data..."
           SERVICE_URL="${{ steps.deploy.outputs.service_url }}"
           
-          # 테스트 사용자로 로그인하여 토큰 획득
-          echo "🔐 Testing login with seed user..."
+          # 로그인 테스트
+          echo "🔐 Testing authentication..."
           LOGIN_RESPONSE=$(curl -s -X POST "$SERVICE_URL/api/auth/login" \
             -H "Content-Type: application/json" \
-            -d '{"email":"test@example.com","password":"password"}')
+            -d '{"email": "test@example.com", "password": "password"}')
           
-          echo "Login response: $LOGIN_RESPONSE"
+          TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.token' 2>/dev/null)
           
-          # 토큰 추출 (간단한 방법)
-          TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
-          
-          if [ -n "$TOKEN" ]; then
+          if [ "$TOKEN" != "null" ] && [ -n "$TOKEN" ]; then
             echo "✅ Login successful, testing all seed data endpoints..."
+            echo "🔒 Token obtained (masked): ${TOKEN:0:10}..."
             
-            # 1. 사용자 관련 테스트
-            echo "👤 Testing user endpoints..."
+            # 1. 사용자 조회 테스트
+            echo "👥 Testing user endpoints..."
             USER_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/user")
-            USER_COUNT=$(echo $USER_RESPONSE | jq '. | length' 2>/dev/null || echo 'N/A')
+            USER_COUNT=$(echo $USER_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
             echo "Users found: $USER_COUNT"
-            echo "User details:"
-            echo $USER_RESPONSE | jq -r '.[] | "  - Username: \(.username), Email: \(.email), University: \(.university), Major: \(.major)"' 2>/dev/null || echo "  - No user details available"
+            if [ "$USER_COUNT" -gt 0 ]; then
+              echo "User details (masked):"
+              echo $USER_RESPONSE | jq -r '.[] | "  - Username: \(.username), Email: \(.email | .[0:3] + "***@***"), University: \(.university // "N/A")"' 2>/dev/null || echo "  - No user details available"
+            else
+              echo "  - No users found"
+            fi
             
             # 2. 모집공고 조회 테스트
             echo "📋 Testing recruitment list..."
@@ -383,8 +385,8 @@ jobs:
             if [ "$FIRST_USER_ID" != "null" ] && [ -n "$FIRST_USER_ID" ]; then
               PROFILE_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/profile/$FIRST_USER_ID")
               echo "Profile data: $(echo $PROFILE_RESPONSE | jq -r '.username // "N/A"' 2>/dev/null)"
-              echo "Profile details:"
-              echo $PROFILE_RESPONSE | jq -r '"  - Username: \(.username), Bio: \(.bio // "N/A"), Skills: \(.skills // "N/A")"' 2>/dev/null || echo "  - No profile details available"
+              echo "Profile details (masked):"
+              echo $PROFILE_RESPONSE | jq -r '"  - Username: \(.username), Bio: \(.bio // "N/A" | .[0:20] + "..."), Skills: \(.skills // "N/A" | .[0:30] + "...")"' 2>/dev/null || echo "  - No profile details available"
             fi
             
             # 14. 평점 조회 테스트 (첫 번째 사용자의 평점)
