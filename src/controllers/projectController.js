@@ -1,4 +1,4 @@
-const { Project, Recruitment, User, Todo, Timeline, ProjectMember } = require("../models");
+const { Project, Recruitment, User, Todo, Timeline, ProjectMembers } = require("../models");
 
 const createProject = async (data) => {
   const { title, description, user_id, recruitment_id, start_date, end_date, status, role } = data;
@@ -36,9 +36,7 @@ const getAllProjects = async (req, res) => {
 const getProjectById = async (req, res) => {
   try {
     const { project_id } = req.params;
-    console.log("Requested project_id: ", project_id);  // 파라미터 확인
     const project = await Project.findByPk(project_id, {
-      logging: console.log, // SQL 쿼리를 로깅
       include: [
         { model: User, as: "User", attributes: ["username"] },
         { model: Recruitment, as: "Recruitment", attributes: ["title"] },
