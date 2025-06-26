@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
     const Hashtag = sequelize.define("Hashtag", {
-      hashtag_id: {
+      id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,

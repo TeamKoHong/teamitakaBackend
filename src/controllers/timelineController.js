@@ -19,11 +19,12 @@ const getTimeline = async (req, res) => {
 const addTimelineEvent = async (req, res) => {
   try {
     const { project_id } = req.params;
-    const { event, date } = req.body;
+    const { event_title, description, date } = req.body;
 
     const newEvent = await Timeline.create({
       project_id,
-      event,
+      event_title,
+      description,
       date,
     });
 
@@ -37,14 +38,14 @@ const addTimelineEvent = async (req, res) => {
 const updateTimelineEvent = async (req, res) => {
   try {
     const { event_id } = req.params;
-    const { event, date } = req.body;
+    const { event_title, description, date } = req.body;
 
     const timelineEvent = await Timeline.findByPk(event_id);
     if (!timelineEvent) {
       return res.status(404).json({ message: "이벤트를 찾을 수 없습니다." });
     }
 
-    await timelineEvent.update({ event, date });
+    await timelineEvent.update({ event_title, description, date });
     res.json(timelineEvent);
   } catch (error) {
     handleError(res, error);
