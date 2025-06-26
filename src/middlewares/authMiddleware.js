@@ -43,5 +43,6 @@ const adminAuth = (req, res, next) => {
   }
 };
 
-module.exports = adminAuth;
+module.exports = authenticateToken;
 module.exports.authenticateToken = authenticateToken;
+module.exports.adminAuth = adminAuth;
