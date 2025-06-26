@@ -6,7 +6,7 @@
  */
 
 const axios = require('axios');
-const colors = require('colors');
+require('colors');
 
 // 환경 설정
 const BASE_URL = process.env.API_BASE_URL || 'https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app';
@@ -256,7 +256,7 @@ async function runAllTests() {
   
   try {
     await testBasicConnectivity();
-    const token = await testAuthentication();
+    await testAuthentication();
     await testDatabaseIntegrity();
     await testAPIEndpoints();
     await testRelationalData();
