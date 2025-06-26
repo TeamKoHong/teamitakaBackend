@@ -143,6 +143,36 @@ jobs:
           echo "🔍 Ensuring database exists on Cloud SQL..."
           mysql -h ${{ secrets.DB_HOST }} -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.DB_NAME }}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
 
+      # 11.2. Drop All Tables (Reset Database Schema)
+      - name: Drop All Tables (Reset Database Schema)
+        run: |
+          echo "🗑️  Dropping all existing tables to reset database schema..."
+          docker run --rm \
+            -e NODE_ENV=production \
+            -e DB_HOST=${{ secrets.DB_HOST }} \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e DB_PORT=${{ secrets.DB_PORT }} \
+            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
+            node scripts/drop-all-tables.js
+
+      # 11.3. Run Migrations (Production)
+      - name: Run Migrations (Production)
+        run: |
+          echo "🔧 Running migrations in production..."
+          docker run --rm \
+            -e NODE_ENV=production \
+            -e DB_HOST=${{ secrets.DB_HOST }} \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e DB_PORT=${{ secrets.DB_PORT }} \
+            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
+            npm run migrate:prod
+
       # 11.5. Initialize DB Tables and Insert Sample Data (Production)
       - name: Initialize DB Tables and Insert Sample Data (Production)
         run: |
