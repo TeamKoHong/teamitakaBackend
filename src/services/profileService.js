@@ -4,7 +4,7 @@ class ProfileService {
     async getProfileData(user_id) {
         const user = await User.findOne({
             where: { user_id },
-            attributes: ["user_id", "nickname", "university", "major", "avatar", "bio"]
+            attributes: ["user_id", "username", "university", "major", "avatar", "bio", "skills", "portfolio_url"]
         });
 
         if (!user) {
@@ -43,10 +43,11 @@ class ProfileService {
 
     async getUserProjects(user_id) {
         return await Project.findAll({
-            include: {
+            include: [{
                 model: ProjectMembers,
-                where: { user_id }
-            },
+                where: { user_id },
+                required: true
+            }],
             attributes: ["project_id", "title", "description", "createdAt"]
         });
     }

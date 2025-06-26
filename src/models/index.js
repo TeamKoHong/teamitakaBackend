@@ -90,7 +90,7 @@ db.Project.associate = (models) => {
   });
   db.Project.belongsToMany(db.User, {
     as: "Members",
-    through: "ProjectMember",
+    through: "ProjectMembers",
     foreignKey: "project_id",
     otherKey: "user_id",
   });
