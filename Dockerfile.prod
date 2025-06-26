@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y netcat-openbsd default-mysql-client
 RUN mkdir -p /app/data && chmod 755 /app/data
 
 COPY package.json ./
-RUN npm install --production && npm install sequelize-cli
+RUN npm install --production && npm install sequelize-cli cross-env
 
 COPY . .
 
@@ -40,7 +40,7 @@ fi\n\
 \n\
 # 애플리케이션 시작\n\
 echo "🎯 Starting application..."\n\
-exec npm run start\n\
+exec node index.js\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
 CMD ["/app/start.sh"]
