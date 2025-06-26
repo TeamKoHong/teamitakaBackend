@@ -12,7 +12,7 @@ const jwt = require('jsonwebtoken');
 require('colors');
 
 // 환경 설정
-const BASE_URL = process.env.API_BASE_URL || 'https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app';
+const BASE_URL = process.env.API_BASE_URL || 'https://teamitaka-backend-732827775376.us-central1.run.app';
 const TEST_USER_ID = '00000000-0000-0000-0000-000000000001';
 const TEST_PROJECT_ID = '00000000-0000-0000-0000-000000000003';
 const TEST_RECRUITMENT_ID = '00000000-0000-0000-0000-000000000001';
@@ -98,7 +98,7 @@ async function testBasicConnectivity() {
   log.header('1. 기본 연결성 테스트');
   
   try {
-    const response = await axios.get(`${BASE_URL}/health`, { timeout: 10000 });
+    const response = await axios.get(`${BASE_URL}/api/health`, { timeout: 10000 });
     console.log('🏥 Health Check 응답:');
     console.log(JSON.stringify(response.data, null, 2));
     addResult('Health Check', response.status === 200, `Status: ${response.status}, DB: ${response.data.database}`);
