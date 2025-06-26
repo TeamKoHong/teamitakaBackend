@@ -135,22 +135,26 @@ const createSeedData = async (models) => {
     
     // 1. 테스트 사용자 생성
     const testUser = await User.create({
+      username: 'testuser',
       email: 'test@example.com',
       password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // 'password'
-      name: '테스트 사용자',
-      univName: '테스트 대학교',
-      certified_email: 'test@test.ac.kr',
-      certified_date: new Date()
+      userType: 'MEMBER',
+      role: 'MEMBER',
+      university: '테스트 대학교',
+      major: '컴퓨터공학과',
+      bio: '테스트용 사용자입니다.',
+      skills: 'JavaScript, Python, React',
+      portfolio_url: 'https://github.com/testuser'
     });
     console.log('✅ Test user created:', testUser.email);
 
     // 2. 테스트 모집공고 생성
     const testRecruitment = await Recruitment.create({
       title: '테스트 모집공고',
-      content: '이것은 테스트용 모집공고입니다. API 테스트를 위해 생성되었습니다.',
-      author_id: testUser.id,
-      status: 'active',
-      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30일 후
+      description: '이것은 테스트용 모집공고입니다. API 테스트를 위해 생성되었습니다.',
+      user_id: testUser.user_id,
+      status: 'OPEN',
+      views: 0
     });
     console.log('✅ Test recruitment created:', testRecruitment.title);
 
@@ -158,9 +162,11 @@ const createSeedData = async (models) => {
     const testProject = await Project.create({
       title: '테스트 프로젝트',
       description: '이것은 테스트용 프로젝트입니다. API 테스트를 위해 생성되었습니다.',
-      status: 'active',
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000) // 60일 후
+      user_id: testUser.user_id,
+      recruitment_id: testRecruitment.recruitment_id,
+      status: '예정',
+      start_date: new Date(),
+      end_date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000) // 60일 후
     });
     console.log('✅ Test project created:', testProject.title);
 
@@ -174,23 +180,23 @@ const createSeedData = async (models) => {
 
     // 5. 테스트 지원 생성
     const testApplication = await Application.create({
-      recruitment_id: testRecruitment.id,
-      user_id: testUser.id,
-      status: 'pending',
-      message: '테스트 지원 메시지입니다.'
+      user_id: testUser.user_id,
+      recruitment_id: testRecruitment.recruitment_id,
+      status: 'PENDING'
     });
     console.log('✅ Test application created');
 
     // 6. 테스트 리뷰 생성
     const testReview = await Review.create({
-      reviewer_id: testUser.id,
-      reviewee_id: testUser.id, // 자기 자신에 대한 리뷰 (테스트용)
-      project_id: testProject.id,
-      ability_rating: 4,
-      effort_rating: 5,
-      dedication_rating: 4,
-      communication_rating: 5,
-      reflection_rating: 4,
+      project_id: testProject.project_id,
+      reviewer_id: testUser.user_id,
+      reviewee_id: testUser.user_id, // 자기 자신에 대한 리뷰 (테스트용)
+      ability: 4,
+      effort: 5,
+      commitment: 4,
+      communication: 5,
+      reflection: 4,
+      overall_rating: 4,
       comment: '테스트 리뷰입니다.'
     });
     console.log('✅ Test review created');
