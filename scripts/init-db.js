@@ -55,6 +55,61 @@ const initDatabase = async () => {
     models.ProjectMembers = require('../src/models/ProjectMembers')(sequelize, sequelize.Sequelize.DataTypes);
     models.Todo = require('../src/models/Todo')(sequelize, sequelize.Sequelize.DataTypes);
     
+    // 4-1. 모델 관계 설정
+    console.log('🔗 Setting up model associations...');
+    
+    // User - Project 관계 (1:N)
+    models.User.hasMany(models.Project, { foreignKey: 'user_id', sourceKey: 'user_id' });
+    models.Project.belongsTo(models.User, { foreignKey: 'user_id', targetKey: 'user_id' });
+    
+    // User - Recruitment 관계 (1:N)
+    models.User.hasMany(models.Recruitment, { foreignKey: 'user_id', sourceKey: 'user_id' });
+    models.Recruitment.belongsTo(models.User, { foreignKey: 'user_id', targetKey: 'user_id' });
+    
+    // Project - Recruitment 관계 (1:1)
+    models.Project.belongsTo(models.Recruitment, { foreignKey: 'recruitment_id', targetKey: 'recruitment_id' });
+    models.Recruitment.hasOne(models.Project, { foreignKey: 'recruitment_id', sourceKey: 'recruitment_id' });
+    
+    // User - Application 관계 (1:N)
+    models.User.hasMany(models.Application, { foreignKey: 'user_id', sourceKey: 'user_id' });
+    models.Application.belongsTo(models.User, { foreignKey: 'user_id', targetKey: 'user_id' });
+    
+    // Recruitment - Application 관계 (1:N)
+    models.Recruitment.hasMany(models.Application, { foreignKey: 'recruitment_id', sourceKey: 'recruitment_id' });
+    models.Application.belongsTo(models.Recruitment, { foreignKey: 'recruitment_id', targetKey: 'recruitment_id' });
+    
+    // User - Comment 관계 (1:N)
+    models.User.hasMany(models.Comment, { foreignKey: 'user_id', sourceKey: 'user_id' });
+    models.Comment.belongsTo(models.User, { foreignKey: 'user_id', targetKey: 'user_id' });
+    
+    // Recruitment - Comment 관계 (1:N)
+    models.Recruitment.hasMany(models.Comment, { foreignKey: 'recruitment_id', sourceKey: 'recruitment_id' });
+    models.Comment.belongsTo(models.Recruitment, { foreignKey: 'recruitment_id', targetKey: 'recruitment_id' });
+    
+    // User - Review 관계 (리뷰어)
+    models.User.hasMany(models.Review, { foreignKey: 'reviewer_id', sourceKey: 'user_id', as: 'ReviewsGiven' });
+    models.Review.belongsTo(models.User, { foreignKey: 'reviewer_id', targetKey: 'user_id', as: 'Reviewer' });
+    
+    // User - Review 관계 (피리뷰어)
+    models.User.hasMany(models.Review, { foreignKey: 'reviewee_id', sourceKey: 'user_id', as: 'ReviewsReceived' });
+    models.Review.belongsTo(models.User, { foreignKey: 'reviewee_id', targetKey: 'user_id', as: 'Reviewee' });
+    
+    // Project - Review 관계 (1:N)
+    models.Project.hasMany(models.Review, { foreignKey: 'project_id', sourceKey: 'project_id' });
+    models.Review.belongsTo(models.Project, { foreignKey: 'project_id', targetKey: 'project_id' });
+    
+    // Project - Todo 관계 (1:N)
+    models.Project.hasMany(models.Todo, { foreignKey: 'project_id', sourceKey: 'project_id' });
+    models.Todo.belongsTo(models.Project, { foreignKey: 'project_id', targetKey: 'project_id' });
+    
+    // Project - ProjectMembers 관계 (1:N)
+    models.Project.hasMany(models.ProjectMembers, { foreignKey: 'project_id', sourceKey: 'project_id' });
+    models.ProjectMembers.belongsTo(models.Project, { foreignKey: 'project_id', targetKey: 'project_id' });
+    
+    // User - ProjectMembers 관계 (1:N)
+    models.User.hasMany(models.ProjectMembers, { foreignKey: 'user_id', sourceKey: 'user_id' });
+    models.ProjectMembers.belongsTo(models.User, { foreignKey: 'user_id', targetKey: 'user_id' });
+    
     console.log('✅ Models loaded successfully');
 
     // 5. 환경별 처리
@@ -227,6 +282,16 @@ const createSeedData = async (models) => {
     });
     console.log('✅ Test todo created');
 
+    // 8. 테스트 프로젝트 멤버 생성
+    const testProjectMember = await models.ProjectMembers.create({
+      id: '00000000-0000-0000-0000-000000000008', // 간단한 테스트용 ID
+      project_id: testProject.project_id,
+      user_id: testUser.user_id,
+      role: '팀장',
+      status: '활성'
+    });
+    console.log('✅ Test project member created');
+
     console.log('🎉 All seed data created successfully!');
     console.log('📋 Test IDs for API testing:');
     console.log('   - User ID: 00000000-0000-0000-0000-000000000001');
@@ -236,6 +301,7 @@ const createSeedData = async (models) => {
     console.log('   - Application ID: 00000000-0000-0000-0000-000000000005');
     console.log('   - Review ID: 00000000-0000-0000-0000-000000000006');
     console.log('   - Todo ID: 00000000-0000-0000-0000-000000000007');
+    console.log('   - ProjectMember ID: 00000000-0000-0000-0000-000000000008');
     
   } catch (error) {
     console.error('❌ Seed data creation failed:', error);

@@ -1,4 +1,4 @@
-const { User, Review, Project, ProjectMembers } = require("../models");
+const { User, Review, Project, ProjectMember } = require("../models");
 
 class ProfileService {
     async getProfileData(user_id) {
@@ -44,11 +44,11 @@ class ProfileService {
     async getUserProjects(user_id) {
         return await Project.findAll({
             include: [{
-                model: ProjectMembers,
+                model: ProjectMember,
                 where: { user_id },
                 required: true
             }],
-            attributes: ["project_id", "title", "description", "createdAt"]
+            attributes: ["project_id", "title", "description", "status", "start_date", "end_date", "createdAt"]
         });
     }
 }
