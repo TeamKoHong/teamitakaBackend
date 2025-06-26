@@ -1,7 +1,26 @@
 const jwt = require("jsonwebtoken");
 const { jwtSecret } = require("../config/authConfig");
 
-module.exports = (req, res, next) => {
+// 일반 인증 미들웨어 (관리자 권한 불필요)
+const authenticateToken = (req, res, next) => {
+  const token = req.header("Authorization");
+
+  if (!token) {
+    return res.status(401).json({ error: "인증이 필요합니다." });
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    console.error("🚨 Auth Middleware Error:", error);
+    return res.status(401).json({ error: error.message || "잘못된 토큰입니다." });
+  }
+};
+
+// 관리자 인증 미들웨어 (관리자 권한 필요)
+const adminAuth = (req, res, next) => {
   const token = req.header("Authorization");
 
   if (!token) {
@@ -23,3 +42,6 @@ module.exports = (req, res, next) => {
     return res.status(401).json({ error: error.message || "잘못된 토큰입니다." });
   }
 };
+
+module.exports = adminAuth;
+module.exports.authenticateToken = authenticateToken;
