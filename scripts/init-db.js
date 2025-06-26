@@ -43,7 +43,16 @@ const initDatabase = async () => {
 
     // 4. 모델 로딩 (안전하게)
     console.log('📦 Loading models...');
-    const models = require('../src/models');
+    
+    // 기존 Sequelize 인스턴스를 사용하여 모델 로드
+    const models = {};
+    models.User = require('../src/models/User')(sequelize, sequelize.Sequelize.DataTypes);
+    models.Project = require('../src/models/Project')(sequelize, sequelize.Sequelize.DataTypes);
+    models.Recruitment = require('../src/models/Recruitment')(sequelize, sequelize.Sequelize.DataTypes);
+    models.Application = require('../src/models/Application')(sequelize, sequelize.Sequelize.DataTypes);
+    models.Comment = require('../src/models/Comment')(sequelize, sequelize.Sequelize.DataTypes);
+    models.Review = require('../src/models/Review')(sequelize, sequelize.Sequelize.DataTypes);
+    
     console.log('✅ Models loaded successfully');
 
     // 5. 환경별 처리
