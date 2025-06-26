@@ -88,11 +88,9 @@ db.Project.associate = (models) => {
     foreignKey: "user_id",
     onDelete: "CASCADE",
   });
-  db.Project.belongsToMany(db.User, {
-    as: "Members",
-    through: "ProjectMembers",
+  db.Project.hasMany(models.ProjectMembers, {
     foreignKey: "project_id",
-    otherKey: "user_id",
+    onDelete: "CASCADE",
   });
   db.Project.hasMany(models.Todo, {
     foreignKey: "project_id",
@@ -227,6 +225,13 @@ db.VoteResponse.associate = (models) => {
 db.Schedule.associate = (models) => {
   db.Schedule.belongsTo(models.Project, {
     foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.User.associate = (models) => {
+  db.User.hasMany(models.ProjectMembers, {
+    foreignKey: "user_id",
     onDelete: "CASCADE",
   });
 };
