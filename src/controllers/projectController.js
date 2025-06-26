@@ -60,13 +60,12 @@ const getProjectById = async (req, res) => {
   }
 };
 
-
 // getCompletedProjects
 const getCompletedProjects = async (req, res) => {
   try {
     const projects = await Project.findAll({ where: { status: "완료" } });
     res.json(projects);
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({ message: "완료된 프로젝트 조회 실패" });
   }
 };

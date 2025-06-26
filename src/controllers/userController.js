@@ -35,10 +35,14 @@ exports.createUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     const user_id = req.params.id;
-    const result = await userService.deleteUser(user_id);
-    return res.status(200).json(result);
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
+    }
+    await user.destroy();
+    return res.status(200).json({ message: "사용자가 삭제되었습니다." });
   } catch (error) {
     console.error("deleteUser Error:", error);
-    return res.status(404).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };

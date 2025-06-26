@@ -18,6 +18,7 @@ const getMembers = async (req, res) => {
 
 // ✅ 팀원 추가
 const addMember = async (req, res) => {
+  const { ProjectMembers } = models; // models에서 구조 분해
   try {
     const { project_id } = req.params;
     const { user_id, role } = req.body;
@@ -36,6 +37,7 @@ const addMember = async (req, res) => {
 
 // ✅ 팀원 역할 수정
 const updateMemberRole = async (req, res) => {
+  const { ProjectMembers } = models; // models에서 구조 분해
   try {
     const { member_id } = req.params;
     const { role } = req.body;
@@ -54,6 +56,7 @@ const updateMemberRole = async (req, res) => {
 
 // ✅ 팀원 삭제
 const removeMember = async (req, res) => {
+  const { ProjectMembers } = models; // models에서 구조 분해
   try {
     const { member_id } = req.params;
 
