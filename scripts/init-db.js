@@ -182,8 +182,8 @@ const createSeedData = async (models) => {
     // 4. 테스트 댓글 생성
     const testComment = await Comment.create({
       content: '이것은 테스트 댓글입니다.',
-      recruitment_id: testRecruitment.id,
-      user_id: testUser.id
+      recruitment_id: testRecruitment.recruitment_id,
+      user_id: testUser.user_id
     });
     console.log('✅ Test comment created');
 
