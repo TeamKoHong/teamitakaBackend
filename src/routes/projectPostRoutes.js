@@ -3,7 +3,6 @@ const router = express.Router();
 const projectPostController = require("../controllers/projectPostController");
 const adminAuth = require("../middlewares/authMiddleware");
 const { jwtSecret } = require("../config/authConfig");
-const { authenticateToken } = require("../middleware/auth");
 const jwt = require("jsonwebtoken");
 
 // 게시물 생성 (POST 요청)
