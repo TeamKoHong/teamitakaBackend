@@ -3,11 +3,8 @@ const { handleError } = require("../utils/errorHandler");
 
 const getMembers = async (req, res) => {
   const { ProjectMembers, User } = models; // models에서 구조 분해
-  console.log("ProjectMembers 모델:", ProjectMembers);
-  console.log("User 모델:", User);
   try {
     const { project_id } = req.params;
-    console.log("요청된 project_id:", project_id);
     const members = await ProjectMembers.findAll({
       where: { project_id },
       include: [{ model: User, attributes: ["username", "email"] }],
@@ -25,7 +22,7 @@ const addMember = async (req, res) => {
     const { project_id } = req.params;
     const { user_id, role } = req.body;
 
-    const newMember = await ProjectMember.create({
+    const newMember = await ProjectMembers.create({
       project_id,
       user_id,
       role: role || "팀원", // 기본값: 팀원
@@ -43,7 +40,7 @@ const updateMemberRole = async (req, res) => {
     const { member_id } = req.params;
     const { role } = req.body;
 
-    const member = await ProjectMember.findByPk(member_id);
+    const member = await ProjectMembers.findByPk(member_id);
     if (!member) {
       return res.status(404).json({ message: "팀원을 찾을 수 없습니다." });
     }
@@ -60,7 +57,7 @@ const removeMember = async (req, res) => {
   try {
     const { member_id } = req.params;
 
-    const member = await ProjectMember.findByPk(member_id);
+    const member = await ProjectMembers.findByPk(member_id);
     if (!member) {
       return res.status(404).json({ message: "팀원을 찾을 수 없습니다." });
     }
