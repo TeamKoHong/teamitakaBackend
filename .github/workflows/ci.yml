@@ -32,18 +32,29 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      # 4.1. Ensure Database Exists (Cloud SQL)
-      - name: Ensure Database Exists
-        run: |
-          echo "🔍 Ensuring database exists on Cloud SQL..."
-          mysql -h ${{ secrets.DB_HOST }} -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.DB_NAME }}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
-        env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
+      # 4. Authenticate with gcloud (moved up for DB ensure)
+      - name: Authenticate with gcloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # 4. Database Setup (Development/Test Environment)
+      # 5. Set up Cloud SDK (moved up for DB ensure)
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      # 6. Ensure Database Exists (via gcloud)
+      - name: Ensure Database Exists (via gcloud)
+        run: |
+          set -e
+          INSTANCE_CONN="${{ secrets.INSTANCE_CONNECTION_NAME }}"   # project:region:instance
+          INSTANCE_NAME="${INSTANCE_CONN##*:}"
+          echo "🔍 Ensuring database '${{ secrets.DB_NAME }}' on instance ${INSTANCE_NAME}"
+          gcloud sql databases describe "${{ secrets.DB_NAME }}" --instance="${INSTANCE_NAME}" || \
+          gcloud sql databases create  "${{ secrets.DB_NAME }}" --instance="${INSTANCE_NAME}" --charset=utf8mb4 --collation=utf8mb4_bin
+
+      # 7. Database Setup (Development/Test Environment)
       - name: Setup Database for Testing
         run: |
           echo "🔧 Setting up database for testing environment..."
@@ -79,17 +90,9 @@ jobs:
           echo "✅ API tests completed (placeholder)"
         continue-on-error: true
 
-      # 6. Authenticate with gcloud
-      - name: Authenticate with gcloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      # 7. Set up gcloud CLI
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      # 6.5. Install tools for later steps
+      - name: Install tools (jq)
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       # 8. Configure Docker for Artifact Registry
       - name: Configure Docker
@@ -137,11 +140,15 @@ jobs:
           echo "service_url=$(cat service_url.txt)" >> $GITHUB_OUTPUT
           echo "🔍 Service URL: $(cat service_url.txt)"
 
-      # 11.1. Ensure Database Exists (Cloud SQL)
-      - name: Ensure Database Exists
+      # 11.1. Ensure Database Exists (idempotent)
+      - name: Ensure Database Exists (via gcloud)
         run: |
-          echo "🔍 Ensuring database exists on Cloud SQL..."
-          mysql -h ${{ secrets.DB_HOST }} -u ${{ secrets.DB_USER }} -p${{ secrets.DB_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.DB_NAME }}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+          set -e
+          INSTANCE_CONN="${{ secrets.INSTANCE_CONNECTION_NAME }}"
+          INSTANCE_NAME="${INSTANCE_CONN##*:}"
+          echo "🔍 Ensuring database '${{ secrets.DB_NAME }}' on instance ${INSTANCE_NAME} (post-deploy)"
+          gcloud sql databases describe "${{ secrets.DB_NAME }}" --instance="${INSTANCE_NAME}" || \
+          gcloud sql databases create  "${{ secrets.DB_NAME }}" --instance="${INSTANCE_NAME}" --charset=utf8mb4 --collation=utf8mb4_bin
 
       # 11.2. Drop All Tables (Reset Database Schema)
       - name: Drop All Tables (Reset Database Schema)
@@ -189,27 +196,22 @@ jobs:
             node scripts/init-db.js
 
       # 12. Wait for service to be ready + Health Check
-      - name: Wait and Check Health
+      - name: Wait and Check Health (retry)
         run: |
-          echo "🔍 Cloud Run service URL: ${{ steps.deploy.outputs.service_url }}"
-          echo "⏳ Waiting for service to be ready..."
-          sleep 60
-          echo "🏥 Attempting health check..."
-          curl -f "${{ steps.deploy.outputs.service_url }}/api/health" || {
-            echo "❌ Health check failed - Database connection is required for deployment success"
-            echo "📋 Service URL: ${{ steps.deploy.outputs.service_url }}"
-            echo "📋 Recent logs:"
-            gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=${{ env.IMAGE_NAME }}" --limit=20 --format="value(timestamp,textPayload)"
-            echo "❌ Deployment failed: Application cannot connect to database"
-            echo "💡 Please check GitHub Secrets for database environment variables:"
-            echo "   - DB_HOST"
-            echo "   - DB_USER" 
-            echo "   - DB_PASSWORD"
-            echo "   - DB_NAME"
-            echo "   - DB_PORT (optional)"
-            exit 1
-          }
-          echo "✅ Health check passed! Database connection successful."
+          set +e
+          URL="${{ steps.deploy.outputs.service_url }}/api/health"
+          for d in 20 20 30 45 60; do
+            echo "⏳ Waiting ${d}s before health check..."; sleep ${d}
+            if curl -fsS "$URL"; then
+              echo "✅ Health check passed!"; exit 0
+            fi
+            echo "Retrying health check..."
+          done
+          echo "❌ Health check failed after retries"
+          echo "📋 Service URL: ${{ steps.deploy.outputs.service_url }}"
+          echo "📋 Recent logs:"
+          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=${{ env.IMAGE_NAME }}" --limit=20 --format="value(timestamp,textPayload)"
+          exit 1
 
       # 13. API Test with Seed Data
       - name: Test API with Seed Data
