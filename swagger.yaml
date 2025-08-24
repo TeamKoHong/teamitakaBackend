@@ -52,6 +52,8 @@ tags:
     description: 모집공고 스크랩 기능 API
   - name: 대학인증
     description: 대학 인증 시스템 API
+  - name: 이메일인증
+    description: 이메일 인증 전송/검증 API
 
 servers:
   - url: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app/api
@@ -556,6 +558,113 @@ paths:
         - bearerAuth: []
 
   # 개발용 엔드포인트
+  # 이메일 인증 엔드포인트
+  /email/send:
+    post:
+      tags: [이메일인증]
+      summary: 인증 이메일 전송
+      description: 매직링크와 6자리 코드가 포함된 인증 이메일을 전송합니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                purpose:
+                  type: string
+                  enum: [signup, login, change]
+                redirectUrl:
+                  type: string
+              required: [email, purpose]
+      responses:
+        '200':
+          description: 전송 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Verification email sent
+                  expires_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: 레이트리밋 초과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 서버 오류
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /email/verify:
+    post:
+      tags: [이메일인증]
+      summary: 인증 검증
+      description: 매직링크 토큰 또는 6자리 코드로 이메일을 검증합니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: 매직링크 토큰
+                email:
+                  type: string
+                  format: email
+                code:
+                  type: string
+                  description: 6자리 코드
+                purpose:
+                  type: string
+                  enum: [signup, login, change]
+              anyOf:
+                - required: [token, purpose]
+                - required: [email, code, purpose]
+      responses:
+        '200':
+          description: 검증 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Email verified
+                  email:
+                    type: string
+        '400':
+          description: 검증 실패 또는 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: 레이트리밋 초과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /dev/clear-verified-emails:
     delete:
       summary: 인증된 이메일 전체 삭제 (개발용)
