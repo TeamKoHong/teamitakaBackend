@@ -21,6 +21,7 @@ const reviewRoutes = require("./routes/reviewRoutes"); // ✅ 리뷰 라우트 �
 const draftRoutes = require("./routes/draftRoutes");  // draftRoutes 추가
 const scrapRoutes = require("./routes/scrapRoutes");  // scrapRoutes 추가
 const applicationRoutes = require("./routes/applicationRoutes"); 
+const emailRoutes = require("./routes/emailRoutes");
 
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('yamljs');
@@ -50,6 +51,7 @@ app.use("/api/reviews", reviewRoutes); // ✅ 리뷰 라우트 추가
 app.use("/api/drafts", draftRoutes);    // draftRoutes 라우트 추가
 app.use("/api/scraps", scrapRoutes); 
 app.use("/api/applications", applicationRoutes); 
+app.use("/api/email", emailRoutes);
 
 // 기본 라우트
 app.get("/", (req, res) => {
@@ -71,20 +73,17 @@ app.get('/api/health', async (req, res) => {
 // swagger 라우트 추가
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// 앱 시작 시 DB 연결 시도
-const startApp = async () => {
-  console.log("🚀 Starting application...");
-  
-  // DB 연결 시도
-  const dbConnected = await connectDB();
-  if (!dbConnected) {
-    console.error("❌ Failed to connect to database. Application may not work properly.");
-  }
-  
-  console.log("✅ Application setup completed.");
-};
-
-// 앱 시작
-startApp();
+// 앱 시작 시 DB 연결 시도 (테스트 환경 제외)
+if (process.env.NODE_ENV !== 'test') {
+  const startApp = async () => {
+    console.log("🚀 Starting application...");
+    const dbConnected = await connectDB();
+    if (!dbConnected) {
+      console.error("❌ Failed to connect to database. Application may not work properly.");
+    }
+    console.log("✅ Application setup completed.");
+  };
+  startApp();
+}
 
 module.exports = app;
