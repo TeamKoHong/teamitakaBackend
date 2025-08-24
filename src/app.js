@@ -29,7 +29,8 @@ const path = require('path');
 const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 
 const app = express();
-app.use(cors());
+const corsOrigin = process.env.CORS_ORIGIN || '*';
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // URL-encoded 데이터 파싱
 app.use(cookieParser()); // 추가
