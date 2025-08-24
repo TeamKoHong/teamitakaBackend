@@ -5,6 +5,7 @@ const { User } = require("../models");
 const { validatePassword } = require("../utils/passwordValidator");
 const { v4: uuidv4 } = require("uuid"); // ✅ UUID 생성 모듈 추가
 const { jwtSecret } = require("../config/authConfig");
+const { verifyGoogleIdToken } = require("../utils/googleTokenVerifier");
 
 exports.register = async (req, res) => {
   try {
@@ -109,4 +110,52 @@ exports.validatePassword = (req, res) => {
 
   const validationResult = validatePassword(password);
   return res.json(validationResult);
+};
+
+// Google Social Login by ID Token
+exports.googleSignInByIdToken = async (req, res) => {
+  try {
+    const { idToken } = req.body || {};
+    if (!idToken) return res.status(400).json({ error: "idToken is required" });
+
+    const expectedAud = process.env.GOOGLE_OAUTH_CLIENT_ID;
+    if (!expectedAud) return res.status(500).json({ error: "server not configured (GOOGLE_OAUTH_CLIENT_ID missing)" });
+
+    const payload = await verifyGoogleIdToken(idToken, expectedAud);
+    const email = payload.email;
+    if (!email) return res.status(400).json({ error: "email not found in token" });
+
+    // find or create user
+    let user = await User.findOne({ where: { email } });
+    if (!user) {
+      const hashedPassword = await bcrypt.hash(uuidv4(), 10); // placeholder
+      user = await User.create({
+        uuid: uuidv4(),
+        username: payload.name || email.split("@")[0],
+        email,
+        password: hashedPassword,
+        role: "MEMBER",
+        email_verified_at: payload.email_verified ? new Date() : null,
+      });
+    } else if (payload.email_verified && !user.email_verified_at) {
+      await User.update({ email_verified_at: new Date() }, { where: { user_id: user.user_id } });
+    }
+
+    const token = jwt.sign(
+      { userId: user.user_id, email: user.email, role: user.role },
+      jwtSecret,
+      { expiresIn: process.env.APP_JWT_EXPIRES_IN || "1d" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
+    return res.status(200).json({ message: "Google login success", token });
+  } catch (err) {
+    console.error("🚨 Google login error:", err?.message || err);
+    return res.status(401).json({ error: "invalid google token" });
+  }
 };

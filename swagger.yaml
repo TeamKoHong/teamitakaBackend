@@ -415,6 +415,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /auth/google/id-token:
+    post:
+      tags: [인증]
+      summary: Google ID 토큰 기반 로그인
+      description: Firebase Auth(Identity Platform)에서 발급된 Google ID 토큰으로 로그인합니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idToken:
+                  type: string
+                  description: Google ID 토큰
+              required:
+                - idToken
+      responses:
+        '200':
+          description: 로그인 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Google login success
+                  token:
+                    type: string
+        '400':
+          description: 잘못된 요청(idToken 누락 등)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 유효하지 않은 구글 토큰
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 서버 설정 누락(GOOGLE_OAUTH_CLIENT_ID 등)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /auth/validate-password:
     post:
       summary: 비밀번호 유효성 검사
