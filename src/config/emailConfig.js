@@ -49,7 +49,7 @@ const getEmailConfig = () => {
 // 이메일 전송기 생성
 const createTransporter = () => {
   const config = getEmailConfig();
-  return nodemailer.createTransporter(config);
+  return nodemailer.createTransport(config);
 };
 
 // SendGrid를 사용한 이메일 전송 (권장)
