@@ -21,13 +21,13 @@ const reviewRoutes = require("./routes/reviewRoutes"); // ✅ 리뷰 라우트 �
 const draftRoutes = require("./routes/draftRoutes");  // draftRoutes 추가
 const scrapRoutes = require("./routes/scrapRoutes");  // scrapRoutes 추가
 const applicationRoutes = require("./routes/applicationRoutes"); 
-const emailRoutes = require("./routes/emailRoutes");
+
 const verificationRoutes = require("./routes/verificationRoutes");
 
-const swaggerUi = require('swagger-ui-express');
-const yaml = require('yamljs');
-const path = require('path');
-const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
+// const swaggerUi = require('swagger-ui-express');
+// const yaml = require('yamljs');
+// const path = require('path');
+// const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 
 const app = express();
 const corsOrigin = process.env.CORS_ORIGIN || '*';
@@ -53,7 +53,7 @@ app.use("/api/reviews", reviewRoutes); // ✅ 리뷰 라우트 추가
 app.use("/api/drafts", draftRoutes);    // draftRoutes 라우트 추가
 app.use("/api/scraps", scrapRoutes); 
 app.use("/api/applications", applicationRoutes); 
-app.use("/api/email", emailRoutes);
+
 app.use("/api/auth", verificationRoutes);
 
 // 기본 라우트
@@ -73,8 +73,8 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// swagger 라우트 추가
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// swagger 라우트 추가 (임시 비활성화)
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // 앱 시작 시 DB 연결 시도 (테스트 환경 제외)
 if (process.env.NODE_ENV !== 'test') {

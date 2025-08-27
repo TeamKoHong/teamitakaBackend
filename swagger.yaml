@@ -3,63 +3,63 @@ info:
   title: TEAMITAKA Backend API
   version: 1.0.0
   description: |
-          TEAMITAKA 백엔드 API 문서
+          TEAMITAKA Backend API Documentation
     
-    ## 인증
-    대부분의 API는 JWT 토큰이 필요합니다. 로그인 후 받은 토큰을 Authorization 헤더에 포함시켜 주세요.
+    ## Authentication
+    Most APIs require JWT tokens. Please include the token received after login in the Authorization header.
     
     ```
     Authorization: Bearer <your-jwt-token>
     ```
     
-    ## 주요 기능
-    - 사용자 인증 및 관리
-    - 모집공고 관리
-    - 프로젝트 관리
-    - 지원 및 리뷰 시스템
-    - 대학 인증 시스템
+    ## Main Features
+    - User authentication and management
+    - Recruitment post management
+    - Project management
+    - Application and review system
+    - University verification system
     
-    ## 개발 환경
-    - 로컬 개발: http://localhost:3000
-    - 프로덕션: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app
+    ## Development Environment
+    - Local development: http://localhost:3000
+    - Production: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app
     
-    ## API 문서 접근
+    ## API Documentation Access
     - Swagger UI: `/api-docs`
-    - JSON 형식: `/api-docs/swagger.json`
+    - JSON format: `/api-docs/swagger.json`
     
 tags:
-  - name: 인증
-    description: 사용자 로그인, 회원가입, 인증 관련 API
-  - name: 관리자
-    description: 관리자 전용 기능 API
-  - name: 사용자
-    description: 사용자 정보 관리 API
-  - name: 모집공고
-    description: 모집공고 작성, 조회, 수정 API
-  - name: 지원
-    description: 모집공고 지원 관련 API
-  - name: 프로젝트
-    description: 프로젝트 관리 API
-  - name: 리뷰
-    description: 팀원 간 리뷰 시스템 API
-  - name: 댓글
-    description: 댓글 작성, 조회 API
-  - name: 검색
-    description: 검색 기능 API
-  - name: 프로필
-    description: 사용자 프로필 관리 API
-  - name: 스크랩
-    description: 모집공고 스크랩 기능 API
-  - name: 대학인증
-    description: 대학 인증 시스템 API
-  - name: 이메일인증
-    description: 이메일 인증 전송/검증 API
+  - name: Authentication
+    description: User login, registration, and authentication APIs
+  - name: Admin
+    description: Admin-only functionality APIs
+  - name: User
+    description: User information management APIs
+  - name: Recruitment
+    description: Recruitment post creation, viewing, and modification APIs
+  - name: Application
+    description: Recruitment application related APIs
+  - name: Project
+    description: Project management APIs
+  - name: Review
+    description: Team member review system APIs
+  - name: Comment
+    description: Comment creation and viewing APIs
+  - name: Search
+    description: Search functionality APIs
+  - name: Profile
+    description: User profile management APIs
+  - name: Scrap
+    description: Recruitment post scrap functionality APIs
+  - name: University Verification
+    description: University verification system APIs
+  - name: Email Verification
+    description: Email verification sending/validation APIs
 
 servers:
   - url: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app/api
-    description: 프로덕션 서버
+    description: Production server
   - url: http://localhost:3000/api
-    description: 로컬 개발 서버
+    description: Local development server
 
 paths:
   # 관리자 관련 엔드포인트
