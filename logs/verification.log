@@ -1,0 +1,1 @@
+2025-08-27 19:50:10 [INFO]: [EMAIL] 이메일 발송 성공 {"email":"newtest@example.com","provider":"sendgrid","ip":"127.0.0.1"}
