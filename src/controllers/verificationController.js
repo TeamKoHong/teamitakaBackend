@@ -8,10 +8,12 @@ const {
 
 // 인증번호 전송
 exports.sendVerification = async (req, res) => {
+  let email, clientIP, userAgent;
+  
   try {
-    const { email } = req.body;
-    const clientIP = req.ip || req.connection.remoteAddress;
-    const userAgent = req.get('User-Agent');
+    email = req.body.email;
+    clientIP = req.ip || req.connection.remoteAddress;
+    userAgent = req.get('User-Agent');
 
     // 1. 이메일 형식 검증
     if (!email) {
@@ -62,7 +64,11 @@ exports.sendVerification = async (req, res) => {
     });
 
   } catch (error) {
-    logEmailFailed(email, error, 'sendgrid', { ip: clientIP });
+    // 에러 로깅 시 변수가 정의되지 않았을 수 있으므로 안전하게 처리
+    const errorEmail = email || 'unknown';
+    const errorIP = clientIP || 'unknown';
+    
+    logEmailFailed(errorEmail, error, 'sendgrid', { ip: errorIP });
     
     res.status(500).json({
       error: 'SERVER_ERROR',
