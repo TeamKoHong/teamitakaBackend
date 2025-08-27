@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 🚀 Teamitaka Backend 배포 검증 스크립트
+ * 🚀 TEAMITAKA Backend 배포 검증 스크립트
  * 완벽한 배포 상태를 확인하는 종합 테스트
  */
 
@@ -507,7 +507,7 @@ async function checkServerEnvironment() {
 
 // 메인 실행 함수
 async function runAllTests() {
-  console.log('\n🚀 Teamitaka Backend 배포 검증 시작'.bold.cyan);
+  console.log('\n🚀 TEAMITAKA Backend 배포 검증 시작'.bold.cyan);
   console.log(`📍 Target URL: ${BASE_URL}\n`);
   
   try {

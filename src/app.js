@@ -9,7 +9,7 @@ const { sequelize, connectDB } = require("./config/db"); // DB 연결 함수 imp
 const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
 const devRoutes = require("./routes/devRoutes");
-const univCertRoutes = require("./routes/univCertRoutes");
+
 const userRoutes = require("./routes/userRoutes");
 const recruitmentRoutes = require("./routes/recruitmentRoutes");
 const commentRoutes = require("./routes/commentRoutes");
@@ -22,6 +22,7 @@ const draftRoutes = require("./routes/draftRoutes");  // draftRoutes 추가
 const scrapRoutes = require("./routes/scrapRoutes");  // scrapRoutes 추가
 const applicationRoutes = require("./routes/applicationRoutes"); 
 const emailRoutes = require("./routes/emailRoutes");
+const verificationRoutes = require("./routes/verificationRoutes");
 
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('yamljs');
@@ -40,7 +41,7 @@ app.use(morgan("dev"));
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/dev", devRoutes);
-app.use("/api/univcert", univCertRoutes);
+
 app.use("/api/user", userRoutes);
 app.use("/api/recruitments", recruitmentRoutes);
 app.use("/api/comments", commentRoutes); // 복수형으로 수정
@@ -53,10 +54,11 @@ app.use("/api/drafts", draftRoutes);    // draftRoutes 라우트 추가
 app.use("/api/scraps", scrapRoutes); 
 app.use("/api/applications", applicationRoutes); 
 app.use("/api/email", emailRoutes);
+app.use("/api/auth", verificationRoutes);
 
 // 기본 라우트
 app.get("/", (req, res) => {
-  res.status(200).send("Teamitaka Backend Running!");
+  res.status(200).send("TEAMITAKA Backend Running!");
 });
 
 // 헬스체크 엔드포인트

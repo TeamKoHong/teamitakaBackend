@@ -1,4 +1,4 @@
-# Teamitaka Backend API 테스트 가이드
+# TEAMITAKA Backend API 테스트 가이드
 
 ## 🎉 최신 상태 (2025-06-26)
 
@@ -314,4 +314,4 @@ node scripts/deployment-verification.js
 
 ---
 
-**🎉 Teamitaka Backend API가 완전히 안정적이고 프로덕션 준비가 완료되었습니다!** 
+**🎉 TEAMITAKA Backend API가 완전히 안정적이고 프로덕션 준비가 완료되었습니다!** 
