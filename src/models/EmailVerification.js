@@ -13,6 +13,7 @@ module.exports = (sequelize) => {
     sent_provider: { type: DataTypes.STRING(50), allowNull: true },
     created_ip: { type: DataTypes.STRING(64), allowNull: true },
     ua: { type: DataTypes.STRING(512), allowNull: true },
+    attempt_count: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     createdAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     updatedAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   }, {
