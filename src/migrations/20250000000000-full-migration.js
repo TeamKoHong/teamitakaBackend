@@ -553,42 +553,19 @@ module.exports = {
           createdAt: {
             type: Sequelize.DATE,
             allowNull: false,
-            defaultValue: Sequelize.fn("NOW"),
+            defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
           },
           updatedAt: {
             type: Sequelize.DATE,
             allowNull: false,
-            defaultValue: Sequelize.fn("NOW"),
+            defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
           },
         },
         { transaction }
       );
 
-      // 3. recruitment_hashtags 보완용 외래키 제약 조건 강제 추가
-      const tableInfo = await queryInterface.describeTable("recruitment_hashtags");
-      if (tableInfo.hashtag_id.type !== "CHAR(36)") {
-        await queryInterface.changeColumn(
-          "recruitment_hashtags",
-          "hashtag_id",
-          { type: Sequelize.CHAR(36), allowNull: false },
-          { transaction }
-        );
-      }
-      try {
-        await queryInterface.addConstraint("recruitment_hashtags", {
-          fields: ["hashtag_id"],
-          type: "foreign key",
-          name: "recruitment_hashtags_ibfk_2",
-          references: {
-            table: "Hashtags",
-            field: "id",
-          },
-          onDelete: "CASCADE",
-          transaction,
-        });
-      } catch (err) {
-        console.log("Foreign key recruitment_hashtags_ibfk_2 already exists or failed, skipping...");
-      }
+      // 3. recruitment_hashtags 외래키 제약 조건은 이미 테이블 생성 시 자동으로 추가됨
+      // 별도로 추가하지 않음
 
       // Recruitments 테이블의 views, photo 컬럼은 이미 포함되어 있으므로 생략
       // Reviews, Todos, ProjectMembers 테이블도 이미 포함되어 있음
