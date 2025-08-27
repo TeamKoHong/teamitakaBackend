@@ -31,6 +31,7 @@ db.Todo = require("./Todo")(sequelize, Sequelize.DataTypes);
 db.University = require("./University")(sequelize, Sequelize.DataTypes);
 db.User = require("./User")(sequelize, Sequelize.DataTypes);
 db.VerifiedEmail = require("./VerifiedEmail")(sequelize, Sequelize.DataTypes);
+db.EmailVerification = require("./EmailVerification")(sequelize, Sequelize.DataTypes);
 db.Vote = require("./Vote")(sequelize, Sequelize.DataTypes);
 db.VoteOption = require("./VoteOption")(sequelize, Sequelize.DataTypes);
 db.VoteResponse = require("./VoteResponse")(sequelize, Sequelize.DataTypes);

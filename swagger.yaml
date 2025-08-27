@@ -1,63 +1,65 @@
 openapi: 3.0.0
 info:
-  title: Teamitaka Backend API
+  title: TEAMITAKA Backend API
   version: 1.0.0
   description: |
-    Teamitaka 백엔드 API 문서
+          TEAMITAKA Backend API Documentation
     
-    ## 인증
-    대부분의 API는 JWT 토큰이 필요합니다. 로그인 후 받은 토큰을 Authorization 헤더에 포함시켜 주세요.
+    ## Authentication
+    Most APIs require JWT tokens. Please include the token received after login in the Authorization header.
     
     ```
     Authorization: Bearer <your-jwt-token>
     ```
     
-    ## 주요 기능
-    - 사용자 인증 및 관리
-    - 모집공고 관리
-    - 프로젝트 관리
-    - 지원 및 리뷰 시스템
-    - 대학 인증 시스템
+    ## Main Features
+    - User authentication and management
+    - Recruitment post management
+    - Project management
+    - Application and review system
+    - University verification system
     
-    ## 개발 환경
-    - 로컬 개발: http://localhost:3000
-    - 프로덕션: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app
+    ## Development Environment
+    - Local development: http://localhost:3000
+    - Production: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app
     
-    ## API 문서 접근
+    ## API Documentation Access
     - Swagger UI: `/api-docs`
-    - JSON 형식: `/api-docs/swagger.json`
+    - JSON format: `/api-docs/swagger.json`
     
 tags:
-  - name: 인증
-    description: 사용자 로그인, 회원가입, 인증 관련 API
-  - name: 관리자
-    description: 관리자 전용 기능 API
-  - name: 사용자
-    description: 사용자 정보 관리 API
-  - name: 모집공고
-    description: 모집공고 작성, 조회, 수정 API
-  - name: 지원
-    description: 모집공고 지원 관련 API
-  - name: 프로젝트
-    description: 프로젝트 관리 API
-  - name: 리뷰
-    description: 팀원 간 리뷰 시스템 API
-  - name: 댓글
-    description: 댓글 작성, 조회 API
-  - name: 검색
-    description: 검색 기능 API
-  - name: 프로필
-    description: 사용자 프로필 관리 API
-  - name: 스크랩
-    description: 모집공고 스크랩 기능 API
-  - name: 대학인증
-    description: 대학 인증 시스템 API
+  - name: Authentication
+    description: User login, registration, and authentication APIs
+  - name: Admin
+    description: Admin-only functionality APIs
+  - name: User
+    description: User information management APIs
+  - name: Recruitment
+    description: Recruitment post creation, viewing, and modification APIs
+  - name: Application
+    description: Recruitment application related APIs
+  - name: Project
+    description: Project management APIs
+  - name: Review
+    description: Team member review system APIs
+  - name: Comment
+    description: Comment creation and viewing APIs
+  - name: Search
+    description: Search functionality APIs
+  - name: Profile
+    description: User profile management APIs
+  - name: Scrap
+    description: Recruitment post scrap functionality APIs
+  - name: University Verification
+    description: University verification system APIs
+  - name: Email Verification
+    description: Email verification sending/validation APIs
 
 servers:
   - url: https://teamitaka-backend-zwe2nuc5ga-uc.a.run.app/api
-    description: 프로덕션 서버
+    description: Production server
   - url: http://localhost:3000/api
-    description: 로컬 개발 서버
+    description: Local development server
 
 paths:
   # 관리자 관련 엔드포인트
@@ -413,6 +415,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /auth/google/id-token:
+    post:
+      tags: [인증]
+      summary: Google ID 토큰 기반 로그인
+      description: Firebase Auth(Identity Platform)에서 발급된 Google ID 토큰으로 로그인합니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idToken:
+                  type: string
+                  description: Google ID 토큰
+              required:
+                - idToken
+      responses:
+        '200':
+          description: 로그인 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Google login success
+                  token:
+                    type: string
+        '400':
+          description: 잘못된 요청(idToken 누락 등)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 유효하지 않은 구글 토큰
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 서버 설정 누락(GOOGLE_OAUTH_CLIENT_ID 등)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /auth/validate-password:
     post:
       summary: 비밀번호 유효성 검사
@@ -556,6 +606,113 @@ paths:
         - bearerAuth: []
 
   # 개발용 엔드포인트
+  # 이메일 인증 엔드포인트
+  /email/send:
+    post:
+      tags: [이메일인증]
+      summary: 인증 이메일 전송
+      description: 매직링크와 6자리 코드가 포함된 인증 이메일을 전송합니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                purpose:
+                  type: string
+                  enum: [signup, login, change]
+                redirectUrl:
+                  type: string
+              required: [email, purpose]
+      responses:
+        '200':
+          description: 전송 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Verification email sent
+                  expires_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: 레이트리밋 초과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 서버 오류
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /email/verify:
+    post:
+      tags: [이메일인증]
+      summary: 인증 검증
+      description: 매직링크 토큰 또는 6자리 코드로 이메일을 검증합니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: 매직링크 토큰
+                email:
+                  type: string
+                  format: email
+                code:
+                  type: string
+                  description: 6자리 코드
+                purpose:
+                  type: string
+                  enum: [signup, login, change]
+              anyOf:
+                - required: [token, purpose]
+                - required: [email, code, purpose]
+      responses:
+        '200':
+          description: 검증 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Email verified
+                  email:
+                    type: string
+        '400':
+          description: 검증 실패 또는 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: 레이트리밋 초과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /dev/clear-verified-emails:
     delete:
       summary: 인증된 이메일 전체 삭제 (개발용)

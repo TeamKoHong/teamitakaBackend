@@ -20,7 +20,7 @@ EXPOSE 8080
 
 # 시작 스크립트 생성
 RUN echo '#!/bin/bash\n\
-echo "🚀 Starting Teamitaka Backend..."\n\
+echo "🚀 Starting TEAMITAKA Backend..."\n\
 \n\
 # 환경변수 확인\n\
 echo "🔍 Environment: $NODE_ENV"\n\

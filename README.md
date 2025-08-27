@@ -1,6 +1,6 @@
-# Teamitaka Backend
+# TEAMITAKA Backend
 
-Teamitaka 백엔드 API 서버입니다.
+TEAMITAKA 백엔드 API 서버입니다.
 
 ## 🚀 배포 상태
 
@@ -71,7 +71,10 @@ src/
 ### 1. 인증 시스템
 - 사용자 로그인/회원가입
 - JWT 토큰 기반 인증
-- 대학 인증 시스템 (UnivCert)
+- **자체 이메일 인증 시스템** (UnivCert 대체)
+  - Nodemailer 기반 이메일 발송
+  - 보안 강화된 인증번호 관리
+  - 속도 제한 및 시도 횟수 제한
 
 ### 2. 모집공고 관리
 - 모집공고 작성/수정/삭제
@@ -110,13 +113,29 @@ npm install
 `.env` 파일을 생성하고 다음 변수들을 설정:
 
 ```env
+# ===== 서버 설정 =====
 NODE_ENV=development
+PORT=5000
+CORS_ORIGIN=http://localhost:3000
+
+# ===== 데이터베이스 설정 =====
 DB_HOST=localhost
 DB_USER=your_username
 DB_PASSWORD=your_password
 DB_NAME=your_database
 DB_PORT=3306
 JWT_SECRET=your_jwt_secret  # 선택사항 (기본값 제공)
+
+# ===== 이메일 서비스 설정 =====
+# SendGrid 사용 시 (권장)
+EMAIL_SERVICE=sendgrid
+SENDGRID_API_KEY=sg.your_sendgrid_api_key_here
+EMAIL_FROM=noreply@teamitaka.com
+
+# Gmail 사용 시
+# EMAIL_SERVICE=gmail
+# EMAIL_USER=your-email@gmail.com
+# EMAIL_APP_PASSWORD=your-gmail-app-password
 ```
 
 ### 3. 데이터베이스 초기화

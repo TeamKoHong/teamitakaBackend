@@ -8,5 +8,7 @@ router.post("/register", authController.register);
 router.post("/login", authController.login);
 // ✅ 비밀번호 검증 API
 router.post("/validate-password", authController.validatePassword);
+// ✅ Google 소셜 로그인(ID 토큰)
+router.post("/google/id-token", authController.googleSignInByIdToken);
 
 module.exports = router;
