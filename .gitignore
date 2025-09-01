@@ -17,3 +17,8 @@ npm-debug.log
 yarn-error.log
 .DS_Store
 coverage/
+logs/
+*.log
+
+# 🛠️ 개발 도구 설정
+.claude/
