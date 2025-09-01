@@ -3,15 +3,24 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      // 1) Users.email_verified_at 추가
-      const tableDesc = await queryInterface.describeTable("Users");
-      if (!tableDesc.email_verified_at) {
-        await queryInterface.addColumn(
-          "Users",
-          "email_verified_at",
-          { type: Sequelize.DATE, allowNull: true },
-          { transaction }
-        );
+      // 1) Users.email_verified_at 추가 (테이블이 존재하는 경우에만)
+      try {
+        const tableNames = await queryInterface.showAllTables({ transaction });
+        const hasUsersTable = tableNames.includes("Users");
+        
+        if (hasUsersTable) {
+          const tableDesc = await queryInterface.describeTable("Users");
+          if (!tableDesc.email_verified_at) {
+            await queryInterface.addColumn(
+              "Users",
+              "email_verified_at",
+              { type: Sequelize.DATE, allowNull: true },
+              { transaction }
+            );
+          }
+        }
+      } catch (error) {
+        console.log("Users 테이블이 존재하지 않거나 접근할 수 없습니다:", error.message);
       }
 
       // 2) EmailVerifications 테이블 생성
@@ -52,9 +61,17 @@ module.exports = {
         await queryInterface.dropTable("EmailVerifications", { transaction });
       }
 
-      const tableDesc = await queryInterface.describeTable("Users");
-      if (tableDesc.email_verified_at) {
-        await queryInterface.removeColumn("Users", "email_verified_at", { transaction });
+      // Users 테이블이 존재하는 경우에만 컬럼 제거
+      try {
+        const hasUsersTable = tableNames.includes("Users");
+        if (hasUsersTable) {
+          const tableDesc = await queryInterface.describeTable("Users");
+          if (tableDesc.email_verified_at) {
+            await queryInterface.removeColumn("Users", "email_verified_at", { transaction });
+          }
+        }
+      } catch (error) {
+        console.log("Users 테이블에서 컬럼 제거 실패:", error.message);
       }
     });
   },
