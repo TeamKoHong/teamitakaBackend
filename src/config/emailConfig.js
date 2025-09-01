@@ -1,5 +1,7 @@
 const nodemailer = require('nodemailer');
 const sgMail = require('@sendgrid/mail');
+const fs = require('fs');
+const path = require('path');
 
 // SendGrid API 키 설정
 if (process.env.SENDGRID_API_KEY) {
@@ -62,6 +64,26 @@ const sendEmailWithSendGrid = async (mailOptions) => {
       text: mailOptions.text,
       html: mailOptions.html
     };
+
+    // 배너 이미지 첨부 (첨부파일과 인라인 이미지로 사용)
+    if (mailOptions.attachments) {
+      msg.attachments = mailOptions.attachments;
+    } else {
+      // 기본 배너 이미지 첨부
+      const bannerPath = path.join(__dirname, '../img/teamitaka_banner.png');
+      if (fs.existsSync(bannerPath)) {
+        const bannerContent = fs.readFileSync(bannerPath).toString('base64');
+        msg.attachments = [
+          {
+            content: bannerContent,
+            filename: 'teamitaka_banner.png',
+            type: 'image/png',
+            disposition: 'inline',
+            content_id: 'banner'
+          }
+        ];
+      }
+    }
     
     const result = await sgMail.send(msg);
     return result;

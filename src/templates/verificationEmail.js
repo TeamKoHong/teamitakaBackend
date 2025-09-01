@@ -26,6 +26,14 @@ const generateVerificationEmail = (code, email) => {
           text-align: center;
           margin-bottom: 30px;
         }
+        .banner {
+          width: 100%;
+          max-width: 500px;
+          height: auto;
+          margin: 0 auto 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
         .logo {
           font-size: 28px;
           font-weight: bold;
@@ -73,7 +81,9 @@ const generateVerificationEmail = (code, email) => {
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">TEAMITAKA</div>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="cid:banner" alt="TEAMITAKA 배너" class="banner" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          </div>
           <h2>이메일 인증</h2>
         </div>
         
