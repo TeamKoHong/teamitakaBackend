@@ -15,8 +15,11 @@ exports.sendVerification = async (req, res) => {
     clientIP = req.ip || req.connection.remoteAddress;
     userAgent = req.get('User-Agent');
 
+    console.log(`[VERIFICATION] 인증 요청 시작: ${email}, IP: ${clientIP}`);
+
     // 1. 이메일 형식 검증
     if (!email) {
+      console.log('[VERIFICATION] 이메일 누락');
       return res.status(400).json({
         error: 'MISSING_EMAIL',
         message: '이메일을 입력해주세요.'
@@ -24,36 +27,51 @@ exports.sendVerification = async (req, res) => {
     }
 
     if (!verificationService.validateEmailFormat(email)) {
+      console.log(`[VERIFICATION] 잘못된 이메일 형식: ${email}`);
       return res.status(400).json({
         error: 'INVALID_EMAIL_FORMAT',
         message: '올바른 이메일 형식이 아닙니다.'
       });
     }
 
+    console.log(`[VERIFICATION] 이메일 형식 검증 통과: ${email}`);
+
     // 2. 중복 이메일 확인
+    console.log(`[VERIFICATION] 중복 이메일 확인 중: ${email}`);
     const isDuplicate = await verificationService.checkDuplicateEmail(email);
     if (isDuplicate) {
+      console.log(`[VERIFICATION] 중복 이메일 발견: ${email}`);
       return res.status(409).json({
         error: 'DUPLICATE_EMAIL',
         message: '이미 등록된 이메일입니다.'
       });
     }
 
+    console.log(`[VERIFICATION] 중복 이메일 확인 통과: ${email}`);
+
     // 3. 인증번호 생성
     const verificationCode = verificationService.generateVerificationCode();
+    console.log(`[VERIFICATION] 인증번호 생성 완료: ${email}, 코드: ${verificationCode.substring(0, 2)}****`);
     
     // 4. 이전 인증번호 무효화
+    console.log(`[VERIFICATION] 이전 인증번호 무효화 중: ${email}`);
     await verificationService.invalidatePreviousCodes(email);
+    console.log(`[VERIFICATION] 이전 인증번호 무효화 완료: ${email}`);
     
     // 5. 인증번호 저장
+    console.log(`[VERIFICATION] 인증번호 저장 중: ${email}`);
     await verificationService.saveVerification(email, verificationCode, clientIP, userAgent);
+    console.log(`[VERIFICATION] 인증번호 저장 완료: ${email}`);
     
     // 6. 이메일 발송
+    console.log(`[VERIFICATION] 이메일 발송 시작: ${email}`);
     const emailResult = await verificationService.sendVerificationEmail(email, verificationCode);
+    console.log(`[VERIFICATION] 이메일 발송 완료: ${email}, Message ID: ${emailResult.messageId || 'N/A'}`);
     
     // 7. 성공 응답
     logEmailSent(email, emailResult.messageId, 'sendgrid', { ip: clientIP });
     
+    console.log(`[VERIFICATION] 인증 요청 성공: ${email}`);
     res.status(200).json({
       success: true,
       message: '인증번호가 이메일로 전송되었습니다.',
@@ -67,6 +85,11 @@ exports.sendVerification = async (req, res) => {
     // 에러 로깅 시 변수가 정의되지 않았을 수 있으므로 안전하게 처리
     const errorEmail = email || 'unknown';
     const errorIP = clientIP || 'unknown';
+    
+    console.error(`[VERIFICATION] 오류 발생: ${errorEmail}`);
+    console.error(`[VERIFICATION] 오류 상세:`, error);
+    console.error(`[VERIFICATION] 오류 스택:`, error.stack);
+    console.error(`[VERIFICATION] 환경 정보: NODE_ENV=${process.env.NODE_ENV}, DB_HOST=${process.env.GCP_DB_HOST || 'N/A'}`);
     
     logEmailFailed(errorEmail, error, 'sendgrid', { ip: errorIP });
     
