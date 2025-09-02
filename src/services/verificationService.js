@@ -68,9 +68,12 @@ class VerificationService {
   // 인증번호 저장
   async saveVerification(email, code, ip, userAgent) {
     try {
-      const expiresAt = new Date(Date.now() + this.EXPIRATION_TIME);
+      console.log(`[SERVICE] 인증번호 저장 시작: ${email}`);
       
-      await EmailVerification.create({
+      const expiresAt = new Date(Date.now() + this.EXPIRATION_TIME);
+      console.log(`[SERVICE] 만료 시간 설정: ${expiresAt.toISOString()}`);
+      
+      const verificationData = {
         email: email,
         purpose: 'signup',
         jti: crypto.randomUUID(),
@@ -79,11 +82,19 @@ class VerificationService {
         created_ip: ip,
         ua: userAgent,
         attempt_count: 0
-      });
+      };
+      
+      console.log(`[SERVICE] 저장할 데이터 준비 완료: ${email}`);
+      
+      const result = await EmailVerification.create(verificationData);
+      console.log(`[SERVICE] 인증번호 저장 성공: ${email}, ID: ${result.id}`);
 
       return true;
     } catch (error) {
-      console.error('인증번호 저장 중 오류:', error);
+      console.error(`[SERVICE] 인증번호 저장 중 오류: ${email}`);
+      console.error(`[SERVICE] 오류 상세:`, error);
+      console.error(`[SERVICE] 오류 스택:`, error.stack);
+      console.error(`[SERVICE] 데이터베이스 연결 상태 확인 필요`);
       throw new Error('인증번호 저장 중 오류가 발생했습니다.');
     }
   }
@@ -96,7 +107,10 @@ class VerificationService {
   // 이메일 발송
   async sendVerificationEmail(email, code) {
     try {
+      console.log(`[SERVICE] 이메일 발송 시작: ${email}`);
+      
       const fromEmail = getFromEmail();
+      console.log(`[SERVICE] 발신자 이메일: ${fromEmail}`);
       
       const mailOptions = {
         from: fromEmail,
@@ -106,22 +120,30 @@ class VerificationService {
         text: generateVerificationEmailText(code)
       };
 
+      console.log(`[SERVICE] 이메일 옵션 준비 완료: ${email}`);
+
       // SendGrid를 우선 사용하고, 실패 시 Nodemailer로 폴백
       try {
+        console.log(`[SERVICE] SendGrid로 이메일 발송 시도: ${email}`);
         const result = await sendEmailWithSendGrid(mailOptions);
-        console.log(`SendGrid로 인증번호 이메일 발송 성공: ${email}`);
+        console.log(`[SERVICE] SendGrid로 인증번호 이메일 발송 성공: ${email}, Message ID: ${result.messageId || 'N/A'}`);
         return result;
       } catch (sendgridError) {
-        console.warn('SendGrid 실패, Nodemailer로 폴백:', sendgridError.message);
+        console.warn(`[SERVICE] SendGrid 실패, Nodemailer로 폴백: ${email}`, sendgridError.message);
+        console.warn(`[SERVICE] SendGrid 오류 상세:`, sendgridError);
         
         // Nodemailer로 폴백
+        console.log(`[SERVICE] Nodemailer로 이메일 발송 시도: ${email}`);
         const transporter = createTransporter();
         const result = await transporter.sendMail(mailOptions);
-        console.log(`Nodemailer로 인증번호 이메일 발송 성공: ${email}`);
+        console.log(`[SERVICE] Nodemailer로 인증번호 이메일 발송 성공: ${email}, Message ID: ${result.messageId || 'N/A'}`);
         return result;
       }
     } catch (error) {
-      console.error('이메일 발송 중 오류:', error);
+      console.error(`[SERVICE] 이메일 발송 중 오류: ${email}`);
+      console.error(`[SERVICE] 오류 상세:`, error);
+      console.error(`[SERVICE] 오류 스택:`, error.stack);
+      console.error(`[SERVICE] 환경 변수 확인: SENDGRID_API_KEY=${process.env.SENDGRID_API_KEY ? 'SET' : 'NOT_SET'}, EMAIL_USER=${process.env.EMAIL_USER || 'NOT_SET'}`);
       throw new Error('이메일 발송에 실패했습니다.');
     }
   }
