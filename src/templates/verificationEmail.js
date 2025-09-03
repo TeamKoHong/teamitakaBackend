@@ -8,23 +8,32 @@ const generateVerificationEmail = (code, email) => {
       <title>TEAMITAKA 이메일 인증</title>
       <style>
         body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          max-width: 600px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          line-height: 1.7;
+          color: #2c3e50;
+          max-width: 650px;
           margin: 0 auto;
           padding: 20px;
-          background-color: #f4f4f4;
+          background-color: #f8f9fa;
+          font-size: 16px;
         }
         .container {
           background-color: #ffffff;
-          padding: 30px;
-          border-radius: 10px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          padding: 40px;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+          border: 1px solid #e9ecef;
         }
         .header {
           text-align: center;
-          margin-bottom: 30px;
+          margin-bottom: 35px;
+        }
+        .header h2 {
+          font-size: 28px;
+          font-weight: 700;
+          color: #1e3a8a;
+          margin: 0;
+          letter-spacing: -0.5px;
         }
         .banner {
           width: 100%;
@@ -41,40 +50,78 @@ const generateVerificationEmail = (code, email) => {
           margin-bottom: 10px;
         }
         .verification-code {
-          background-color: #f8f9fa;
-          border: 2px dashed #007bff;
-          border-radius: 8px;
-          padding: 20px;
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          border: 3px solid #3b82f6;
+          border-radius: 12px;
+          padding: 30px 25px;
           text-align: center;
-          margin: 30px 0;
+          margin: 35px 0;
+          position: relative;
+        }
+        .verification-code::before {
+          content: '';
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          right: -2px;
+          bottom: -2px;
+          background: linear-gradient(45deg, #3b82f6, #1e40af, #3b82f6);
+          border-radius: 12px;
+          z-index: -1;
+        }
+        .verification-code p {
+          font-size: 18px;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 15px;
         }
         .code {
-          font-size: 36px;
-          font-weight: bold;
-          color: #007bff;
-          letter-spacing: 5px;
-          font-family: 'Courier New', monospace;
+          font-size: 48px;
+          font-weight: 900;
+          color: #1e3a8a;
+          letter-spacing: 8px;
+          font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+          text-shadow: 0 2px 4px rgba(30, 58, 138, 0.1);
+          margin: 5px 0;
         }
         .info {
-          background-color: #e7f3ff;
-          border-left: 4px solid #007bff;
-          padding: 15px;
-          margin: 20px 0;
+          background-color: #dbeafe;
+          border: 1px solid #93c5fd;
+          border-left: 5px solid #3b82f6;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 25px 0;
+          font-size: 15px;
+        }
+        .info strong {
+          font-size: 16px;
+          color: #1e40af;
+          display: block;
+          margin-bottom: 8px;
         }
         .warning {
-          background-color: #fff3cd;
-          border-left: 4px solid #ffc107;
-          padding: 15px;
-          margin: 20px 0;
-          font-size: 14px;
+          background-color: #fef3c7;
+          border: 1px solid #fcd34d;
+          border-left: 5px solid #f59e0b;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 25px 0;
+          font-size: 15px;
+        }
+        .warning strong {
+          font-size: 16px;
+          color: #d97706;
+          display: block;
+          margin-bottom: 8px;
         }
         .footer {
           text-align: center;
-          margin-top: 30px;
-          padding-top: 20px;
-          border-top: 1px solid #eee;
-          color: #666;
-          font-size: 12px;
+          margin-top: 40px;
+          padding-top: 25px;
+          border-top: 1px solid #e5e7eb;
+          color: #6b7280;
+          font-size: 14px;
+          line-height: 1.6;
         }
       </style>
     </head>
@@ -87,7 +134,7 @@ const generateVerificationEmail = (code, email) => {
           <h2>이메일 인증</h2>
         </div>
         
-        <p>안녕하세요! TEAMITAKA 회원가입을 위한 이메일 인증번호를 발송드립니다.</p>
+        <p style="font-size: 17px; color: #374151; margin-bottom: 25px; line-height: 1.6;">안녕하세요! <strong>TEAMITAKA</strong> 회원가입을 위한 이메일 인증번호를 발송드립니다.</p>
         
         <div class="verification-code">
           <p>아래 인증번호를 입력해주세요:</p>
@@ -107,7 +154,7 @@ const generateVerificationEmail = (code, email) => {
           • 공용 컴퓨터에서는 로그아웃 후 브라우저를 종료하세요.
         </div>
         
-        <p>감사합니다.<br>TEAMITAKA 팀 드림</p>
+        <p style="font-size: 16px; color: #374151; margin-top: 30px; margin-bottom: 0; line-height: 1.6;">감사합니다.<br><strong style="color: #1e40af;">TEAMITAKA 팀 드림</strong></p>
         
         <div class="footer">
           <p>본 메일은 ${email}로 발송되었습니다.</p>
