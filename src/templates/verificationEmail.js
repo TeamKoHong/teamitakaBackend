@@ -158,7 +158,7 @@ const generateVerificationEmail = (code, email) => {
         
         <div class="footer">
           <p>본 메일은 ${email}로 발송되었습니다.</p>
-          <p>© 2024 TEAMITAKA. All rights reserved.</p>
+          <p>© 2025 TEAMITAKA. All rights reserved.</p>
         </div>
       </div>
     </body>
