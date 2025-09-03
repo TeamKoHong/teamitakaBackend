@@ -121,10 +121,10 @@ jobs:
           
           # JWT_SECRET이 있으면 포함, 없으면 제외
           if [ -n "${{ secrets.JWT_SECRET }}" ]; then
-            ENV_VARS="NODE_ENV=production,JWT_SECRET=${{ secrets.JWT_SECRET }},DB_HOST=${{ secrets.DB_HOST }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }},DB_PORT=${{ secrets.DB_PORT }}"
+            ENV_VARS="NODE_ENV=production,JWT_SECRET=${{ secrets.JWT_SECRET }},DB_HOST=${{ secrets.DB_HOST }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }},DB_PORT=${{ secrets.DB_PORT }},EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }},EMAIL_FROM=${{ secrets.EMAIL_FROM }},SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}"
             echo "✅ JWT_SECRET included in environment variables"
           else
-            ENV_VARS="NODE_ENV=production,DB_HOST=${{ secrets.DB_HOST }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }},DB_PORT=${{ secrets.DB_PORT }}"
+            ENV_VARS="NODE_ENV=production,DB_HOST=${{ secrets.DB_HOST }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }},DB_PORT=${{ secrets.DB_PORT }},EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }},EMAIL_FROM=${{ secrets.EMAIL_FROM }},SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}"
             echo "⚠️  JWT_SECRET not set, using default value"
           fi
           
@@ -162,6 +162,9 @@ jobs:
             -e GCP_DB_NAME=${{ secrets.DB_NAME }} \
             -e DB_PORT=${{ secrets.DB_PORT }} \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            -e EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }} \
+            -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} \
+            -e SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }} \
             us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
             node scripts/drop-all-tables.js
 
@@ -177,6 +180,9 @@ jobs:
             -e GCP_DB_NAME=${{ secrets.DB_NAME }} \
             -e DB_PORT=${{ secrets.DB_PORT }} \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            -e EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }} \
+            -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} \
+            -e SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }} \
             us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
             npx sequelize-cli db:migrate
 
@@ -192,6 +198,9 @@ jobs:
             -e GCP_DB_NAME=${{ secrets.DB_NAME }} \
             -e DB_PORT=${{ secrets.DB_PORT }} \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            -e EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }} \
+            -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} \
+            -e SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }} \
             us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
             node scripts/init-db.js
 
