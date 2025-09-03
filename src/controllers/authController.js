@@ -3,18 +3,26 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { User } = require("../models");
 const { validatePassword } = require("../utils/passwordValidator");
+const { generateUniqueUsername } = require("../utils/usernameGenerator");
 const { v4: uuidv4 } = require("uuid"); // ✅ UUID 생성 모듈 추가
 const { jwtSecret } = require("../config/authConfig");
 const { verifyGoogleIdToken } = require("../utils/googleTokenVerifier");
 
 exports.register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { email, password, university, department, student_id } = req.body;
 
-    // 필수 값 검증
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: "❌ 모든 필드를 입력해주세요." });
+    // 필수 값 검증 (username 제거, 프론트엔드 필드 추가)
+    if (!email || !password) {
+      return res.status(400).json({ error: "❌ 이메일과 비밀번호를 입력해주세요." });
     }
+
+    console.log(`📝 Registration request for email: ${email}`);
+    console.log(`📊 Additional data - University: ${university}, Department: ${department}, Student ID: ${student_id}`);
+
+    // 자동 username 생성
+    const username = await generateUniqueUsername(email);
+    console.log(`✅ Generated username: ${username} for email: ${email}`);
 
     // 비밀번호 유효성 검사 추가
     const passwordValidation = validatePassword(password);
@@ -40,14 +48,39 @@ exports.register = async (req, res) => {
       role: "MEMBER",
     });
 
+    // 4️⃣ JWT 토큰 발급 (자동 로그인용)
+    const token = jwt.sign(
+      { 
+        userId: newUser.user_id, 
+        email: newUser.email, 
+        role: newUser.role || 'user' 
+      },
+      jwtSecret,
+      { expiresIn: "1d" }
+    );
+
+    // 5️⃣ 보안 강화를 위해 HttpOnly 쿠키 옵션 추가
+    res.cookie("token", token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
     return res.status(201).json({
       message: "✅ 회원가입 성공!",
+      token: token, // JWT 토큰 추가
       user: {
         user_id: newUser.user_id,
         uuid: newUser.uuid,
         username: newUser.username,
         email: newUser.email,
         createdAt: newUser.createdAt,
+      },
+      info: {
+        generatedUsername: true,
+        university: university || null,
+        department: department || null,
+        student_id: student_id || null,
       },
     });
   } catch (error) {

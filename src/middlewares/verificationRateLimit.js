@@ -21,7 +21,7 @@ const emailSendLimit = rateLimit({
   }
 });
 
-// 일일 이메일 제한: 같은 이메일로 하루 최대 5회 전송
+// 일일 이메일 제한: 같은 이메일로 하루 최대 5회 전송 (프로덕션용)
 const dailyEmailLimit = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24시간
   max: 5, // 같은 이메일로 5회
@@ -42,7 +42,28 @@ const dailyEmailLimit = rateLimit({
   }
 });
 
-// IP 기반 일일 제한: 같은 IP에서 하루 최대 20회 전송
+// 테스트 환경용 일일 이메일 제한: 같은 이메일로 하루 최대 100회 전송
+const testDailyEmailLimit = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24시간
+  max: 100, // 같은 이메일로 100회 (테스트용)
+  keyGenerator: (req) => req.body.email,
+  message: {
+    error: 'DAILY_LIMIT_EXCEEDED',
+    message: '하루 최대 100회 전송 가능합니다.',
+    retryAfter: Math.ceil(24 * 60 * 60 / 1000) // 24시간
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'DAILY_LIMIT_EXCEEDED',
+      message: '하루 최대 100회 전송 가능합니다.',
+      retryAfter: 24 * 60 * 60
+    });
+  }
+});
+
+// IP 기반 일일 제한: 같은 IP에서 하루 최대 20회 전송 (프로덕션용)
 const dailyIPLimit = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24시간
   max: 20, // 같은 IP에서 20회
@@ -58,6 +79,27 @@ const dailyIPLimit = rateLimit({
     res.status(429).json({
       error: 'IP_LIMIT_EXCEEDED',
       message: '하루 최대 20회 전송 가능합니다.',
+      retryAfter: 24 * 60 * 60
+    });
+  }
+});
+
+// 테스트 환경용 IP 기반 일일 제한: 같은 IP에서 하루 최대 500회 전송
+const testDailyIPLimit = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24시간
+  max: 500, // 같은 IP에서 500회 (테스트용)
+  keyGenerator: (req) => req.ip || req.connection.remoteAddress,
+  message: {
+    error: 'IP_LIMIT_EXCEEDED',
+    message: '하루 최대 500회 전송 가능합니다.',
+    retryAfter: Math.ceil(24 * 60 * 60 / 1000) // 24시간
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'IP_LIMIT_EXCEEDED',
+      message: '하루 최대 500회 전송 가능합니다.',
       retryAfter: 24 * 60 * 60
     });
   }
@@ -88,5 +130,8 @@ module.exports = {
   emailSendLimit,
   dailyEmailLimit,
   dailyIPLimit,
-  verificationAttemptLimit
+  verificationAttemptLimit,
+  // 테스트 환경용 제한
+  testDailyEmailLimit,
+  testDailyIPLimit
 };
