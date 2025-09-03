@@ -10,15 +10,21 @@ const { verifyGoogleIdToken } = require("../utils/googleTokenVerifier");
 
 exports.register = async (req, res) => {
   try {
-    const { email, password, university, department, student_id } = req.body;
+    const { email, password, university, department, student_id, isEmailVerified } = req.body;
 
     // 필수 값 검증 (username 제거, 프론트엔드 필드 추가)
     if (!email || !password) {
       return res.status(400).json({ error: "❌ 이메일과 비밀번호를 입력해주세요." });
     }
 
+    // 이메일 인증 상태 검증
+    if (!isEmailVerified) {
+      return res.status(400).json({ error: "❌ 이메일 인증을 완료해주세요." });
+    }
+
     console.log(`📝 Registration request for email: ${email}`);
     console.log(`📊 Additional data - University: ${university}, Department: ${department}, Student ID: ${student_id}`);
+    console.log(`📧 Email verification status: ${isEmailVerified}`);
 
     // 자동 username 생성
     const username = await generateUniqueUsername(email);
@@ -85,6 +91,9 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     console.error("🚨 회원가입 오류:", error);
+    console.error("🚨 오류 상세:", error.message);
+    console.error("🚨 오류 스택:", error.stack);
+    console.error("🚨 요청 데이터:", req.body);
     return res.status(500).json({ error: "서버 오류 발생" });
   }
 };
