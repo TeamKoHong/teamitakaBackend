@@ -45,76 +45,83 @@ module.exports = {
       
       console.log('✅ Users 테이블 생성 완료');
       
-      console.log('🚀 EmailVerifications 테이블 생성 시작...');
+      console.log('🚀 EmailVerifications 테이블 확인 시작...');
       
-      // 2. EmailVerifications 테이블
-      await queryInterface.createTable('EmailVerifications', {
-        id: {
-          type: Sequelize.CHAR(36).BINARY,
-          primaryKey: true,
-          allowNull: false
-        },
-        email: {
-          type: Sequelize.STRING(255),
-          allowNull: false
-        },
-        purpose: {
-          type: Sequelize.STRING(50),
-          allowNull: false,
-          defaultValue: 'verification'
-        },
-        jti: {
-          type: Sequelize.STRING(255),
-          allowNull: false,
-          unique: true
-        },
-        code_hash: {
-          type: Sequelize.STRING(255),
-          allowNull: false
-        },
-        expires_at: {
-          type: Sequelize.DATE,
-          allowNull: false
-        },
-        consumed_at: {
-          type: Sequelize.DATE,
-          allowNull: true
-        },
-        created_ip: {
-          type: Sequelize.STRING(45),
-          allowNull: true
-        },
-        ua: {
-          type: Sequelize.TEXT,
-          allowNull: true
-        },
-        attempt_count: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          defaultValue: 0
-        },
-        createdAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-        },
-        updatedAt: {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-        }
-      });
+      // 2. EmailVerifications 테이블 (이미 존재하는지 확인)
+      const allTables = await queryInterface.showAllTables();
+      const emailVerificationExists = allTables.some(table => table === 'EmailVerifications');
       
-      console.log('✅ EmailVerifications 테이블 생성 완료');
+      if (!emailVerificationExists) {
+        console.log('📝 EmailVerifications 테이블이 없어서 생성합니다...');
+        await queryInterface.createTable('EmailVerifications', {
+          id: {
+            type: Sequelize.CHAR(36).BINARY,
+            primaryKey: true,
+            allowNull: false
+          },
+          email: {
+            type: Sequelize.STRING(255),
+            allowNull: false
+          },
+          purpose: {
+            type: Sequelize.STRING(50),
+            allowNull: false,
+            defaultValue: 'verification'
+          },
+          jti: {
+            type: Sequelize.STRING(255),
+            allowNull: false,
+            unique: true
+          },
+          code_hash: {
+            type: Sequelize.STRING(255),
+            allowNull: false
+          },
+          expires_at: {
+            type: Sequelize.DATE,
+            allowNull: false
+          },
+          consumed_at: {
+            type: Sequelize.DATE,
+            allowNull: true
+          },
+          created_ip: {
+            type: Sequelize.STRING(45),
+            allowNull: true
+          },
+          ua: {
+            type: Sequelize.TEXT,
+            allowNull: true
+          },
+          attempt_count: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            defaultValue: 0
+          },
+          createdAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+          },
+          updatedAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+          }
+        });
+        console.log('✅ EmailVerifications 테이블 생성 완료');
+      } else {
+        console.log('ℹ️  EmailVerifications 테이블이 이미 존재합니다.');
+      }
 
       // 3. 테이블 생성 검증
       console.log('🔍 테이블 생성 검증 시작...');
       
-      const allTables = await queryInterface.showAllTables();
-      console.log('📋 데이터베이스의 모든 테이블:', allTables);
+      const finalTables = await queryInterface.showAllTables();
+      console.log('📋 데이터베이스의 모든 테이블:', finalTables);
       
-      const usersTableExists = allTables.some(table => table === 'Users');
-      const emailVerificationsTableExists = allTables.some(table => table === 'EmailVerifications');
+      const usersTableExists = finalTables.some(table => table === 'Users');
+      const emailVerificationsTableExists = finalTables.some(table => table === 'EmailVerifications');
       
       console.log(`📊 Users 테이블 존재 여부: ${usersTableExists}`);
       console.log(`📊 EmailVerifications 테이블 존재 여부: ${emailVerificationsTableExists}`);
