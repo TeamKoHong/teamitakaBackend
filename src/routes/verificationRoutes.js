@@ -5,7 +5,9 @@ const {
   emailSendLimit, 
   dailyEmailLimit, 
   dailyIPLimit, 
-  verificationAttemptLimit 
+  verificationAttemptLimit,
+  testDailyEmailLimit,
+  testDailyIPLimit
 } = require('../middlewares/verificationRateLimit');
 const {
   validateSendVerificationInput,
@@ -18,8 +20,8 @@ const {
 router.post('/send-verification', 
   validateSendVerificationInput,  // 입력값 검증
   emailSendLimit,                 // 1분에 1회
-  dailyEmailLimit,                // 하루 5회
-  dailyIPLimit,                   // IP당 하루 20회
+  process.env.NODE_ENV === 'production' ? dailyEmailLimit : testDailyEmailLimit,  // 환경별 일일 제한
+  process.env.NODE_ENV === 'production' ? dailyIPLimit : testDailyIPLimit,        // 환경별 IP 제한
   verificationController.sendVerification
 );
 
@@ -40,8 +42,8 @@ router.get('/status',
 router.post('/resend-verification',
   validateResendVerificationInput,  // 입력값 검증
   emailSendLimit,                   // 1분에 1회
-  dailyEmailLimit,                  // 하루 5회
-  dailyIPLimit,                     // IP당 하루 20회
+  process.env.NODE_ENV === 'production' ? dailyEmailLimit : testDailyEmailLimit,  // 환경별 일일 제한
+  process.env.NODE_ENV === 'production' ? dailyIPLimit : testDailyIPLimit,        // 환경별 IP 제한
   verificationController.resendVerification
 );
 
