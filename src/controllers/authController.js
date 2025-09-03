@@ -48,8 +48,27 @@ exports.register = async (req, res) => {
       role: "MEMBER",
     });
 
+    // 4️⃣ JWT 토큰 발급 (자동 로그인용)
+    const token = jwt.sign(
+      { 
+        userId: newUser.user_id, 
+        email: newUser.email, 
+        role: newUser.role || 'user' 
+      },
+      jwtSecret,
+      { expiresIn: "1d" }
+    );
+
+    // 5️⃣ 보안 강화를 위해 HttpOnly 쿠키 옵션 추가
+    res.cookie("token", token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
     return res.status(201).json({
       message: "✅ 회원가입 성공!",
+      token: token, // JWT 토큰 추가
       user: {
         user_id: newUser.user_id,
         uuid: newUser.uuid,
