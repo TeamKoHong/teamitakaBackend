@@ -14,6 +14,9 @@ env.supabase
 *.p12
 *.pfx
 
+# 로컬 바이너리/CLI
+supabase-cli
+
 # 🔐 API 키 및 토큰
 *_api_key*
 *_token*
@@ -74,6 +77,10 @@ supabase_clean_start.sql
 supabase_migration_ordered.sql
 supabase_migration_final.sql
 supabase_migration_safe.sql
+
+# 🚀 Supabase Edge Functions (Supabase 대시보드에서 관리)
+supabase/functions/
+supabase_backup/functions/
 
 # 🔐 하드코딩된 API 키 및 토큰
 *_api_key*
