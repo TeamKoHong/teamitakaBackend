@@ -17,10 +17,16 @@ const dbConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306,
-  dialect: "mysql",
+  port: process.env.DB_PORT || (process.env.DB_DIALECT === "postgres" ? 5432 : 3306),
+  dialect: process.env.DB_DIALECT || "mysql",
   logging: console.log, // 디버깅용 로깅 활성화
-  dialectOptions: {
+  dialectOptions: process.env.DB_DIALECT === "postgres" ? {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    },
+    connectTimeout: 10000,
+  } : {
     ssl: false, // Cloud SQL Proxy가 SSL 처리
     connectTimeout: 10000,
   },
