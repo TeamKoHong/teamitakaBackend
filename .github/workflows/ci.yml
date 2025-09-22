@@ -65,13 +65,24 @@ jobs:
       # 6. Deploy to Vercel (Production only)
       - name: Deploy to Vercel
         if: github.ref == 'refs/heads/main'
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: ./
+        run: |
+          echo "🚀 Vercel 배포 시작..."
+          
+          # Vercel CLI 설치
+          npm install -g vercel
+          
+          # 환경 변수 설정 및 배포
+          VERCEL_TOKEN=${{ secrets.VERCEL_TOKEN }} \
+          DB_HOST=${{ secrets.DB_HOST }} \
+          DB_NAME=${{ secrets.DB_NAME }} \
+          DB_USER=${{ secrets.DB_USER }} \
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+          DB_PORT=${{ secrets.DB_PORT }} \
+          EMAIL_FROM=${{ secrets.EMAIL_FROM }} \
+          EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }} \
+          SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }} \
+          JWT_SECRET=${{ secrets.JWT_SECRET }} \
+          ./scripts/deploy-to-vercel.sh
 
       # 7. Health Check (Production only)
       - name: Health Check
