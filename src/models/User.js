@@ -5,7 +5,7 @@ module.exports = (sequelize) => {
     "User",
     {
       user_id: {
-        type: DataTypes.CHAR(36).BINARY,
+        type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
@@ -23,7 +23,7 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
-      userType: {
+      user_type: {
         type: DataTypes.ENUM("ADMIN", "MEMBER"),
         defaultValue: "MEMBER",
       },
@@ -63,20 +63,22 @@ module.exports = (sequelize) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      createdAt: {
+      created_at: {
         type: DataTypes.DATE,
         allowNull: false,
         defaultValue: DataTypes.NOW,
       },
-      updatedAt: {
+      updated_at: {
         type: DataTypes.DATE,
         allowNull: false,
         defaultValue: DataTypes.NOW,
       },
     },
     {
-      tableName: "Users",
+      tableName: "users",
       timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
     }
   );
 
