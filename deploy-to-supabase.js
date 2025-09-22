@@ -45,7 +45,7 @@ console.log('7. "Deploy" 버튼 클릭');
 console.log('='.repeat(50));
 
 // API URL 출력
-const apiUrl = `https://your-project-ref.supabase.co/functions/v1/${functionName}`;
+const apiUrl = `${process.env.SUPABASE_URL}/functions/v1/${functionName}`;
 console.log('\n🌐 배포 후 API URL:');
 console.log('Base URL:', apiUrl);
 console.log('Health Check:', `${apiUrl}/api/health`);
