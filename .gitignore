@@ -14,6 +14,9 @@ env.supabase
 *.p12
 *.pfx
 
+# 로컬 바이너리/CLI
+supabase-cli
+
 # 🔐 API 키 및 토큰
 *_api_key*
 *_token*
