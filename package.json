@@ -11,7 +11,7 @@
     "test": "NODE_ENV=test jest --coverage",
     "lint": "eslint . && prettier --write \"**/*.yml\"",
     "verify": "node scripts/deployment-verification.js",
-    "verify:supabase": "API_BASE_URL=https://huwajjafqbfrcxkdfker.supabase.co/functions/v1/teamitaka-api node scripts/deployment-verification.js",
+    "verify:supabase": "API_BASE_URL=${SUPABASE_URL}/functions/v1/teamitaka-api node scripts/deployment-verification.js",
     "migrate:dev": "dotenv -e .env.development -- npx sequelize-cli db:migrate",
     "migrate:prod": "dotenv -e .env.production -- npx sequelize-cli db:migrate",
     "migrate:test": "dotenv -e .env.test -- npx sequelize-cli db:migrate",
