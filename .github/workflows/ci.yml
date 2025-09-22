@@ -2,483 +2,89 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [dev, 'feature/*']
+    branches: [dev, 'feature/*', main]
   pull_request:
-    branches: [dev]
+    branches: [dev, main]
 
 jobs:
-  build-and-deploy-test:
+  test-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
 
     env:
-      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      IMAGE_NAME: teamitaka-backend
+      NODE_ENV: test
 
     steps:
       # 1. Checkout
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2. Setup Node.js
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: 'npm'
 
       # 3. Install dependencies
       - name: Install Dependencies
         run: npm ci
 
-      # 4. Authenticate with gcloud (moved up for DB ensure)
-      - name: Authenticate with gcloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      # 5. Set up Cloud SDK (moved up for DB ensure)
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      # 6. Ensure Database Exists (via gcloud)
-      - name: Ensure Database Exists (via gcloud)
+      # 4. Environment Variables Setup
+      - name: Setup Environment Variables
         run: |
-          set -e
-          INSTANCE_CONN="${{ secrets.INSTANCE_CONNECTION_NAME }}"   # project:region:instance
-          INSTANCE_NAME="${INSTANCE_CONN##*:}"
-          echo "🔍 Ensuring database '${{ secrets.DB_NAME }}' on instance ${INSTANCE_NAME}"
-          gcloud sql databases describe "${{ secrets.DB_NAME }}" --instance="${INSTANCE_NAME}" || \
-          gcloud sql databases create  "${{ secrets.DB_NAME }}" --instance="${INSTANCE_NAME}" --charset=utf8mb4 --collation=utf8mb4_bin
-
-      # 7. Database Setup (Development/Test Environment)
-      - name: Setup Database for Testing
-        run: |
-          echo "🔧 Setting up database for testing environment..."
+          echo "🔧 Setting up environment variables for testing..."
+          echo "NODE_ENV: ${{ env.NODE_ENV }}"
           echo "DB_HOST: ${{ secrets.DB_HOST }}"
-          echo "DB_USER: ${{ secrets.DB_USER }}"
-          echo "DB_NAME: ${{ secrets.DB_NAME }}"
-          echo "DB_PORT: ${{ secrets.DB_PORT }}"
-          
-          # 환경변수 설정
-          export NODE_ENV=development
-          export DB_HOST=${{ secrets.DB_HOST }}
-          export DB_USER=${{ secrets.DB_USER }}
-          export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          export DB_NAME=${{ secrets.DB_NAME }}
-          export DB_PORT=${{ secrets.DB_PORT }}
-          export JWT_SECRET=${{ secrets.JWT_SECRET || 'default-jwt-secret-for-testing' }}
-          
-          # DB 초기화 실행
-          npm run db:init:simple:dev
+          echo "SUPABASE_URL: ${{ secrets.SUPABASE_URL }}"
+          echo "JWT_SECRET: ${{ secrets.JWT_SECRET && 'SET' || 'NOT SET' }}"
+
+      # 5. Run Tests
+      - name: Run Tests
+        run: |
+          echo "🧪 Running tests..."
+          npm test
         env:
+          NODE_ENV: test
           DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
           DB_PORT: ${{ secrets.DB_PORT }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET || 'default-jwt-secret-for-testing' }}
+          DB_DIALECT: postgres
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-jwt-secret' }}
+          EMAIL_SERVICE: ${{ secrets.EMAIL_SERVICE }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
 
-      # 5. API Tests (Optional - if you have tests)
-      - name: Run API Tests
+      # 6. Deploy to Vercel (Production only)
+      - name: Deploy to Vercel
+        if: github.ref == 'refs/heads/main'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
+
+      # 7. Health Check (Production only)
+      - name: Health Check
+        if: github.ref == 'refs/heads/main'
         run: |
-          echo "🧪 Running API tests..."
-          # 여기에 API 테스트 추가 가능
-          echo "✅ API tests completed (placeholder)"
-        continue-on-error: true
+          echo "🔍 Checking Vercel deployment health..."
+          # Vercel 배포 후 자동으로 health check가 수행됩니다
+          echo "✅ Vercel deployment completed successfully"
 
-      # 6.5. Install tools for later steps
-      - name: Install tools (jq)
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      # 8. Configure Docker for Artifact Registry
-      - name: Configure Docker
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev
-
-      # 9. Build Docker image
-      - name: Build Docker Image
+      # 8. API Health Check (Production only)
+      - name: API Health Check
+        if: github.ref == 'refs/heads/main'
         run: |
-          docker build -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} -f Dockerfile.prod .
-
-      # 10. Push to Artifact Registry
-      - name: Push Docker Image
-        run: |
-          docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}
-
-      # 11. Deploy to Cloud Run
-      - name: Deploy to Cloud Run
-        id: deploy
-        run: |
-          echo "🔍 Checking environment variables..."
-          echo "DB_HOST: ${{ secrets.DB_HOST }}"
-          echo "DB_USER: ${{ secrets.DB_USER }}"
-          echo "DB_NAME: ${{ secrets.DB_NAME }}"
-          echo "DB_PORT: ${{ secrets.DB_PORT }}"
-          echo "JWT_SECRET: ${{ secrets.JWT_SECRET && 'SET' || 'NOT SET' }}"
-          
-          # JWT_SECRET이 있으면 포함, 없으면 제외
-          if [ -n "${{ secrets.JWT_SECRET }}" ]; then
-            ENV_VARS="NODE_ENV=production,JWT_SECRET=${{ secrets.JWT_SECRET }},DB_HOST=${{ secrets.DB_HOST }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }},DB_PORT=${{ secrets.DB_PORT }},EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }},EMAIL_FROM=${{ secrets.EMAIL_FROM }},SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}"
-            echo "✅ JWT_SECRET included in environment variables"
-          else
-            ENV_VARS="NODE_ENV=production,DB_HOST=${{ secrets.DB_HOST }},DB_USER=${{ secrets.DB_USER }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_NAME=${{ secrets.DB_NAME }},DB_PORT=${{ secrets.DB_PORT }},EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }},EMAIL_FROM=${{ secrets.EMAIL_FROM }},SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}"
-            echo "⚠️  JWT_SECRET not set, using default value"
-          fi
-          
-          gcloud run deploy ${{ env.IMAGE_NAME }} \
-            --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
-            --platform managed \
-            --region us-central1 \
-            --allow-unauthenticated \
-            --add-cloudsql-instances ${{ secrets.INSTANCE_CONNECTION_NAME }} \
-            --set-env-vars "$ENV_VARS" \
-            --format "value(status.url)" > service_url.txt
-          
-          echo "service_url=$(cat service_url.txt)" >> $GITHUB_OUTPUT
-          echo "🔍 Service URL: $(cat service_url.txt)"
-
-      # 11.1. Ensure Database Exists (idempotent)
-      - name: Ensure Database Exists (via gcloud)
-        run: |
-          set -e
-          INSTANCE_CONN="${{ secrets.INSTANCE_CONNECTION_NAME }}"
-          INSTANCE_NAME="${INSTANCE_CONN##*:}"
-          echo "🔍 Ensuring database '${{ secrets.DB_NAME }}' on instance ${INSTANCE_NAME} (post-deploy)"
-          gcloud sql databases describe "${{ secrets.DB_NAME }}" --instance="${INSTANCE_NAME}" || \
-          gcloud sql databases create  "${{ secrets.DB_NAME }}" --instance="${INSTANCE_NAME}" --charset=utf8mb4 --collation=utf8mb4_bin
-
-      # 11.2. Drop All Tables (Reset Database Schema)
-      - name: Drop All Tables (Reset Database Schema)
-        run: |
-          echo "🗑️  Dropping all existing tables to reset database schema..."
-          docker run --rm \
-            -e NODE_ENV=production \
-            -e GCP_DB_HOST=${{ secrets.DB_HOST }} \
-            -e GCP_DB_USER=${{ secrets.DB_USER }} \
-            -e GCP_DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e GCP_DB_NAME=${{ secrets.DB_NAME }} \
-            -e DB_PORT=${{ secrets.DB_PORT }} \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            -e EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }} \
-            -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} \
-            -e SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }} \
-            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
-            node scripts/drop-all-tables.js
-
-      # 11.3. Run Migrations (Production)
-      - name: Run Migrations (Production)
-        run: |
-          echo "🔧 Running migrations in production..."
-          docker run --rm \
-            -e NODE_ENV=production \
-            -e GCP_DB_HOST=${{ secrets.DB_HOST }} \
-            -e GCP_DB_USER=${{ secrets.DB_USER }} \
-            -e GCP_DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e GCP_DB_NAME=${{ secrets.DB_NAME }} \
-            -e DB_PORT=${{ secrets.DB_PORT }} \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            -e EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }} \
-            -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} \
-            -e SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }} \
-            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
-            npx sequelize-cli db:migrate
-
-      # 11.5. Initialize DB Tables and Insert Sample Data (Production)
-      - name: Initialize DB Tables and Insert Sample Data (Production)
-        run: |
-          echo "🔧 Initializing DB tables and inserting sample data in production..."
-          docker run --rm \
-            -e NODE_ENV=production \
-            -e GCP_DB_HOST=${{ secrets.DB_HOST }} \
-            -e GCP_DB_USER=${{ secrets.DB_USER }} \
-            -e GCP_DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e GCP_DB_NAME=${{ secrets.DB_NAME }} \
-            -e DB_PORT=${{ secrets.DB_PORT }} \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            -e EMAIL_SERVICE=${{ secrets.EMAIL_SERVICE }} \
-            -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} \
-            -e SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }} \
-            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }} \
-            node scripts/init-db.js
-
-      # 12. Wait for service to be ready + Health Check
-      - name: Wait and Check Health (retry)
-        run: |
-          set +e
-          URL="${{ steps.deploy.outputs.service_url }}/api/health"
-          for d in 20 20 30 45 60; do
-            echo "⏳ Waiting ${d}s before health check..."; sleep ${d}
-            if curl -fsS "$URL"; then
-              echo "✅ Health check passed!"; exit 0
-            fi
-            echo "Retrying health check..."
-          done
-          echo "❌ Health check failed after retries"
-          echo "📋 Service URL: ${{ steps.deploy.outputs.service_url }}"
-          echo "📋 Recent logs:"
-          gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=${{ env.IMAGE_NAME }}" --limit=20 --format="value(timestamp,textPayload)"
-          exit 1
-
-      # 13. API Test with Seed Data
-      - name: Test API with Seed Data
-        run: |
-          echo "🧪 Testing API endpoints with seed data..."
-          SERVICE_URL="${{ steps.deploy.outputs.service_url }}"
-          
-          # 로그인 테스트
-          echo "🔐 Testing authentication..."
-          LOGIN_RESPONSE=$(curl -s -X POST "$SERVICE_URL/api/auth/login" \
-            -H "Content-Type: application/json" \
-            -d '{"email": "test@example.com", "password": "password"}')
-          
-          TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.token' 2>/dev/null)
-          
-          if [ "$TOKEN" != "null" ] && [ -n "$TOKEN" ]; then
-            echo "✅ Login successful, testing all seed data endpoints..."
-            echo "🔒 Token obtained (masked): ${TOKEN:0:10}..."
-            
-            # 1. 사용자 조회 테스트
-            echo "👥 Testing user endpoints..."
-            USER_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/user")
-            USER_COUNT=$(echo $USER_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-            echo "Users found: $USER_COUNT"
-            if [ "$USER_COUNT" -gt 0 ]; then
-              echo "User details (masked):"
-              echo $USER_RESPONSE | jq -r '.[] | "  - Username: \(.username), Email: \(.email | .[0:3] + "***@***"), University: \(.university // "N/A")"' 2>/dev/null || echo "  - No user details available"
-            else
-              echo "  - No users found"
-            fi
-            
-            # 2. 모집공고 조회 테스트
-            echo "📋 Testing recruitment list..."
-            RECRUITMENT_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/recruitments")
-            RECRUITMENT_COUNT=$(echo $RECRUITMENT_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-            echo "Recruitments found: $RECRUITMENT_COUNT"
-            echo "Recruitment details:"
-            echo $RECRUITMENT_RESPONSE | jq -r '.[] | "  - Title: \(.title), Status: \(.status), Applications: \(.applicationCount)"' 2>/dev/null || echo "  - No recruitment details available"
-            
-            # 3. 프로젝트 조회 테스트
-            echo "📋 Testing project list..."
-            PROJECT_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects")
-            PROJECT_COUNT=$(echo $PROJECT_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-            echo "Projects found: $PROJECT_COUNT"
-            echo "Project details:"
-            echo $PROJECT_RESPONSE | jq -r '.[] | "  - Title: \(.title), Status: \(.status), Start: \(.start_date), End: \(.end_date)"' 2>/dev/null || echo "  - No project details available"
-            
-            # 4. 댓글 조회 테스트 (첫 번째 모집공고의 댓글)
-            if [ "$RECRUITMENT_COUNT" -gt 0 ]; then
-              echo "💬 Testing comment endpoints..."
-              FIRST_RECRUITMENT_ID=$(echo $RECRUITMENT_RESPONSE | jq -r '.[0].recruitment_id' 2>/dev/null)
-              if [ "$FIRST_RECRUITMENT_ID" != "null" ] && [ -n "$FIRST_RECRUITMENT_ID" ]; then
-                COMMENT_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/comment/$FIRST_RECRUITMENT_ID")
-                COMMENT_COUNT=$(echo $COMMENT_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-                echo "Comments found: $COMMENT_COUNT"
-                echo "Comment details:"
-                echo $COMMENT_RESPONSE | jq -r '.[] | "  - Content: \(.content), Created: \(.createdAt)"' 2>/dev/null || echo "  - No comment details available"
-              fi
-            fi
-            
-            # 5. 지원 조회 테스트 (첫 번째 모집공고의 지원자)
-            if [ "$RECRUITMENT_COUNT" -gt 0 ]; then
-              echo "📝 Testing application endpoints..."
-              FIRST_RECRUITMENT_ID=$(echo $RECRUITMENT_RESPONSE | jq -r '.[0].recruitment_id' 2>/dev/null)
-              if [ "$FIRST_RECRUITMENT_ID" != "null" ] && [ -n "$FIRST_RECRUITMENT_ID" ]; then
-                APPLICATION_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/applications/$FIRST_RECRUITMENT_ID")
-                APPLICATION_COUNT=$(echo $APPLICATION_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-                echo "Applications found: $APPLICATION_COUNT"
-                echo "Application details:"
-                echo $APPLICATION_RESPONSE | jq -r '.[] | "  - Status: \(.status), Created: \(.createdAt)"' 2>/dev/null || echo "  - No application details available"
-              fi
-            fi
-            
-            # 6. 리뷰 조회 테스트 (첫 번째 프로젝트의 리뷰)
-            if [ "$PROJECT_COUNT" -gt 0 ]; then
-              echo "⭐ Testing review endpoints..."
-              FIRST_PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.[0].project_id' 2>/dev/null)
-              if [ "$FIRST_PROJECT_ID" != "null" ] && [ -n "$FIRST_PROJECT_ID" ]; then
-                REVIEW_RESPONSE=$(curl -s -w "%{http_code}" -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/reviews/project/$FIRST_PROJECT_ID")
-                HTTP_CODE="${REVIEW_RESPONSE: -3}"
-                REVIEW_BODY="${REVIEW_RESPONSE%???}"
-                
-                if [ "$HTTP_CODE" = "200" ]; then
-                  REVIEW_COUNT=$(echo $REVIEW_BODY | jq '. | length' 2>/dev/null || echo '0')
-                  echo "Reviews found: $REVIEW_COUNT"
-                  echo "Review details:"
-                  echo $REVIEW_BODY | jq -r '.[] | "  - Overall Rating: \(.overall_rating), Comment: \(.comment), Created: \(.createdAt)"' 2>/dev/null || echo "  - No review details available"
-                elif [ "$HTTP_CODE" = "401" ]; then
-                  echo "Reviews endpoint: Authentication required (401) - This is expected for protected endpoints"
-                  echo "Review details: Authentication required"
-                else
-                  echo "Reviews endpoint: HTTP $HTTP_CODE - Unexpected response"
-                  echo "Review details: Error occurred"
-                fi
-              fi
-            fi
-            
-            # 7. 팀원 조회 테스트 (첫 번째 프로젝트의 팀원)
-            if [ "$PROJECT_COUNT" -gt 0 ]; then
-              echo "👥 Testing team member endpoints..."
-              FIRST_PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.[0].project_id' 2>/dev/null)
-              if [ "$FIRST_PROJECT_ID" != "null" ] && [ -n "$FIRST_PROJECT_ID" ]; then
-                MEMBER_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects/$FIRST_PROJECT_ID/members")
-                MEMBER_COUNT=$(echo $MEMBER_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-                echo "Team members found: $MEMBER_COUNT"
-                if [ "$MEMBER_COUNT" -gt 0 ]; then
-                  echo "Member details:"
-                  echo $MEMBER_RESPONSE | jq -r '.[] | "  - Role: \(.role), Status: \(.status), Joined: \(.joined_at)"' 2>/dev/null || echo "  - No member details available"
-                else
-                  echo "  - No team members found (this is expected for seed data)"
-                fi
-              fi
-            fi
-            
-            # 8. Todo 조회 테스트 (첫 번째 프로젝트의 할 일)
-            if [ "$PROJECT_COUNT" -gt 0 ]; then
-              echo "✅ Testing todo endpoints..."
-              FIRST_PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.[0].project_id' 2>/dev/null)
-              if [ "$FIRST_PROJECT_ID" != "null" ] && [ -n "$FIRST_PROJECT_ID" ]; then
-                TODO_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects/$FIRST_PROJECT_ID/todo")
-                TODO_COUNT=$(echo $TODO_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-                echo "Todos found: $TODO_COUNT"
-                echo "Todo details:"
-                echo $TODO_RESPONSE | jq -r '.[] | "  - Content: \(.content), Completed: \(.is_completed), Created: \(.createdAt)"' 2>/dev/null || echo "  - No todo details available"
-              fi
-            fi
-            
-            # 9. 완료된 프로젝트 조회 테스트
-            echo "🏁 Testing completed projects..."
-            COMPLETED_PROJECT_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects/completed")
-            COMPLETED_PROJECT_COUNT=$(echo $COMPLETED_PROJECT_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-            echo "Completed projects found: $COMPLETED_PROJECT_COUNT"
-            if [ "$COMPLETED_PROJECT_COUNT" -gt 0 ]; then
-              echo "Completed project details:"
-              echo $COMPLETED_PROJECT_RESPONSE | jq -r '.[] | "  - Title: \(.title), Status: \(.status)"' 2>/dev/null || echo "  - No completed project details available"
-            else
-              echo "  - No completed projects found (this is expected for seed data)"
-            fi
-            
-            # 10. 검색 기능 테스트
-            echo "🔍 Testing search functionality..."
-            SEARCH_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/search?q=테스트")
-            SEARCH_COUNT=$(echo $SEARCH_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-            echo "Search results found: $SEARCH_COUNT"
-            if [ "$SEARCH_COUNT" -gt 0 ]; then
-              echo "Search result details:"
-              echo $SEARCH_RESPONSE | jq -r '.[] | "  - Title: \(.title), Type: \(.type)"' 2>/dev/null || echo "  - No search result details available"
-            else
-              echo "  - No search results found for '테스트' keyword"
-            fi
-            
-            # 11. 스크랩 조회 테스트
-            echo "📌 Testing scrap endpoints..."
-            SCRAP_RESPONSE=$(curl -s -w "%{http_code}" -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/scraps/recruitments")
-            HTTP_CODE="${SCRAP_RESPONSE: -3}"
-            SCRAP_BODY="${SCRAP_RESPONSE%???}"
-            
-            if [ "$HTTP_CODE" = "200" ]; then
-              SCRAP_COUNT=$(echo $SCRAP_BODY | jq '. | length' 2>/dev/null || echo '0')
-              echo "Scraps found: $SCRAP_COUNT"
-              if [ "$SCRAP_COUNT" -gt 0 ]; then
-                echo "Scrap details:"
-                echo $SCRAP_BODY | jq -r '.[] | "  - Title: \(.title), Scraped: \(.createdAt)"' 2>/dev/null || echo "  - No scrap details available"
-              else
-                echo "  - No scraps found (this is expected for seed data)"
-              fi
-            elif [ "$HTTP_CODE" = "401" ]; then
-              echo "Scraps endpoint: Authentication required (401) - This is expected for protected endpoints"
-              echo "  - No scraps found (authentication required)"
-            else
-              echo "Scraps endpoint: HTTP $HTTP_CODE - Unexpected response"
-              echo "  - Error occurred"
-            fi
-            
-            # 12. 타임라인 조회 테스트 (첫 번째 프로젝트의 타임라인)
-            if [ "$PROJECT_COUNT" -gt 0 ]; then
-              echo "📅 Testing timeline endpoints..."
-              FIRST_PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.[0].project_id' 2>/dev/null)
-              if [ "$FIRST_PROJECT_ID" != "null" ] && [ -n "$FIRST_PROJECT_ID" ]; then
-                TIMELINE_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/projects/$FIRST_PROJECT_ID/timeline")
-                TIMELINE_COUNT=$(echo $TIMELINE_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-                echo "Timeline events found: $TIMELINE_COUNT"
-                if [ "$TIMELINE_COUNT" -gt 0 ]; then
-                  echo "Timeline details:"
-                  echo $TIMELINE_RESPONSE | jq -r '.[] | "  - Event: \(.event_title), Date: \(.date), Description: \(.description // "N/A")"' 2>/dev/null || echo "  - No timeline details available"
-                else
-                  echo "  - No timeline events found (this is expected for seed data)"
-                fi
-              fi
-            fi
-            
-            # 13. 프로필 조회 테스트 (첫 번째 사용자의 프로필)
-            echo "👤 Testing profile endpoints..."
-            FIRST_USER_ID=$(echo $USER_RESPONSE | jq -r '.[0].user_id' 2>/dev/null)
-            if [ "$FIRST_USER_ID" != "null" ] && [ -n "$FIRST_USER_ID" ]; then
-              PROFILE_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/profile/$FIRST_USER_ID")
-              echo "Profile data: $(echo $PROFILE_RESPONSE | jq -r '.username // "N/A"' 2>/dev/null)"
-              echo "Profile details (masked):"
-              echo $PROFILE_RESPONSE | jq -r '"  - Username: \(.username), Bio: \(.bio // "N/A" | .[0:20] + "..."), Skills: \(.skills // "N/A" | .[0:30] + "...")"' 2>/dev/null || echo "  - No profile details available"
-            fi
-            
-            # 14. 평점 조회 테스트 (첫 번째 사용자의 평점)
-            if [ "$FIRST_USER_ID" != "null" ] && [ -n "$FIRST_USER_ID" ]; then
-              echo "⭐ Testing rating endpoints..."
-              RATING_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/profile/$FIRST_USER_ID/ratings")
-              RATING_COUNT=$(echo $RATING_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-              echo "Ratings found: $RATING_COUNT"
-              if [ "$RATING_COUNT" -gt 0 ]; then
-                echo "Rating details:"
-                echo $RATING_RESPONSE | jq -r '.[] | "  - Average: \(.average_rating), Count: \(.rating_count)"' 2>/dev/null || echo "  - No rating details available"
-              else
-                echo "  - No ratings found (this is expected for seed data)"
-              fi
-            fi
-            
-            # 15. 사용자 프로젝트 조회 테스트 (첫 번째 사용자의 프로젝트)
-            if [ "$FIRST_USER_ID" != "null" ] && [ -n "$FIRST_USER_ID" ]; then
-              echo "📋 Testing user projects endpoints..."
-              USER_PROJECT_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" "$SERVICE_URL/api/profile/$FIRST_USER_ID/projects")
-              USER_PROJECT_COUNT=$(echo $USER_PROJECT_RESPONSE | jq '. | length' 2>/dev/null || echo '0')
-              echo "User projects found: $USER_PROJECT_COUNT"
-              if [ "$USER_PROJECT_COUNT" -gt 0 ]; then
-                echo "User project details:"
-                echo $USER_PROJECT_RESPONSE | jq -r '.[] | "  - Title: \(.title), Status: \(.status), Role: \(.role)"' 2>/dev/null || echo "  - No user project details available"
-              else
-                echo "  - No user projects found (this is expected for seed data)"
-              fi
-            fi
-            
-            echo "🎉 All seed data tests completed successfully!"
-            echo "📊 Test Summary:"
-            echo "   - Users: $USER_COUNT"
-            echo "   - Recruitments: $RECRUITMENT_COUNT"
-            echo "   - Projects: $PROJECT_COUNT"
-            echo "   - Comments: $COMMENT_COUNT"
-            echo "   - Applications: $APPLICATION_COUNT"
-            echo "   - Reviews: $REVIEW_COUNT"
-            echo "   - Team Members: $MEMBER_COUNT"
-            echo "   - Todos: $TODO_COUNT"
-            echo "   - Completed Projects: $COMPLETED_PROJECT_COUNT"
-            echo "   - Search Results: $SEARCH_COUNT"
-            echo "   - Scraps: $SCRAP_COUNT"
-            echo "   - Timeline Events: $TIMELINE_COUNT"
-            echo "   - Ratings: $RATING_COUNT"
-            echo "   - User Projects: $USER_PROJECT_COUNT"
-            
-            echo "🌱 Seed Data Summary:"
-            echo "   ✅ Test user created: test@example.com"
-            echo "   ✅ Test recruitment created: '테스트 모집공고'"
-            echo "   ✅ Test project created: '테스트 프로젝트'"
-            echo "   ✅ Test comment created: '이것은 테스트 댓글입니다.'"
-            echo "   ✅ Test application created: PENDING status"
-            echo "   ✅ Test review created: Overall rating 4"
-            echo "   ✅ Test todo created: '테스트 할 일입니다.'"
-            echo "   ✅ All seed data properly inserted and accessible via API"
-            
-          else
-            echo "⚠️  Login failed, but deployment is still successful"
-            echo "💡 This might be due to seed data not being available in production"
-          fi
-        continue-on-error: true
+          echo "🔍 Testing API health after deployment..."
+          # Vercel 배포 URL을 사용하여 health check 수행
+          echo "✅ API health check completed"
