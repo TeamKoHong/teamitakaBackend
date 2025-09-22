@@ -5,12 +5,16 @@ const fs = require('fs');
 // .env 파일 로드
 function loadEnvFile() {
   const envPath = path.join(process.cwd(), '.env');
+  const envSupabasePath = path.join(process.cwd(), 'env.supabase');
   
   if (fs.existsSync(envPath)) {
     require('dotenv').config({ path: envPath });
     console.log('✅ .env 파일이 로드되었습니다.');
+  } else if (fs.existsSync(envSupabasePath)) {
+    require('dotenv').config({ path: envSupabasePath });
+    console.log('✅ env.supabase 파일이 로드되었습니다.');
   } else {
-    console.log('⚠️  .env 파일을 찾을 수 없습니다. 환경 변수를 확인하세요.');
+    console.log('⚠️  .env 또는 env.supabase 파일을 찾을 수 없습니다. 환경 변수를 확인하세요.');
   }
 }
 
