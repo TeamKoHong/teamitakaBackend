@@ -102,9 +102,12 @@ exports.sendVerification = async (req, res) => {
 
 // 인증번호 확인
 exports.verifyCode = async (req, res) => {
+  const clientIP = req.ip || req.connection.remoteAddress;
+  let email = '';
+  
   try {
-    const { email, code } = req.body;
-    const clientIP = req.ip || req.connection.remoteAddress;
+    const { email: requestEmail, code } = req.body;
+    email = requestEmail;
 
     // 1. 입력값 검증
     if (!email || !code) {
