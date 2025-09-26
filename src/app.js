@@ -31,7 +31,19 @@ const verificationRoutes = require("./routes/verificationRoutes");
 
 const app = express();
 const corsOrigin = process.env.CORS_ORIGIN || '*';
-app.use(cors({ origin: corsOrigin, credentials: true }));
+const allowAnyOrigin = process.env.ALLOW_ANY_ORIGIN === 'true';
+const corsOptions = allowAnyOrigin
+  ? {
+      origin: (origin, callback) => callback(null, true),
+      credentials: true,
+      methods: ['GET','HEAD','PUT','PATCH','POST','DELETE'],
+      allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
+      optionsSuccessStatus: 204,
+    }
+  : { origin: corsOrigin, credentials: true };
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // URL-encoded 데이터 파싱
 app.use(cookieParser()); // 추가
