@@ -50,3 +50,59 @@ curl -i http://localhost:3001/api/health -H "Origin: http://localhost:3000"
 ### 주의사항
 - 이 설정은 모든 Origin을 허용합니다. 민감한 API(계정/결제/이메일 발송)는 테스트하지 마세요.
 - 프로덕션 환경에서는 절대 사용하지 마세요.
+
+---
+
+## Local Development Guide (teamitakaFrontend2 ↔ backend)
+
+### 1) Backend (CORS 임시 전체 허용으로 실행)
+```bash
+cd /Users/_woo_s.j/Desktop/woo/workspace/teamitaka/teamitakaBackend
+ALLOW_ANY_ORIGIN=true npm run dev
+# 기본 포트: 8080
+```
+
+정상 동작 확인:
+```bash
+curl -i -X OPTIONS http://localhost:8080/api/health \
+  -H "Origin: http://localhost:3000" \
+  -H "Access-Control-Request-Method: GET"
+
+curl -i http://localhost:8080/api/health \
+  -H "Origin: http://localhost:3000"
+```
+
+### 2) Frontend (Create React App: teamitakaFrontend2)
+```bash
+cd /Users/_woo_s.j/Desktop/woo/workspace/teamitakaFrontend2
+echo "REACT_APP_API_BASE_URL=http://localhost:8080" >> .env.development
+npm start
+# 기본 포트: 3000
+```
+
+fetch/axios 예시(자격증명 필요 시):
+```js
+// fetch
+fetch('http://localhost:8080/api/health', { credentials: 'include' })
+  .then(r => r.json()).then(console.log).catch(console.error);
+
+// axios
+import axios from 'axios';
+axios.get('http://localhost:8080/api/health', { withCredentials: true })
+  .then(r => console.log(r.data)).catch(console.error);
+```
+
+### 3) 브라우저에서 확인할 것
+- Network 탭의 응답 헤더:
+  - `Access-Control-Allow-Origin: http://localhost:3000`
+  - `Access-Control-Allow-Credentials: true`
+
+### 4) Troubleshooting
+- 백엔드가 `ALLOW_ANY_ORIGIN=true`로 실행됐는지 확인
+- 프론트 `.env.development`의 `REACT_APP_API_BASE_URL`이 정확한지(프로토콜/포트 포함)
+- 인증 필요한 요청인지 확인하고, 필요한 경우 `credentials/include` 설정
+- 여전히 이슈면 프리플라이트 명령으로 Allow-* 헤더 누락 여부 확인
+
+### 5) 종료/원복
+- 개발 세션 종료 후 `ALLOW_ANY_ORIGIN` 미설정으로 원복
+- 배포 환경에서는 반드시 도메인 화이트리스트(`CORS_ORIGIN`) 방식 사용
