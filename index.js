@@ -15,9 +15,10 @@ const app = require("./src/app");  // Express 앱
 // NODE_ENV !== 'test' 조건 하에 connectDB()가 이미 실행될 것)
 
 const PORT = process.env.PORT || 8080;
+const HOST = process.env.HOST || '0.0.0.0';
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server listening on ${HOST}:${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   setInterval(() => console.log('✅ Server still running...'), 5000);
 });
