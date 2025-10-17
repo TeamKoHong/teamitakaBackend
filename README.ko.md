@@ -1,0 +1,613 @@
+# 🚀 TeamItaka Backend
+
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE)
+
+팀 프로젝트 모집 및 협업을 위한 종합 RESTful API 서비스
+
+> [English](README.md) | **한국어**
+
+## 📋 목차
+
+- [주요 기능](#-주요-기능)
+- [기술 스택](#-기술-스택)
+- [시작하기](#-시작하기)
+- [프로젝트 구조](#-프로젝트-구조)
+- [API 문서](#-api-문서)
+- [데이터베이스](#-데이터베이스)
+- [개발 가이드](#-개발-가이드)
+- [테스트](#-테스트)
+- [배포](#-배포)
+- [환경 변수](#-환경-변수)
+- [기여하기](#-기여하기)
+
+## ✨ 주요 기능
+
+### 🔐 사용자 인증 및 권한 관리
+- 6자리 인증 코드를 통한 이메일 인증
+- JWT 기반 인증 시스템
+- 구글 OAuth 소셜 로그인
+- bcrypt 기반 안전한 비밀번호 암호화
+
+### 📊 프로젝트 관리
+- 프로젝트 생성, 조회, 수정, 삭제 (CRUD)
+- 팀원 모집 시스템
+- 지원서 추적 관리
+- 팀 멤버 관리
+
+### 👤 사용자 프로필
+- 커스터마이징 가능한 프로필
+- 기술 스택 및 경력 관리
+- 포트폴리오 관리
+
+### 💬 소셜 기능
+- 댓글 및 답글
+- 프로젝트 리뷰 및 평점
+- 북마크/스크랩 기능
+- 투표 시스템
+
+### 🔍 검색 및 탐색
+- 고급 프로젝트 검색
+- 기술 스택, 역할, 상태별 필터링
+- 사용자 검색
+
+### 🛡️ 관리자 기능
+- 사용자 관리
+- 콘텐츠 관리
+- 시스템 모니터링
+
+## 🛠 기술 스택
+
+### 핵심 기술
+- **런타임**: Node.js 18+
+- **프레임워크**: Express.js
+- **데이터베이스**: MySQL / PostgreSQL (Supabase)
+- **ORM**: Sequelize
+
+### 인증 및 보안
+- **JWT**: jsonwebtoken, jose
+- **비밀번호 암호화**: bcrypt, bcryptjs
+- **유효성 검증**: Joi, express-validator
+- **Rate Limiting**: express-rate-limit
+- **CORS**: cors
+
+### 이메일 및 통신
+- **이메일 서비스**: SendGrid, Nodemailer
+- **템플릿 엔진**: markdown-it, marked
+
+### 개발 및 테스트
+- **테스팅**: Jest, Supertest
+- **코드 품질**: ESLint, Prettier
+- **프로세스 관리**: nodemon
+- **환경 변수**: dotenv, cross-env
+
+### 클라우드 및 배포
+- **데이터베이스**: Supabase PostgreSQL
+- **Edge Functions**: Supabase Edge Functions (Deno)
+- **스토리지**: Supabase Storage
+
+## 🚀 시작하기
+
+### 사전 요구사항
+
+- Node.js >= 18.0.0
+- npm 또는 yarn
+- MySQL 8.0+ 또는 PostgreSQL 14+
+- Git
+
+### 설치 방법
+
+#### 1️⃣ 저장소 복제
+
+```bash
+git clone https://github.com/TeamKoHong/teamitakaBackend.git
+cd teamitakaBackend
+```
+
+#### 2️⃣ 의존성 패키지 설치
+
+```bash
+npm install
+```
+
+#### 3️⃣ 환경 변수 설정
+
+```bash
+# 예제 환경 파일 복사
+cp .env.example .env.development
+
+# 환경 변수 파일 수정
+nano .env.development
+```
+
+#### 4️⃣ 데이터베이스 초기화
+
+```bash
+# 마이그레이션 실행
+npm run migrate:dev
+
+# 초기 데이터 시딩 (선택사항)
+npm run seed:dev
+```
+
+#### 5️⃣ 개발 서버 시작
+
+```bash
+npm run dev
+```
+
+서버가 `http://0.0.0.0:8080` 에서 시작됩니다.
+
+### 🐳 Docker로 빠르게 시작하기
+
+```bash
+# Docker Compose 사용
+docker-compose up -d
+```
+
+## 📁 프로젝트 구조
+
+```
+teamitakaBackend/
+├── src/
+│   ├── config/          # 설정 파일 (DB, env)
+│   ├── controllers/     # 라우트 컨트롤러
+│   ├── middlewares/     # Express 미들웨어 (인증, 검증)
+│   ├── models/          # Sequelize 모델
+│   ├── routes/          # API 라우트
+│   ├── services/        # 비즈니스 로직 레이어
+│   ├── utils/           # 유틸리티 함수
+│   ├── validations/     # 요청 유효성 검증 스키마
+│   ├── templates/       # 이메일 템플릿
+│   └── app.js           # Express 앱 설정
+├── tests/               # 테스트 파일
+├── scripts/             # 유틸리티 스크립트
+├── migrations/          # 데이터베이스 마이그레이션
+├── docs/                # 문서
+├── index.js             # 애플리케이션 진입점
+└── package.json         # 의존성 및 스크립트
+```
+
+## 📚 API 문서
+
+### 기본 URL
+- **개발 환경**: `http://localhost:8080`
+- **프로덕션**: `https://huwajjafqbfrcxkdfker.supabase.co/functions/v1/teamitaka-api`
+
+### 주요 엔드포인트
+
+#### 🔐 인증 (Authentication)
+```
+POST   /api/auth/register              # 회원가입
+POST   /api/auth/login                 # 로그인
+POST   /api/auth/logout                # 로그아웃
+POST   /api/auth/send-verification     # 이메일 인증 코드 전송
+POST   /api/auth/verify-code           # 이메일 인증 코드 확인
+GET    /api/auth/google                # 구글 OAuth 로그인
+```
+
+#### 👤 사용자 (Users)
+```
+GET    /api/users/:id                  # 사용자 프로필 조회
+PUT    /api/users/:id                  # 사용자 프로필 수정
+DELETE /api/users/:id                  # 사용자 계정 삭제
+```
+
+#### 📊 프로젝트 (Projects)
+```
+GET    /api/projects                   # 전체 프로젝트 목록
+GET    /api/projects/:id               # 프로젝트 상세 조회
+POST   /api/projects                   # 새 프로젝트 생성
+PUT    /api/projects/:id               # 프로젝트 수정
+DELETE /api/projects/:id               # 프로젝트 삭제
+```
+
+#### 📝 지원서 (Applications)
+```
+GET    /api/applications               # 지원서 목록
+POST   /api/applications               # 프로젝트 지원
+PUT    /api/applications/:id           # 지원서 상태 수정
+```
+
+#### 💬 댓글 (Comments)
+```
+GET    /api/comments/:projectId        # 프로젝트 댓글 조회
+POST   /api/comments                   # 댓글 작성
+PUT    /api/comments/:id               # 댓글 수정
+DELETE /api/comments/:id               # 댓글 삭제
+```
+
+#### 🔍 검색 (Search)
+```
+GET    /api/search/projects            # 프로젝트 검색
+GET    /api/search/users               # 사용자 검색
+```
+
+#### 🛡️ 관리자 (Admin)
+```
+GET    /api/admin/users                # 전체 사용자 목록
+PUT    /api/admin/users/:id/role       # 사용자 역할 수정
+DELETE /api/admin/users/:id            # 사용자 삭제 (관리자)
+```
+
+#### ❤️ 상태 확인 (Health Check)
+```
+GET    /api/health                     # 서버 상태 확인
+```
+
+자세한 API 문서는 [API_DOCS.md](docs/API_DOCS.md)를 참고하세요.
+
+## 🗄 데이터베이스
+
+### 지원 데이터베이스
+- **MySQL 8.0+** (로컬 개발)
+- **PostgreSQL 14+** (Supabase 프로덕션)
+
+### 데이터베이스 모델
+
+| 모델 | 설명 |
+|------|------|
+| **Users** | 사용자 계정 및 프로필 |
+| **Projects** | 프로젝트 정보 |
+| **Recruitments** | 프로젝트 모집 공고 |
+| **Applications** | 프로젝트 지원서 |
+| **Comments** | 프로젝트 댓글 |
+| **Reviews** | 프로젝트 리뷰 |
+| **Scraps** | 북마크한 프로젝트 |
+| **Votes** | 투표 시스템 |
+| **EmailVerifications** | 이메일 인증 코드 |
+
+### 마이그레이션
+
+```bash
+# 마이그레이션 실행
+npm run migrate:dev          # 개발 환경
+npm run migrate:prod         # 프로덕션 환경
+
+# 마이그레이션 롤백
+npm run rollback:dev         # 마지막 마이그레이션 롤백
+npm run undo-migrate:dev     # 모든 마이그레이션 롤백
+
+# 데이터 시딩
+npm run seed:dev             # 개발 데이터 시딩
+```
+
+### 데이터베이스 초기화
+
+```bash
+# 모든 테이블을 포함한 데이터베이스 초기화
+npm run db:init:dev
+
+# 간단한 초기화
+npm run db:init:simple:dev
+
+# 데이터베이스 리셋
+npm run db:reset
+```
+
+## 🔧 개발 가이드
+
+### 사용 가능한 스크립트
+
+```bash
+# 개발
+npm run dev                  # nodemon으로 시작 (핫 리로드)
+npm run dev:supabase        # Supabase 설정으로 시작
+
+# 프로덕션
+npm start                    # 프로덕션 서버 시작
+npm run start:supabase      # Supabase 설정으로 프로덕션 시작
+
+# 테스트
+npm test                     # 모든 테스트 실행
+npm run test:watch          # 워치 모드로 테스트 실행
+
+# 코드 품질
+npm run lint                 # ESLint 및 Prettier 실행
+
+# 데이터베이스
+npm run migrate:dev         # 마이그레이션 실행
+npm run seed:dev            # 데이터베이스 시딩
+npm run db:init:dev         # 데이터베이스 초기화
+
+# 검증
+npm run verify              # 배포 검증
+npm run verify:supabase     # Supabase 배포 검증
+```
+
+### 개발 워크플로우
+
+#### 1️⃣ 새 브랜치 생성
+
+```bash
+git checkout -b feature/기능-이름
+```
+
+#### 2️⃣ 변경 사항 작성
+
+```bash
+# 파일 수정
+# 테스트 작성
+```
+
+#### 3️⃣ 테스트 실행
+
+```bash
+npm test
+```
+
+#### 4️⃣ 변경 사항 커밋
+
+```bash
+git add .
+git commit -m "feat: 기능 설명"
+```
+
+#### 5️⃣ 원격 저장소에 푸시
+
+```bash
+git push origin feature/기능-이름
+```
+
+#### 6️⃣ Pull Request 생성
+
+GitHub에서 Pull Request를 생성합니다.
+
+### 코드 스타일
+
+이 프로젝트는 ESLint와 Prettier를 사용합니다:
+
+```bash
+# 린터 실행
+npm run lint
+
+# 자동 수정
+npm run lint -- --fix
+```
+
+## 🧪 테스트
+
+### 테스트 실행
+
+```bash
+# 모든 테스트 실행
+npm test
+
+# 커버리지와 함께 테스트 실행
+npm test -- --coverage
+
+# 특정 테스트 파일 실행
+npm test -- tests/auth.test.js
+
+# 워치 모드
+npm test -- --watch
+```
+
+### 테스트 구조
+
+```javascript
+describe('인증 컨트롤러', () => {
+  it('새 사용자를 등록해야 함', async () => {
+    // 테스트 구현
+  });
+
+  it('유효한 자격 증명으로 로그인해야 함', async () => {
+    // 테스트 구현
+  });
+});
+```
+
+### 커버리지 리포트
+
+커버리지 리포트는 `coverage/` 디렉토리에 생성됩니다.
+
+## 🚀 배포
+
+### Supabase Edge Functions
+
+이 프로젝트는 Supabase Edge Functions에 배포할 수 있습니다:
+
+#### 1️⃣ Supabase CLI 설치
+
+```bash
+npm install -g supabase
+```
+
+#### 2️⃣ Supabase 로그인
+
+```bash
+supabase login
+```
+
+#### 3️⃣ Edge Function 배포
+
+```bash
+# Supabase에 배포
+supabase functions deploy teamitaka-api
+```
+
+자세한 배포 가이드는 다음 문서를 참고하세요:
+- [Supabase 배포 가이드](docs/deployment/SUPABASE_EDGE_FUNCTION_DEPLOYMENT_GUIDE.md)
+- [로컬 개발 환경 설정](docs/deployment/LOCAL_DEV_SETUP_GUIDE.md)
+
+### 환경별 배포
+
+```bash
+# 개발 환경
+npm run dev
+
+# Supabase (프로덕션)
+npm run start:supabase
+```
+
+## 🔐 환경 변수
+
+### 필수 환경 변수
+
+```bash
+# Node 환경
+NODE_ENV=development                    # development, production, test
+
+# 서버 설정
+PORT=8080                              # 서버 포트
+HOST=0.0.0.0                          # 서버 호스트 (모든 인터페이스)
+
+# 데이터베이스 (MySQL)
+DB_HOST=localhost
+DB_USER=데이터베이스_사용자
+DB_PASSWORD=데이터베이스_비밀번호
+DB_NAME=teamitaka
+DB_PORT=3306
+DB_DIALECT=mysql
+
+# 데이터베이스 (PostgreSQL/Supabase)
+DB_DIALECT=postgres
+DB_HOST=db.xxx.supabase.co
+DB_USER=postgres
+DB_PASSWORD=비밀번호
+DB_NAME=postgres
+DB_PORT=5432
+
+# JWT 설정
+JWT_SECRET=JWT_시크릿_키
+JWT_EXPIRES_IN=7d
+JWT_REFRESH_SECRET=리프레시_시크릿
+JWT_REFRESH_EXPIRES_IN=30d
+
+# 이메일 서비스 (SendGrid)
+EMAIL_SERVICE=sendgrid
+EMAIL_FROM=noreply@teamitaka.com
+SENDGRID_API_KEY=SendGrid_API_키
+
+# 구글 OAuth
+GOOGLE_CLIENT_ID=구글_클라이언트_ID
+GOOGLE_CLIENT_SECRET=구글_클라이언트_시크릿
+GOOGLE_CALLBACK_URL=http://localhost:8080/api/auth/google/callback
+
+# CORS
+CORS_ORIGIN=http://localhost:3000     # 프론트엔드 URL
+CORS_CREDENTIALS=true
+
+# Supabase (선택사항)
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_ANON_KEY=익명_키
+SUPABASE_SERVICE_KEY=서비스_키
+```
+
+### 환경 파일
+
+- `.env.development` - 개발 환경
+- `.env.production` - 프로덕션 환경
+- `.env.test` - 테스트 환경
+- `env.supabase` - Supabase 설정
+
+**⚠️ 주의**: `.env` 파일은 절대 버전 관리에 커밋하지 마세요!
+
+## 📖 문서
+
+`docs/` 디렉토리에서 추가 문서를 확인할 수 있습니다:
+
+- [API 문서](docs/API_DOCS.md)
+- [데이터베이스 스키마](docs/DATABASE_SCHEMA.md)
+- [배포 가이드](docs/deployment/DEPLOYMENT_GUIDE.md)
+- [로컬 개발 환경 설정](docs/deployment/LOCAL_DEV_SETUP_GUIDE.md)
+- [Supabase 마이그레이션 가이드](docs/deployment/SUPABASE_COMPLETE_MIGRATION_GUIDE.md)
+- [이메일 인증 구현](docs/EmailVerification/IMPLEMENTATION_GUIDE.md)
+- [구글 OAuth 구현](docs/GoogleSocialLogin/IMPLEMENTATION_GUIDE.md)
+
+## 🤝 기여하기
+
+기여를 환영합니다! 다음 단계를 따라주세요:
+
+### 기여 프로세스
+
+1. 저장소 포크하기
+2. 기능 브랜치 생성 (`git checkout -b feature/멋진-기능`)
+3. 변경 사항 커밋 (`git commit -m 'feat: 멋진 기능 추가'`)
+4. 브랜치에 푸시 (`git push origin feature/멋진-기능`)
+5. Pull Request 열기
+
+### 커밋 컨벤션
+
+[Conventional Commits](https://www.conventionalcommits.org/) 명세를 따릅니다:
+
+| 타입 | 설명 | 예시 |
+|------|------|------|
+| `feat:` | 새로운 기능 | `feat: 사용자 프로필 추가` |
+| `fix:` | 버그 수정 | `fix: 로그인 에러 수정` |
+| `docs:` | 문서 변경 | `docs: README 업데이트` |
+| `style:` | 코드 포맷팅 | `style: 들여쓰기 수정` |
+| `refactor:` | 코드 리팩토링 | `refactor: 인증 로직 개선` |
+| `test:` | 테스트 추가/수정 | `test: 회원가입 테스트 추가` |
+| `chore:` | 기타 변경사항 | `chore: 의존성 업데이트` |
+
+### 코드 리뷰
+
+- 모든 Pull Request는 리뷰를 거칩니다
+- 테스트를 통과해야 합니다
+- 코드 스타일 가이드를 따라야 합니다
+
+## 📝 라이선스
+
+이 프로젝트는 ISC 라이선스를 따릅니다.
+
+## 👥 팀
+
+**TeamItaka 개발팀**
+
+- 백엔드 개발
+- API 설계
+- 데이터베이스 아키텍처
+- DevOps 및 배포
+
+## 🐛 버그 리포트 및 기능 요청
+
+버그 리포트와 기능 요청은 [GitHub Issues](https://github.com/TeamKoHong/teamitakaBackend/issues)를 이용해 주세요.
+
+### 버그 리포트 작성 시 포함할 내용
+
+- 버그 설명
+- 재현 단계
+- 예상 동작
+- 실제 동작
+- 스크린샷 (필요시)
+- 환경 정보 (OS, Node.js 버전 등)
+
+### 기능 요청 작성 시 포함할 내용
+
+- 기능 설명
+- 사용 사례
+- 예상되는 이점
+- 추가 컨텍스트
+
+## 📮 연락처
+
+질문이나 지원이 필요하신 경우 개발팀에 문의해 주세요.
+
+---
+
+## 🌟 프로젝트 현황
+
+| 항목 | 상태 |
+|------|------|
+| **버전** | 1.0.0 |
+| **마지막 업데이트** | 2025-01-17 |
+| **유지보수** | 활발히 진행 중 |
+| **문서화** | 완료 |
+| **테스트 커버리지** | 진행 중 |
+
+## 🔄 변경 이력
+
+### v1.0.0 (2025-01-17)
+- ✨ 초기 릴리즈
+- 🔐 이메일 인증 시스템 구현
+- 🔑 JWT 기반 인증 구현
+- 📊 프로젝트 관리 CRUD
+- 💬 댓글 시스템 구현
+- 🔍 검색 기능 구현
+- 🚀 Supabase 배포 지원
+
+---
+
+**개발**: TeamItaka Development Team
+**문의**: GitHub Issues를 통해 연락 주세요
