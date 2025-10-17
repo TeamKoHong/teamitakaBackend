@@ -6,7 +6,7 @@
   "scripts": {
     "start": "cross-env NODE_ENV=production node index.js",
     "start:supabase": "cross-env NODE_ENV=production npx dotenv -e env.supabase -- node index.js",
-    "dev": "NODE_ENV=development nodemon index.js",
+    "dev": "NODE_ENV=development HOST=0.0.0.0 nodemon index.js",
     "dev:supabase": "NODE_ENV=development npx dotenv -e env.supabase -- nodemon index.js",
     "test": "NODE_ENV=test jest --coverage",
     "lint": "eslint . && prettier --write \"**/*.yml\"",
