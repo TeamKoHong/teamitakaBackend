@@ -18,8 +18,10 @@ jest.mock('src/models', () => ({
   },
 }));
 
-jest.mock('src/services/emailSender', () => ({
-  sendVerification: jest.fn().mockResolvedValue({ provider: 'stub', requestId: 'r1' }),
+jest.mock('src/services/verificationService', () => ({
+  saveVerification: jest.fn().mockResolvedValue({ id: 'e1' }),
+  sendVerificationEmail: jest.fn().mockResolvedValue({ provider: 'stub', requestId: 'r1' }),
+  verifyCode: jest.fn().mockResolvedValue(null),
 }));
 
 describe('Email Verification API', () => {
