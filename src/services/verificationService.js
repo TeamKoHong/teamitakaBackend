@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { createTransporter, getFromEmail, sendEmailWithSendGrid } = require('../config/emailConfig');
+const { getFromEmail, sendEmailWithSendGrid } = require('../config/emailConfig');
 const { generateVerificationEmail, generateVerificationEmailText } = require('../templates/verificationEmail');
 const { EmailVerification, User } = require('../models');
 const { Op } = require('sequelize');
@@ -122,23 +122,11 @@ class VerificationService {
 
       console.log(`[SERVICE] 이메일 옵션 준비 완료: ${email}`);
 
-      // SendGrid를 우선 사용하고, 실패 시 Nodemailer로 폴백
-      try {
-        console.log(`[SERVICE] SendGrid로 이메일 발송 시도: ${email}`);
-        const result = await sendEmailWithSendGrid(mailOptions);
-        console.log(`[SERVICE] SendGrid로 인증번호 이메일 발송 성공: ${email}, Message ID: ${result.messageId || 'N/A'}`);
-        return result;
-      } catch (sendgridError) {
-        console.warn(`[SERVICE] SendGrid 실패, Nodemailer로 폴백: ${email}`, sendgridError.message);
-        console.warn(`[SERVICE] SendGrid 오류 상세:`, sendgridError);
-        
-        // Nodemailer로 폴백
-        console.log(`[SERVICE] Nodemailer로 이메일 발송 시도: ${email}`);
-        const transporter = createTransporter();
-        const result = await transporter.sendMail(mailOptions);
-        console.log(`[SERVICE] Nodemailer로 인증번호 이메일 발송 성공: ${email}, Message ID: ${result.messageId || 'N/A'}`);
-        return result;
-      }
+      // SendGrid Web API로 이메일 발송 (Render는 SMTP 차단)
+      console.log(`[SERVICE] SendGrid Web API로 이메일 발송 시도: ${email}`);
+      const result = await sendEmailWithSendGrid(mailOptions);
+      console.log(`[SERVICE] SendGrid 이메일 발송 성공: ${email}, Response: ${JSON.stringify(result[0]?.statusCode || 'N/A')}`);
+      return { messageId: result[0]?.headers?.['x-message-id'] || 'sent' };
     } catch (error) {
       console.error(`[SERVICE] 이메일 발송 중 오류: ${email}`);
       console.error(`[SERVICE] 오류 상세:`, error);
