@@ -8,7 +8,7 @@ module.exports = {
       // 1. Users 테이블 (가장 기본적인 구조)
       await queryInterface.createTable('Users', {
         user_id: {
-          type: Sequelize.CHAR(36).BINARY,
+          type: Sequelize.UUID,
           primaryKey: true,
           allowNull: false
         },
@@ -55,7 +55,7 @@ module.exports = {
         console.log('📝 EmailVerifications 테이블이 없어서 생성합니다...');
         await queryInterface.createTable('EmailVerifications', {
           id: {
-            type: Sequelize.CHAR(36).BINARY,
+            type: Sequelize.UUID,
             primaryKey: true,
             allowNull: false
           },

@@ -5,7 +5,7 @@ module.exports = (sequelize) => {
     "Recruitment",
     {
       recruitment_id: {
-        type: DataTypes.CHAR(36).BINARY,
+        type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
@@ -24,7 +24,7 @@ module.exports = (sequelize) => {
         defaultValue: "OPEN",
       },
       user_id: {
-        type: DataTypes.CHAR(36).BINARY,
+        type: DataTypes.UUID,
         allowNull: false,
         references: {
           model: "Users",

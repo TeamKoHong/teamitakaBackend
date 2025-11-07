@@ -3,7 +3,7 @@ const { DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
   const VerifiedEmail = sequelize.define("VerifiedEmail", {
     id: {
-      type: DataTypes.CHAR(36).BINARY,
+      type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
