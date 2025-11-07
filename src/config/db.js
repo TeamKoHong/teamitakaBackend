@@ -41,6 +41,8 @@ const dbConfig = {
       rejectUnauthorized: false
     },
     connectTimeout: 10000,
+    // Force IPv4 to avoid IPv6 connection issues on Render
+    family: 4,
   } : {
     ssl: false,
     connectTimeout: 10000,
