@@ -19,9 +19,14 @@ jest.mock('src/models', () => ({
 }));
 
 jest.mock('src/services/verificationService', () => ({
-  saveVerification: jest.fn().mockResolvedValue({ id: 'e1' }),
-  sendVerificationEmail: jest.fn().mockResolvedValue({ provider: 'stub', requestId: 'r1' }),
-  verifyCode: jest.fn().mockResolvedValue(null),
+  validateEmailFormat: jest.fn().mockReturnValue(true),
+  checkDuplicateEmail: jest.fn().mockResolvedValue(false),
+  generateVerificationCode: jest.fn().mockReturnValue('123456'),
+  invalidatePreviousCodes: jest.fn().mockResolvedValue(),
+  saveVerification: jest.fn().mockResolvedValue(true),
+  sendVerificationEmail: jest.fn().mockResolvedValue({ messageId: 'test-message-id' }),
+  verifyCode: jest.fn().mockResolvedValue({ valid: false, message: '유효하지 않은 인증번호입니다.' }),
+  getVerificationStatus: jest.fn().mockResolvedValue({ hasActiveCode: false, remainingTime: 0 }),
 }));
 
 describe('Email Verification API', () => {
