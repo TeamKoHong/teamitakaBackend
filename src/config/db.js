@@ -2,32 +2,47 @@ require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
 const env = process.env.NODE_ENV || "development";
+const isProduction = env === "production";
+
+// 환경별 데이터베이스 설정
+// 프로덕션: SUPABASE_* 변수 사용 (PostgreSQL)
+// 개발: DB_* 변수 사용 (MySQL 또는 로컬 PostgreSQL)
+const dbHost = isProduction ? process.env.SUPABASE_DB_HOST : process.env.DB_HOST;
+const dbUser = isProduction ? process.env.SUPABASE_DB_USER : process.env.DB_USER;
+const dbPassword = isProduction ? process.env.SUPABASE_DB_PASSWORD : process.env.DB_PASSWORD;
+const dbName = isProduction ? process.env.SUPABASE_DB_NAME : process.env.DB_NAME;
+const dbPort = isProduction
+  ? (process.env.SUPABASE_DB_PORT || 5432)
+  : (process.env.DB_PORT || 3306);
+const dbDialect = isProduction ? "postgres" : (process.env.DB_DIALECT || "mysql");
 
 console.log("🔍 Environment variables:");
 console.log("NODE_ENV:", env);
-console.log("DB_HOST:", process.env.DB_HOST);
-console.log("DB_USER:", process.env.DB_USER ? "SET" : "NOT SET");
-console.log("DB_PASSWORD:", process.env.DB_PASSWORD ? "SET" : "NOT SET");
-console.log("DB_NAME:", process.env.DB_NAME);
-console.log("DB_PORT:", process.env.DB_PORT || "3306");
+console.log("Environment:", isProduction ? "PRODUCTION (using SUPABASE_*)" : "DEVELOPMENT (using DB_*)");
+console.log("DB_HOST:", dbHost);
+console.log("DB_USER:", dbUser ? "SET" : "NOT SET");
+console.log("DB_PASSWORD:", dbPassword ? "SET" : "NOT SET");
+console.log("DB_NAME:", dbName);
+console.log("DB_PORT:", dbPort);
+console.log("DB_DIALECT:", dbDialect);
 
-// DB_* 환경변수들을 사용하여 연결 설정
+// 데이터베이스 연결 설정
 const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || (process.env.DB_DIALECT === "postgres" ? 5432 : 3306),
-  dialect: process.env.DB_DIALECT || "mysql",
+  host: dbHost,
+  user: dbUser,
+  password: dbPassword,
+  database: dbName,
+  port: dbPort,
+  dialect: dbDialect,
   logging: console.log, // 디버깅용 로깅 활성화
-  dialectOptions: process.env.DB_DIALECT === "postgres" ? {
+  dialectOptions: dbDialect === "postgres" ? {
     ssl: {
       require: true,
       rejectUnauthorized: false
     },
     connectTimeout: 10000,
   } : {
-    ssl: false, // Cloud SQL Proxy가 SSL 처리
+    ssl: false,
     connectTimeout: 10000,
   },
   define: {
@@ -40,7 +55,11 @@ const hasRequiredEnvVars = dbConfig.host && dbConfig.user && dbConfig.password &
 
 if (!hasRequiredEnvVars) {
   console.warn("⚠️  Required database environment variables are missing!");
-  console.warn("Required: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME");
+  if (isProduction) {
+    console.warn("Required for PRODUCTION: SUPABASE_DB_HOST, SUPABASE_DB_USER, SUPABASE_DB_PASSWORD, SUPABASE_DB_NAME");
+  } else {
+    console.warn("Required for DEVELOPMENT: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME");
+  }
   console.warn("Available environment variables:", Object.keys(process.env).filter(key => key.includes('DB')));
   console.warn("Database connection will fail when attempted.");
 }

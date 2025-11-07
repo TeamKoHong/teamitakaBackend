@@ -3,12 +3,12 @@ const { DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
   const Scrap = sequelize.define("Scrap", {
     id: {
-      type: DataTypes.CHAR(36).BINARY,
+      type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
     user_id: {
-      type: DataTypes.CHAR(36).BINARY,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "Users",
@@ -17,7 +17,7 @@ module.exports = (sequelize) => {
       onDelete: "CASCADE",
     },
     recruitment_id: {
-      type: DataTypes.CHAR(36).BINARY,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "Recruitments",

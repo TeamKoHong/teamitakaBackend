@@ -4,7 +4,7 @@ async function checkUsersTable() {
   try {
     await sequelize.authenticate();
     console.log("✅ Successfully connected to the database");
-    const tables = await sequelize.query("SHOW TABLES", { type: sequelize.QueryTypes.SELECT });
+    const tables = await sequelize.getQueryInterface().showAllTables();
     console.log("Tables:", tables);
   } catch (err) {
     console.error("❌ Error checking Users table:", err);
