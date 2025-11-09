@@ -132,12 +132,27 @@ exports.login = async (req, res) => {
 
     // 5️⃣ 보안 강화를 위해 HttpOnly 쿠키 옵션 추가 가능
     res.cookie("token", token, {
-      httpOnly: true, 
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
     });
 
-    return res.status(200).json({ message: "✅ 로그인 성공!", token });
+    // 6️⃣ 응답 형식: 프론트엔드 요청에 따라 user 객체 포함
+    return res.status(200).json({
+      success: true,
+      message: "로그인 성공",
+      token,
+      user: {
+        userId: user.user_id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        university: user.university,
+        major: user.major,
+        avatar: user.avatar,
+        bio: user.bio
+      }
+    });
   } catch (error) {
     console.error("🚨 로그인 오류:", error);
     return res.status(500).json({ error: "서버 오류 발생" });
@@ -199,5 +214,65 @@ exports.googleSignInByIdToken = async (req, res) => {
   } catch (err) {
     console.error("🚨 Google login error:", err?.message || err);
     return res.status(401).json({ error: "invalid google token" });
+  }
+};
+
+// GET /api/auth/me - 현재 로그인한 사용자 정보 조회
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const userId = req.user.userId; // authMiddleware에서 설정됨
+
+    const user = await User.findByPk(userId, {
+      attributes: [
+        'user_id',
+        'username',
+        'email',
+        'role',
+        'university',
+        'major',
+        'avatar',
+        'bio',
+        'awards',
+        'skills',
+        'portfolio_url',
+        'email_verified_at',
+        'created_at',
+        'updated_at'
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "사용자를 찾을 수 없습니다."
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        userId: user.user_id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        university: user.university,
+        major: user.major,
+        avatar: user.avatar,
+        bio: user.bio,
+        awards: user.awards,
+        skills: user.skills,
+        portfolioUrl: user.portfolio_url,
+        emailVerifiedAt: user.email_verified_at,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at
+      }
+    });
+  } catch (error) {
+    console.error("🚨 getCurrentUser Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "사용자 정보 조회 실패",
+      error: error.message
+    });
   }
 };
