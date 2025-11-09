@@ -24,10 +24,12 @@
 ## ✨ 주요 기능
 
 ### 🔐 사용자 인증 및 권한 관리
-- 6자리 인증 코드를 통한 이메일 인증
+- 6자리 인증 코드를 통한 이메일 인증 (SendGrid Web API)
+- 도메인 인증 완료 (teamitaka.com)
 - JWT 기반 인증 시스템
 - 구글 OAuth 소셜 로그인
 - bcrypt 기반 안전한 비밀번호 암호화
+- Rate Limiting 적용 (중복 요청 방지)
 
 ### 📊 프로젝트 관리
 - 프로젝트 생성, 조회, 수정, 삭제 (CRUD)
@@ -72,7 +74,7 @@
 - **CORS**: cors
 
 ### 이메일 및 통신
-- **이메일 서비스**: SendGrid, Nodemailer
+- **이메일 서비스**: SendGrid Web API (도메인 인증 완료)
 - **템플릿 엔진**: markdown-it, marked
 
 ### 개발 및 테스트
@@ -82,9 +84,10 @@
 - **환경 변수**: dotenv, cross-env
 
 ### 클라우드 및 배포
-- **데이터베이스**: Supabase PostgreSQL
-- **Edge Functions**: Supabase Edge Functions (Deno)
-- **스토리지**: Supabase Storage
+- **호스팅**: Render (프로덕션)
+- **데이터베이스**: Supabase PostgreSQL (Shared Pooler)
+- **이메일**: SendGrid (도메인 인증 완료)
+- **버전 관리**: GitHub
 
 ## 🚀 시작하기
 
@@ -172,7 +175,7 @@ teamitakaBackend/
 
 ### 기본 URL
 - **개발 환경**: `http://localhost:8080`
-- **프로덕션**: `https://huwajjafqbfrcxkdfker.supabase.co/functions/v1/teamitaka-api`
+- **프로덕션**: `https://teamitakabackend.onrender.com`
 
 ### 주요 엔드포인트
 
@@ -403,32 +406,35 @@ describe('인증 컨트롤러', () => {
 
 ## 🚀 배포
 
-### Supabase Edge Functions
+### Render 배포
 
-이 프로젝트는 Supabase Edge Functions에 배포할 수 있습니다:
+이 프로젝트는 Render에 배포되어 있습니다:
 
-#### 1️⃣ Supabase CLI 설치
+#### 1️⃣ Render 설정
 
-```bash
-npm install -g supabase
-```
+1. [Render](https://render.com) 계정 생성 및 로그인
+2. **New +** → **Web Service** 선택
+3. GitHub 저장소 연결
+4. 다음 설정 사용:
+   - **Environment**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
 
-#### 2️⃣ Supabase 로그인
+#### 2️⃣ 환경 변수 설정
 
-```bash
-supabase login
-```
+Render 대시보드의 **Environment** 탭에서 필요한 환경 변수 추가:
+- `NODE_ENV=production`
+- `PORT=3001`
+- `SUPABASE_DB_HOST` (Shared Pooler 사용)
+- `SUPABASE_DB_PORT=5432`
+- `SENDGRID_API_KEY`
+- `EMAIL_FROM=noreply@teamitaka.com`
+- 기타 필수 환경 변수
 
-#### 3️⃣ Edge Function 배포
+#### 3️⃣ 자동 배포
 
-```bash
-# Supabase에 배포
-supabase functions deploy teamitaka-api
-```
-
-자세한 배포 가이드는 다음 문서를 참고하세요:
-- [Supabase 배포 가이드](docs/deployment/SUPABASE_EDGE_FUNCTION_DEPLOYMENT_GUIDE.md)
-- [로컬 개발 환경 설정](docs/deployment/LOCAL_DEV_SETUP_GUIDE.md)
+- `main` 브랜치에 푸시하면 자동으로 배포됩니다
+- 배포 로그는 Render 대시보드에서 확인 가능
 
 ### 환경별 배포
 
@@ -436,8 +442,8 @@ supabase functions deploy teamitaka-api
 # 개발 환경
 npm run dev
 
-# Supabase (프로덕션)
-npm run start:supabase
+# 프로덕션 (Render)
+npm start
 ```
 
 ## 🔐 환경 변수
@@ -460,7 +466,7 @@ DB_NAME=teamitaka
 DB_PORT=3306
 DB_DIALECT=mysql
 
-# 데이터베이스 (PostgreSQL/Supabase)
+# 데이터베이스 (PostgreSQL/Supabase Direct)
 DB_DIALECT=postgres
 DB_HOST=db.xxx.supabase.co
 DB_USER=postgres
@@ -468,16 +474,23 @@ DB_PASSWORD=비밀번호
 DB_NAME=postgres
 DB_PORT=5432
 
+# Supabase Shared Pooler (프로덕션 권장)
+SUPABASE_DB_HOST=aws-0-region.pooler.supabase.com
+SUPABASE_DB_USER=postgres.xxx
+SUPABASE_DB_PASSWORD=비밀번호
+SUPABASE_DB_NAME=postgres
+SUPABASE_DB_PORT=5432
+
 # JWT 설정
 JWT_SECRET=JWT_시크릿_키
 JWT_EXPIRES_IN=7d
 JWT_REFRESH_SECRET=리프레시_시크릿
 JWT_REFRESH_EXPIRES_IN=30d
 
-# 이메일 서비스 (SendGrid)
+# 이메일 서비스 (SendGrid Web API)
 EMAIL_SERVICE=sendgrid
-EMAIL_FROM=noreply@teamitaka.com
-SENDGRID_API_KEY=SendGrid_API_키
+EMAIL_FROM=noreply@teamitaka.com      # 도메인 인증 필수
+SENDGRID_API_KEY=SendGrid_API_키      # Full Access 권한 필요
 
 # 구글 OAuth
 GOOGLE_CLIENT_ID=구글_클라이언트_ID
@@ -511,9 +524,9 @@ SUPABASE_SERVICE_KEY=서비스_키
 - [데이터베이스 스키마](docs/DATABASE_SCHEMA.md)
 - [배포 가이드](docs/deployment/DEPLOYMENT_GUIDE.md)
 - [로컬 개발 환경 설정](docs/deployment/LOCAL_DEV_SETUP_GUIDE.md)
-- [Supabase 마이그레이션 가이드](docs/deployment/SUPABASE_COMPLETE_MIGRATION_GUIDE.md)
 - [이메일 인증 구현](docs/EmailVerification/IMPLEMENTATION_GUIDE.md)
 - [구글 OAuth 구현](docs/GoogleSocialLogin/IMPLEMENTATION_GUIDE.md)
+- [SendGrid 도메인 인증 가이드](https://docs.sendgrid.com/ui/account-and-settings/how-to-set-up-domain-authentication)
 
 ## 🤝 기여하기
 
@@ -590,13 +603,22 @@ SUPABASE_SERVICE_KEY=서비스_키
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.0.0 |
-| **마지막 업데이트** | 2025-01-17 |
+| **버전** | 1.1.0 |
+| **마지막 업데이트** | 2025-11-07 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
 
 ## 🔄 변경 이력
+
+### v1.1.0 (2025-11-07)
+- ✅ SendGrid 도메인 인증 완료 (teamitaka.com)
+- 🚀 Render 프로덕션 배포 완료
+- ⚡ Nodemailer SMTP 폴백 제거 (성능 개선: 120초 → 2초)
+- 🗄️ Supabase Shared Pooler 적용 (IPv4 호환성)
+- 🔧 이메일 발송 시스템 최적화 (SendGrid Web API 전용)
+- 🛠️ GitHub Actions 워크플로우 정리
+- 📝 프론트엔드 통합 문서 작성
 
 ### v1.0.0 (2025-01-17)
 - ✨ 초기 릴리즈
