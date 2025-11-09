@@ -63,7 +63,7 @@ exports.getDashboardSummary = async (req, res) => {
     });
     const pendingReviewsCount = parseInt(pendingReviewsResult[0]?.pending_reviews_count || 0);
 
-    // 6. 최근 활동 (최근 7일 이내)
+    // 6. 최근 활동 (최근 7일 이내) - 단순화 버전
     const recentActivities = await sequelize.query(`
       SELECT
         'project' as type,
@@ -73,23 +73,16 @@ exports.getDashboardSummary = async (req, res) => {
       FROM project_members pm
       JOIN projects p ON pm.project_id = p.project_id
       WHERE pm.user_id = :user_id
-        AND pm.joined_at >= NOW() - INTERVAL '7 days'
-      UNION ALL
-      SELECT
-        'application' as type,
-        r.title,
-        a.created_at as activity_date,
-        'applied' as action
-      FROM applications a
-      JOIN recruitments r ON a.recruitment_id = r.recruitment_id
-      WHERE a.user_id = :user_id
-        AND a.created_at >= NOW() - INTERVAL '7 days'
-      ORDER BY activity_date DESC
+        AND p.created_at >= CURRENT_TIMESTAMP - INTERVAL '7 days'
+      ORDER BY p.created_at DESC
       LIMIT 10
     `, {
       replacements: { user_id: userId },
       type: QueryTypes.SELECT
-    }).catch(() => []); // 에러 시 빈 배열 반환
+    }).catch((err) => {
+      console.warn("⚠️ Recent activities query failed:", err.message);
+      return [];
+    }); // 에러 시 빈 배열 반환
 
     // 응답 반환
     return res.status(200).json({
