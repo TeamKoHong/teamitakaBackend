@@ -134,10 +134,15 @@ const getMyProjects = async (req, res) => {
       type: QueryTypes.SELECT
     });
 
+    // 프론트엔드가 기대하는 응답 형식으로 변환
     return res.status(200).json({
       success: true,
-      projects,
-      count: projects.length
+      items: projects,
+      page: {
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        hasMore: projects.length === parseInt(limit)
+      }
     });
   } catch (err) {
     console.error("🔥 getMyProjects Error:", err.message);
