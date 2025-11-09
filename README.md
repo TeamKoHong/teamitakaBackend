@@ -33,9 +33,17 @@
 
 ### 📊 프로젝트 관리
 - 프로젝트 생성, 조회, 수정, 삭제 (CRUD)
+- 내 프로젝트 조회 (평가 상태 추적)
 - 팀원 모집 시스템
 - 지원서 추적 관리
 - 팀 멤버 관리
+- 팀원 상호 평가 시스템
+
+### 📈 대시보드
+- 프로젝트 통계 (참여 프로젝트 수, 모집공고 수)
+- 지원서 및 알림 추적
+- 평가 대기 프로젝트 확인
+- 최근 활동 타임라인
 
 ### 👤 사용자 프로필
 - 커스터마이징 가능한 프로필
@@ -64,7 +72,8 @@
 - **런타임**: Node.js 18+
 - **프레임워크**: Express.js
 - **데이터베이스**: MySQL / PostgreSQL (Supabase)
-- **ORM**: Sequelize
+- **ORM**: Sequelize (마이그레이션) + Raw SQL (프로덕션 쿼리)
+  - PostgreSQL snake_case 명명 규칙 (project_members, created_at 등)
 
 ### 인증 및 보안
 - **JWT**: jsonwebtoken, jose
@@ -183,6 +192,7 @@ teamitakaBackend/
 ```
 POST   /api/auth/register              # 회원가입
 POST   /api/auth/login                 # 로그인
+GET    /api/auth/me                    # 현재 사용자 정보 조회
 POST   /api/auth/logout                # 로그아웃
 POST   /api/auth/send-verification     # 이메일 인증 코드 전송
 POST   /api/auth/verify-code           # 이메일 인증 코드 확인
@@ -199,6 +209,7 @@ DELETE /api/users/:id                  # 사용자 계정 삭제
 #### 📊 프로젝트 (Projects)
 ```
 GET    /api/projects                   # 전체 프로젝트 목록
+GET    /api/projects/mine              # 내 프로젝트 조회 (evaluation_status 지원)
 GET    /api/projects/:id               # 프로젝트 상세 조회
 POST   /api/projects                   # 새 프로젝트 생성
 PUT    /api/projects/:id               # 프로젝트 수정
@@ -224,6 +235,11 @@ DELETE /api/comments/:id               # 댓글 삭제
 ```
 GET    /api/search/projects            # 프로젝트 검색
 GET    /api/search/users               # 사용자 검색
+```
+
+#### 📈 대시보드 (Dashboard)
+```
+GET    /api/dashboard/summary          # 대시보드 요약 정보
 ```
 
 #### 🛡️ 관리자 (Admin)
@@ -252,10 +268,12 @@ GET    /api/health                     # 서버 상태 확인
 |------|------|
 | **Users** | 사용자 계정 및 프로필 |
 | **Projects** | 프로젝트 정보 |
+| **ProjectMembers** | 프로젝트 팀 멤버 |
 | **Recruitments** | 프로젝트 모집 공고 |
 | **Applications** | 프로젝트 지원서 |
 | **Comments** | 프로젝트 댓글 |
-| **Reviews** | 프로젝트 리뷰 |
+| **Reviews** | 프로젝트 리뷰 및 팀원 평가 |
+| **Notifications** | 사용자 알림 |
 | **Scraps** | 북마크한 프로젝트 |
 | **Votes** | 투표 시스템 |
 | **EmailVerifications** | 이메일 인증 코드 |
@@ -603,13 +621,32 @@ SUPABASE_SERVICE_KEY=서비스_키
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.1.0 |
-| **마지막 업데이트** | 2025-11-07 |
+| **버전** | 1.2.0 |
+| **마지막 업데이트** | 2025-01-09 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
 
 ## 🔄 변경 이력
+
+### v1.2.0 (2025-01-09)
+- 🎯 대시보드 요약 API 구현 (`/api/dashboard/summary`)
+  - 프로젝트 통계, 지원서 추적, 평가 대기 프로젝트, 최근 활동 타임라인
+- 👤 현재 사용자 정보 API 추가 (`/api/auth/me`)
+  - 로그인 응답에 user 객체 포함으로 프론트엔드 통합 간소화
+- 📊 내 프로젝트 조회 API 개선 (`/api/projects/mine`)
+  - evaluation_status 필드 지원 (COMPLETED, PENDING, NOT_REQUIRED)
+  - 팀원 평가 상태 자동 계산 및 필터링 지원
+- 🔔 Notifications 테이블 추가
+  - 알림 시스템 기반 구축 (읽음/안읽음 상태 관리)
+- 🗄️ PostgreSQL Raw SQL 전환
+  - Sequelize ORM 대소문자 이슈 해결 (ProjectMembers → project_members)
+  - 프로덕션 안정성 및 성능 향상
+- ⚡ Recruitments 스키마 개선
+  - user_id 컬럼 추가로 모집공고 작성자 추적 기능 강화
+- 🔐 JWT 호환성 레이어 구현
+  - Edge Function JWT (sub 필드) + Render JWT (userId 필드) 동시 지원
+  - 마이그레이션 기간 중 원활한 전환 지원
 
 ### v1.1.0 (2025-11-07)
 - ✅ SendGrid 도메인 인증 완료 (teamitaka.com)
