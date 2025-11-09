@@ -24,7 +24,17 @@ const authenticateToken = (req, res, next) => {
     const decoded = jwt.verify(tokenValue, jwtSecret);
     console.log("✅ Auth Middleware: Token verified successfully");
     console.log("✅ Auth Middleware: Decoded payload:", JSON.stringify(decoded, null, 2));
-    req.user = decoded;
+
+    // Edge Function JWT와 Render JWT 호환성 처리
+    // Edge Function: { sub, email, iss: "teamitaka-api" }
+    // Render Backend: { userId, email, role }
+    req.user = {
+      ...decoded,
+      userId: decoded.userId || decoded.sub, // Edge Function의 sub를 userId로 매핑
+      email: decoded.email,
+      role: decoded.role || 'user'
+    };
+
     next();
   } catch (error) {
     console.error("🚨 Auth Middleware Error:", error.message);
@@ -41,15 +51,25 @@ const adminAuth = (req, res, next) => {
     return res.status(401).json({ error: "인증이 필요합니다." });
   }
 
-  try {
-    const decoded = jwt.verify(token, jwtSecret);
+  // Bearer 토큰 형식 확인
+  const tokenValue = token.startsWith('Bearer ') ? token.substring(7) : token;
 
-    // 관리자 체크는 선택적으로 유지
-    if (!decoded.isAdmin) {
+  try {
+    const decoded = jwt.verify(tokenValue, jwtSecret);
+
+    // Edge Function JWT와 Render JWT 호환성 처리
+    req.user = {
+      ...decoded,
+      userId: decoded.userId || decoded.sub,
+      email: decoded.email,
+      role: decoded.role || 'user'
+    };
+
+    // 관리자 체크
+    if (!decoded.isAdmin && decoded.role !== 'ADMIN') {
       return res.status(403).json({ error: "관리자 권한이 없습니다." });
     }
 
-    req.user = decoded; // req.admin 대신 req.user로 변경
     next();
   } catch (error) {
     console.error("🚨 Auth Middleware Error:", error);
