@@ -84,11 +84,11 @@ const updateProject = async (project_id, updateData) => {
   return project;
 };
 
-// getMyProjects - 내 프로젝트 조회 (status, limit, offset 지원)
+// getMyProjects - 내 프로젝트 조회 (status, limit, offset, evaluation_status 지원)
 const getMyProjects = async (req, res) => {
   try {
     const user_id = req.user.user_id; // authMiddleware에서 설정된 사용자 ID
-    const { status, limit = 10, offset = 0 } = req.query;
+    const { status, evaluation_status, limit = 10, offset = 0 } = req.query;
     const { sequelize } = require("../models");
     const { QueryTypes } = require("sequelize");
 
@@ -105,7 +105,48 @@ const getMyProjects = async (req, res) => {
       statusFilter = `AND p.status = '${statusMap[status]}'`;
     }
 
+    // 1. 사용자가 속한 프로젝트 ID 조회
+    const myProjectsQuery = `
+      SELECT DISTINCT project_id
+      FROM project_members
+      WHERE user_id = :user_id
+    `;
+    const myProjects = await sequelize.query(myProjectsQuery, {
+      replacements: { user_id },
+      type: QueryTypes.SELECT
+    });
+
+    if (myProjects.length === 0) {
+      return res.status(200).json({
+        success: true,
+        items: [],
+        page: {
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          hasMore: false
+        }
+      });
+    }
+
+    const projectIds = myProjects.map(p => p.project_id);
+
+    // 2. 프로젝트 기본 정보 + 팀원 수 + 평가 정보 조회
     const query = `
+      WITH member_counts AS (
+        SELECT
+          project_id,
+          COUNT(*) as member_count
+        FROM project_members
+        GROUP BY project_id
+      ),
+      user_review_counts AS (
+        SELECT
+          project_id,
+          COUNT(*) as completed_reviews
+        FROM reviews
+        WHERE reviewer_id = :user_id
+        GROUP BY project_id
+      )
       SELECT
         p.project_id,
         p.title,
@@ -113,36 +154,73 @@ const getMyProjects = async (req, res) => {
         p.status,
         p.created_at,
         p.updated_at,
-        u.user_id,
-        u.username,
-        u.email,
-        COUNT(DISTINCT r.recruitment_id) as recruitment_count
+        COUNT(DISTINCT r.recruitment_id) as recruitment_count,
+        COALESCE(mc.member_count, 0) as member_count,
+        COALESCE(urc.completed_reviews, 0) as completed_reviews,
+        CASE
+          WHEN COALESCE(mc.member_count, 0) <= 1 THEN 'NOT_REQUIRED'
+          WHEN COALESCE(urc.completed_reviews, 0) >= (COALESCE(mc.member_count, 0) - 1) THEN 'COMPLETED'
+          ELSE 'PENDING'
+        END as evaluation_status
       FROM projects p
-      LEFT JOIN users u ON p.leader_id = u.user_id
       LEFT JOIN recruitments r ON p.project_id = r.project_id
-      WHERE p.leader_id = :user_id ${statusFilter}
-      GROUP BY p.project_id, p.title, p.description, p.status, p.created_at, p.updated_at, u.user_id, u.username, u.email
+      LEFT JOIN member_counts mc ON p.project_id = mc.project_id
+      LEFT JOIN user_review_counts urc ON p.project_id = urc.project_id
+      WHERE p.project_id IN (:projectIds) ${statusFilter}
+      GROUP BY p.project_id, p.title, p.description, p.status, p.created_at, p.updated_at, mc.member_count, urc.completed_reviews
       ORDER BY p.created_at DESC
-      LIMIT :limit OFFSET :offset
     `;
 
-    const projects = await sequelize.query(query, {
+    const allProjects = await sequelize.query(query, {
       replacements: {
         user_id,
-        limit: parseInt(limit),
-        offset: parseInt(offset)
+        projectIds
       },
       type: QueryTypes.SELECT
     });
 
-    // 프론트엔드가 기대하는 응답 형식으로 변환
+    // 3. evaluation_status 필터링 (선택)
+    let filteredProjects = allProjects;
+    if (evaluation_status) {
+      const validStatuses = ['COMPLETED', 'PENDING', 'NOT_REQUIRED'];
+      if (validStatuses.includes(evaluation_status.toUpperCase())) {
+        filteredProjects = allProjects.filter(
+          p => p.evaluation_status === evaluation_status.toUpperCase()
+        );
+      }
+    }
+
+    // 4. 페이지네이션 적용
+    const total = filteredProjects.length;
+    const paginatedProjects = filteredProjects.slice(
+      parseInt(offset),
+      parseInt(offset) + parseInt(limit)
+    );
+
+    // 5. 응답 형식 변환
+    const items = paginatedProjects.map(p => ({
+      project_id: p.project_id,
+      title: p.title,
+      description: p.description,
+      status: p.status,
+      created_at: p.created_at,
+      updated_at: p.updated_at,
+      recruitment_count: parseInt(p.recruitment_count) || 0,
+      evaluation_status: p.evaluation_status,
+      // 추가 정보 (디버깅용, 프론트엔드에서 활용 가능)
+      member_count: parseInt(p.member_count) || 0,
+      completed_reviews: parseInt(p.completed_reviews) || 0,
+      required_reviews: Math.max(0, (parseInt(p.member_count) || 0) - 1)
+    }));
+
     return res.status(200).json({
       success: true,
-      items: projects,
+      items,
       page: {
+        total,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        hasMore: projects.length === parseInt(limit)
+        hasMore: parseInt(offset) + items.length < total
       }
     });
   } catch (err) {
