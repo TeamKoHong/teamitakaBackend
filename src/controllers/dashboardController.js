@@ -7,31 +7,33 @@ exports.getDashboardSummary = async (req, res) => {
   try {
     const userId = req.user.userId; // authMiddleware에서 설정됨
 
-    // 1. 사용자가 속한 프로젝트 수
-    const myProjectsCount = await ProjectMembers.count({
-      where: { user_id: userId }
-    });
+    // 1. 사용자가 속한 프로젝트 수 (raw SQL로 변경 - PostgreSQL 대소문자 이슈)
+    const myProjectsCountResult = await sequelize.query(
+      'SELECT COUNT(*) as count FROM project_members WHERE user_id = :user_id',
+      { replacements: { user_id: userId }, type: QueryTypes.SELECT }
+    );
+    const myProjectsCount = parseInt(myProjectsCountResult[0]?.count || 0);
 
     // 2. 내가 생성한 모집공고 수
-    const myRecruitmentsCount = await Recruitment.count({
-      where: { user_id: userId }
-    });
+    const myRecruitmentsCountResult = await sequelize.query(
+      'SELECT COUNT(*) as count FROM recruitments WHERE user_id = :user_id',
+      { replacements: { user_id: userId }, type: QueryTypes.SELECT }
+    );
+    const myRecruitmentsCount = parseInt(myRecruitmentsCountResult[0]?.count || 0);
 
     // 3. 내가 지원한 모집 수 (대기 중)
-    const pendingApplicationsCount = await Application.count({
-      where: {
-        user_id: userId,
-        status: 'PENDING'
-      }
-    });
+    const pendingApplicationsCountResult = await sequelize.query(
+      "SELECT COUNT(*) as count FROM applications WHERE user_id = :user_id AND status = 'PENDING'",
+      { replacements: { user_id: userId }, type: QueryTypes.SELECT }
+    );
+    const pendingApplicationsCount = parseInt(pendingApplicationsCountResult[0]?.count || 0);
 
     // 4. 읽지 않은 알림 수
-    const unreadNotificationsCount = await Notification.count({
-      where: {
-        user_id: userId,
-        is_read: false
-      }
-    }).catch(() => 0); // Notification 테이블이 없을 수도 있음
+    const unreadNotificationsCountResult = await sequelize.query(
+      'SELECT COUNT(*) as count FROM notifications WHERE user_id = :user_id AND is_read = false',
+      { replacements: { user_id: userId }, type: QueryTypes.SELECT }
+    ).catch(() => [{ count: 0 }]); // Notification 테이블이 없을 수도 있음
+    const unreadNotificationsCount = parseInt(unreadNotificationsCountResult[0]?.count || 0);
 
     // 5. 평가 대기 중인 프로젝트 수 (완료된 프로젝트 중 미평가)
     const completedProjectsQuery = `
