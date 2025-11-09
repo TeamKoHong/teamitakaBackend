@@ -87,7 +87,7 @@ const updateProject = async (project_id, updateData) => {
 // getMyProjects - 내 프로젝트 조회 (status, limit, offset, evaluation_status 지원)
 const getMyProjects = async (req, res) => {
   try {
-    const user_id = req.user.user_id; // authMiddleware에서 설정된 사용자 ID
+    const user_id = req.user.userId; // authMiddleware에서 설정된 사용자 ID (JWT 페이로드의 userId 필드)
     const { status, evaluation_status, limit = 10, offset = 0 } = req.query;
     const { sequelize } = require("../models");
     const { QueryTypes } = require("sequelize");
