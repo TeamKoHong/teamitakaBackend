@@ -10,6 +10,9 @@ const projectPostController = require("../controllers/projectPostController");
 // 전체 프로젝트 조회
 router.get("/", projectController.getAllProjects);
 
+// 내 프로젝트 조회 (인증 필요, 특정 프로젝트 조회보다 먼저 와야 함)
+router.get("/mine", authMiddleware, projectController.getMyProjects);
+
 // 완료된 프로젝트 조회 (특정 프로젝트 조회보다 먼저 와야 함)
 router.get("/completed", projectController.getCompletedProjects);
 
