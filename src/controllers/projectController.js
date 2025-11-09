@@ -92,9 +92,10 @@ const getMyProjects = async (req, res) => {
     const { sequelize } = require("../models");
     const { QueryTypes } = require("sequelize");
 
-    // 상태 매핑: ongoing → ACTIVE, completed → COMPLETED, cancelled → CANCELLED
+    // 상태 매핑: ongoing/recruiting → ACTIVE, completed → COMPLETED, cancelled → CANCELLED
     const statusMap = {
       'ongoing': 'ACTIVE',
+      'recruiting': 'ACTIVE',  // 프론트엔드에서 recruiting으로 요청하는 경우도 처리
       'completed': 'COMPLETED',
       'cancelled': 'CANCELLED'
     };
