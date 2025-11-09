@@ -35,6 +35,7 @@ const authenticateToken = (req, res, next) => {
       role: decoded.role || 'user'
     };
 
+    console.log("🔍 Auth Middleware: req.user.userId =", req.user.userId);
     next();
   } catch (error) {
     console.error("🚨 Auth Middleware Error:", error.message);
