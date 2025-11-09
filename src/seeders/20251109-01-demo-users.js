@@ -21,8 +21,8 @@ module.exports = {
         bio: '안녕하세요! 컴퓨터학과 학생입니다.',
         skills: 'React, Node.js, Python',
         email_verified_at: now,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       },
       {
         user_id: uuidv4(),
@@ -34,8 +34,8 @@ module.exports = {
         bio: '디자인과 개발을 함께 하고 싶습니다.',
         skills: 'Figma, Photoshop, Illustrator',
         email_verified_at: now,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       },
       {
         user_id: uuidv4(),
@@ -47,8 +47,8 @@ module.exports = {
         bio: '비즈니스와 기술의 융합에 관심이 많습니다.',
         skills: 'Data Analysis, Excel, SQL',
         email_verified_at: now,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       },
       {
         user_id: uuidv4(),
@@ -60,8 +60,8 @@ module.exports = {
         bio: 'AI와 머신러닝을 공부하고 있습니다.',
         skills: 'Python, TensorFlow, PyTorch',
         email_verified_at: now,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       },
       {
         user_id: uuidv4(),
@@ -73,8 +73,8 @@ module.exports = {
         bio: '임베디드 시스템에 관심이 있습니다.',
         skills: 'C, C++, Arduino, Raspberry Pi',
         email_verified_at: now,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       },
       {
         user_id: uuidv4(),
@@ -86,8 +86,8 @@ module.exports = {
         bio: '알고리즘과 자료구조를 좋아합니다.',
         skills: 'Java, C++, Algorithm',
         email_verified_at: now,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       },
       {
         user_id: uuidv4(),
@@ -99,8 +99,8 @@ module.exports = {
         bio: '백엔드 개발자를 목표로 하고 있습니다.',
         skills: 'Java, Spring Boot, MySQL',
         email_verified_at: now,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       },
       {
         user_id: uuidv4(),
@@ -112,8 +112,8 @@ module.exports = {
         bio: '데이터 기반 의사결정에 관심이 있습니다.',
         skills: 'R, Python, Tableau',
         email_verified_at: now,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       },
       {
         user_id: uuidv4(),
@@ -125,8 +125,8 @@ module.exports = {
         bio: 'UX 리서치와 사용자 경험에 관심이 많습니다.',
         skills: 'User Research, Survey Design',
         email_verified_at: now,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       },
       {
         user_id: uuidv4(),
@@ -138,8 +138,8 @@ module.exports = {
         bio: '게임 개발과 Unity를 공부 중입니다.',
         skills: 'Unity, C#, Blender',
         email_verified_at: now,
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       }
     ];
 

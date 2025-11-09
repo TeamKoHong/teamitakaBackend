@@ -84,9 +84,76 @@ const updateProject = async (project_id, updateData) => {
   return project;
 };
 
+// getMyProjects - 내 프로젝트 조회 (status, limit, offset 지원)
+const getMyProjects = async (req, res) => {
+  try {
+    const user_id = req.user.user_id; // authMiddleware에서 설정된 사용자 ID
+    const { status, limit = 10, offset = 0 } = req.query;
+    const { sequelize } = require("../models");
+    const { QueryTypes } = require("sequelize");
+
+    // 상태 매핑: ongoing → ACTIVE, completed → COMPLETED, cancelled → CANCELLED
+    const statusMap = {
+      'ongoing': 'ACTIVE',
+      'completed': 'COMPLETED',
+      'cancelled': 'CANCELLED'
+    };
+
+    let statusFilter = '';
+    if (status && statusMap[status]) {
+      statusFilter = `AND p.status = '${statusMap[status]}'`;
+    }
+
+    const query = `
+      SELECT
+        p.project_id,
+        p.title,
+        p.description,
+        p.status,
+        p.created_at,
+        p.updated_at,
+        u.user_id,
+        u.username,
+        u.email,
+        COUNT(DISTINCT r.recruitment_id) as recruitment_count
+      FROM projects p
+      LEFT JOIN users u ON p.leader_id = u.user_id
+      LEFT JOIN recruitments r ON p.project_id = r.project_id
+      WHERE p.leader_id = :user_id ${statusFilter}
+      GROUP BY p.project_id, p.title, p.description, p.status, p.created_at, p.updated_at, u.user_id, u.username, u.email
+      ORDER BY p.created_at DESC
+      LIMIT :limit OFFSET :offset
+    `;
+
+    const projects = await sequelize.query(query, {
+      replacements: {
+        user_id,
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      },
+      type: QueryTypes.SELECT
+    });
+
+    return res.status(200).json({
+      success: true,
+      projects,
+      count: projects.length
+    });
+  } catch (err) {
+    console.error("🔥 getMyProjects Error:", err.message);
+    console.error("Error stack:", err.stack);
+    return res.status(500).json({
+      success: false,
+      message: "내 프로젝트 조회 실패",
+      error: err.message
+    });
+  }
+};
+
 module.exports = {
   getAllProjects,
   getProjectById,
   updateProject,
   getCompletedProjects,
+  getMyProjects,
 };
