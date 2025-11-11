@@ -11,7 +11,7 @@ const getMembers = async (req, res) => {
     // Raw SQL 사용 (PostgreSQL snake_case 테이블명)
     const members = await sequelize.query(
       `SELECT
-        pm.member_id,
+        pm.id,
         pm.project_id,
         pm.user_id,
         pm.role,
@@ -92,7 +92,7 @@ const updateMemberRole = async (req, res) => {
     const result = await sequelize.query(
       `UPDATE project_members
        SET role = :role, updated_at = NOW()
-       WHERE member_id = :member_id
+       WHERE id = :member_id
        RETURNING *`,
       {
         replacements: { member_id, role },
@@ -126,7 +126,7 @@ const removeMember = async (req, res) => {
     // Raw SQL DELETE
     const result = await sequelize.query(
       `DELETE FROM project_members
-       WHERE member_id = :member_id
+       WHERE id = :member_id
        RETURNING *`,
       {
         replacements: { member_id },
