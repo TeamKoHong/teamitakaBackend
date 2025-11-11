@@ -32,10 +32,19 @@ const getMembers = async (req, res) => {
 
     console.log("✅ getMembers - Found members:", members.length);
 
-    res.status(200).json({
-      success: true,
-      data: members
-    });
+    // 프론트엔드 기대 형식: [{user_id, role, User: {username, email, avatar, bio}}]
+    res.status(200).json(
+      members.map(m => ({
+        user_id: m.user_id,
+        role: m.role,
+        User: {
+          username: m.username,
+          email: m.email,
+          avatar: m.avatar,
+          bio: m.bio
+        }
+      }))
+    );
   } catch (error) {
     console.error("🚨 멤버 조회 오류:", error.message);
     handleError(res, error);
