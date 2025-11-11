@@ -1,73 +1,143 @@
-const models = require("../models"); // 전체 모델 객체 가져오기
+const { sequelize } = require("../models"); // Sequelize 인스턴스 가져오기
+const { QueryTypes } = require("sequelize");
 const { handleError } = require("../utils/errorHandler");
 
 const getMembers = async (req, res) => {
-  const { ProjectMembers, User } = models; // models에서 구조 분해
   try {
     const { project_id } = req.params;
-    const members = await ProjectMembers.findAll({
-      where: { project_id },
-      include: [{ model: User, attributes: ["username", "email"] }],
+
+    console.log("🔍 getMembers - project_id:", project_id);
+
+    // Raw SQL 사용 (PostgreSQL snake_case 테이블명)
+    const members = await sequelize.query(
+      `SELECT
+        pm.member_id,
+        pm.project_id,
+        pm.user_id,
+        pm.role,
+        pm.joined_at,
+        u.username,
+        u.email,
+        u.avatar,
+        u.bio
+      FROM project_members pm
+      JOIN users u ON pm.user_id = u.user_id
+      WHERE pm.project_id = :project_id
+      ORDER BY pm.joined_at ASC`,
+      {
+        replacements: { project_id },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    console.log("✅ getMembers - Found members:", members.length);
+
+    res.status(200).json({
+      success: true,
+      data: members
     });
-    res.status(200).json(members);
   } catch (error) {
-    console.error("멤버 조회 오류:", error.message);
+    console.error("🚨 멤버 조회 오류:", error.message);
     handleError(res, error);
   }
 };
 
 // ✅ 팀원 추가
 const addMember = async (req, res) => {
-  const { ProjectMembers } = models; // models에서 구조 분해
   try {
     const { project_id } = req.params;
     const { user_id, role } = req.body;
 
-    const newMember = await ProjectMembers.create({
-      project_id,
-      user_id,
-      role: role || "팀원", // 기본값: 팀원
-    });
+    // Raw SQL INSERT
+    const result = await sequelize.query(
+      `INSERT INTO project_members (project_id, user_id, role, joined_at)
+       VALUES (:project_id, :user_id, :role, NOW())
+       RETURNING *`,
+      {
+        replacements: {
+          project_id,
+          user_id,
+          role: role || "팀원",
+        },
+        type: QueryTypes.INSERT,
+      }
+    );
 
-    res.status(201).json(newMember);
+    res.status(201).json({
+      success: true,
+      data: result[0][0],
+    });
   } catch (error) {
+    console.error("🚨 팀원 추가 오류:", error.message);
     handleError(res, error);
   }
 };
 
 // ✅ 팀원 역할 수정
 const updateMemberRole = async (req, res) => {
-  const { ProjectMembers } = models; // models에서 구조 분해
   try {
     const { member_id } = req.params;
     const { role } = req.body;
 
-    const member = await ProjectMembers.findByPk(member_id);
-    if (!member) {
-      return res.status(404).json({ message: "팀원을 찾을 수 없습니다." });
+    // Raw SQL UPDATE
+    const result = await sequelize.query(
+      `UPDATE project_members
+       SET role = :role, updated_at = NOW()
+       WHERE member_id = :member_id
+       RETURNING *`,
+      {
+        replacements: { member_id, role },
+        type: QueryTypes.UPDATE,
+      }
+    );
+
+    if (result[1].length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "팀원을 찾을 수 없습니다.",
+      });
     }
 
-    await member.update({ role });
-    res.status(200).json({ message: "팀원 역할이 수정되었습니다.", member });
+    res.status(200).json({
+      success: true,
+      message: "팀원 역할이 수정되었습니다.",
+      data: result[1][0],
+    });
   } catch (error) {
+    console.error("🚨 팀원 역할 수정 오류:", error.message);
     handleError(res, error);
   }
 };
 
 // ✅ 팀원 삭제
 const removeMember = async (req, res) => {
-  const { ProjectMembers } = models; // models에서 구조 분해
   try {
     const { member_id } = req.params;
 
-    const member = await ProjectMembers.findByPk(member_id);
-    if (!member) {
-      return res.status(404).json({ message: "팀원을 찾을 수 없습니다." });
+    // Raw SQL DELETE
+    const result = await sequelize.query(
+      `DELETE FROM project_members
+       WHERE member_id = :member_id
+       RETURNING *`,
+      {
+        replacements: { member_id },
+        type: QueryTypes.DELETE,
+      }
+    );
+
+    if (result[1].length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "팀원을 찾을 수 없습니다.",
+      });
     }
 
-    await member.destroy();
-    res.status(200).json({ message: "팀원이 삭제되었습니다." });
+    res.status(200).json({
+      success: true,
+      message: "팀원이 삭제되었습니다.",
+    });
   } catch (error) {
+    console.error("🚨 팀원 삭제 오류:", error.message);
     handleError(res, error);
   }
 };
