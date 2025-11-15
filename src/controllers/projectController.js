@@ -1,11 +1,21 @@
 const { Project, Recruitment, User, Todo, Timeline, ProjectMembers } = require("../models");
 
-const createProject = async (data) => {
-  const { title, description, user_id, recruitment_id, start_date, end_date, status, role } = data;
+const createProject = async (req, res) => {
+  try {
+    // JWT에서 user_id 가져오기 (authMiddleware가 설정)
+    const user_id = req.user.userId;
 
-  // 모집공고 존재 여부 확인
-  const recruitment = await Recruitment.findByPk(recruitment_id);
-  if (!recruitment) throw new Error("유효한 모집공고가 필요합니다.");
+    const newProject = await Project.create({
+      ...req.body,
+      user_id,  // JWT에서 가져온 user_id 사용
+      status: req.body.status || "예정"
+    });
+
+    res.status(201).json(newProject);
+  } catch (error) {
+    console.error("🚨 createProject Error:", error.message);
+    res.status(400).json({ error: error.message });
+  }
 };
 
 // getAllProjects
@@ -235,6 +245,7 @@ const getMyProjects = async (req, res) => {
 };
 
 module.exports = {
+  createProject,
   getAllProjects,
   getProjectById,
   updateProject,
