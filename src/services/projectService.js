@@ -67,6 +67,7 @@ const updateProject = async (project_id, updateData) => {
 
 
 module.exports = {
+  createProject,
   getAllProjects,
   getProjectById,
   getCompletedProjects,
