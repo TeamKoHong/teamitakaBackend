@@ -7,6 +7,9 @@ const memberController = require("../controllers/memberController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const projectPostController = require("../controllers/projectPostController");
 
+// 프로젝트 생성 (인증 필요)
+router.post("/", authMiddleware, projectController.createProject);
+
 // 전체 프로젝트 조회
 router.get("/", projectController.getAllProjects);
 
