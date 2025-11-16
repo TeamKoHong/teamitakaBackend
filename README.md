@@ -34,8 +34,11 @@
 ### 📊 프로젝트 관리
 - 프로젝트 생성, 조회, 수정, 삭제 (CRUD)
 - 내 프로젝트 조회 (평가 상태 추적)
-- 팀원 모집 시스템
-- 지원서 추적 관리
+- 팀원 모집 시스템 (이미지 업로드 지원)
+- 지원서 제출 및 추적 관리
+  - 자기소개 작성 (1-500자)
+  - 포트폴리오 프로젝트 연결
+  - 본인 모집글 지원 방지
 - 팀 멤버 관리
 - 팀원 상호 평가 시스템
 
@@ -60,6 +63,12 @@
 - 고급 프로젝트 검색
 - 기술 스택, 역할, 상태별 필터링
 - 사용자 검색
+
+### 🖼️ 파일 업로드
+- 모집공고 이미지 업로드 (Supabase Storage)
+- 이미지 파일 검증 (jpeg, png, webp)
+- 파일 크기 제한 (최대 5MB)
+- UUID 기반 파일명 생성
 
 ### 🛡️ 관리자 기능
 - 사용자 관리
@@ -92,9 +101,15 @@
 - **프로세스 관리**: nodemon
 - **환경 변수**: dotenv, cross-env
 
+### 파일 및 스토리지
+- **파일 업로드**: multer
+- **파일 저장소**: Supabase Storage
+- **파일명 생성**: uuid
+
 ### 클라우드 및 배포
 - **호스팅**: Render (프로덕션)
 - **데이터베이스**: Supabase PostgreSQL (Shared Pooler)
+- **스토리지**: Supabase Storage (이미지 업로드)
 - **이메일**: SendGrid (도메인 인증 완료)
 - **버전 관리**: GitHub
 
@@ -218,9 +233,16 @@ DELETE /api/projects/:id               # 프로젝트 삭제
 
 #### 📝 지원서 (Applications)
 ```
-GET    /api/applications               # 지원서 목록
-POST   /api/applications               # 프로젝트 지원
-PUT    /api/applications/:id           # 지원서 상태 수정
+POST   /api/applications/:recruitment_id          # 지원서 제출 (자기소개 + 포트폴리오)
+GET    /api/applications/:recruitment_id          # 지원자 목록 (포트폴리오 포함)
+POST   /api/applications/:application_id/approve  # 지원 승인
+POST   /api/applications/:application_id/reject   # 지원 거절
+GET    /api/applications/:recruitment_id/count    # 지원자 수 조회
+```
+
+#### 📤 파일 업로드 (Upload)
+```
+POST   /api/upload/recruitment-image   # 모집공고 이미지 업로드 (JWT 필수)
 ```
 
 #### 💬 댓글 (Comments)
@@ -269,8 +291,9 @@ GET    /api/health                     # 서버 상태 확인
 | **Users** | 사용자 계정 및 프로필 |
 | **Projects** | 프로젝트 정보 |
 | **ProjectMembers** | 프로젝트 팀 멤버 |
-| **Recruitments** | 프로젝트 모집 공고 |
-| **Applications** | 프로젝트 지원서 |
+| **Recruitments** | 프로젝트 모집 공고 (이미지 지원) |
+| **Applications** | 프로젝트 지원서 (자기소개 + 포트폴리오) |
+| **ApplicationPortfolios** | 지원서-포트폴리오 연결 (M:N 관계) |
 | **Comments** | 프로젝트 댓글 |
 | **Reviews** | 프로젝트 리뷰 및 팀원 평가 |
 | **Notifications** | 사용자 알림 |
@@ -519,10 +542,11 @@ GOOGLE_CALLBACK_URL=http://localhost:8080/api/auth/google/callback
 CORS_ORIGIN=http://localhost:3000     # 프론트엔드 URL
 CORS_CREDENTIALS=true
 
-# Supabase (선택사항)
+# Supabase Storage (이미지 업로드)
 SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_ANON_KEY=익명_키
-SUPABASE_SERVICE_KEY=서비스_키
+SUPABASE_STORAGE_BUCKET=버킷명          # 이미지 업로드용 버킷 (예: recruitment-images)
+SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 ```
 
 ### 환경 파일
@@ -621,15 +645,38 @@ SUPABASE_SERVICE_KEY=서비스_키
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.2.0 |
-| **마지막 업데이트** | 2025-01-09 |
+| **버전** | 1.3.0 |
+| **마지막 업데이트** | 2025-11-16 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
 
 ## 🔄 변경 이력
 
-### v1.2.0 (2025-01-09)
+### v1.3.0 (2025-11-16)
+- 📝 **지원서 제출 API 포트폴리오 연결 기능**
+  - ApplicationPortfolio 모델 추가 (M:N 관계)
+  - introduction 필드 추가 (필수, 1-500자)
+  - 포트폴리오 프로젝트 선택 및 소유권 검증
+  - 본인 모집글 지원 방지, 마감 여부 검증
+- 🖼️ **모집공고 이미지 업로드** (Supabase Storage)
+  - photo_url 필드 추가
+  - 이미지 업로드 API (`/api/upload/recruitment-image`)
+  - 파일 검증 (jpeg/png/webp, 최대 5MB)
+  - UUID 기반 파일명 생성
+  - RLS 정책 적용
+- 🔐 **지원서 제출 보안 강화**
+  - 트랜잭션 처리로 데이터 일관성 보장
+  - 포트폴리오 소유권 검증 (ProjectMembers 확인)
+  - 9가지 에러 코드 체계 구현
+    - INVALID_INPUT, SELF_APPLICATION, RECRUITMENT_CLOSED
+    - INVALID_PORTFOLIO, UNAUTHORIZED, RECRUITMENT_NOT_FOUND
+    - ALREADY_APPLIED
+- 📊 **지원자 목록 조회 개선**
+  - 포트폴리오 프로젝트 정보 포함 (제목, 설명)
+  - User 프로필 정보 포함
+
+### v1.2.0 (2025-11-09)
 - 🎯 대시보드 요약 API 구현 (`/api/dashboard/summary`)
   - 프로젝트 통계, 지원서 추적, 평가 대기 프로젝트, 최근 활동 타임라인
 - 👤 현재 사용자 정보 API 추가 (`/api/auth/me`)
@@ -657,7 +704,7 @@ SUPABASE_SERVICE_KEY=서비스_키
 - 🛠️ GitHub Actions 워크플로우 정리
 - 📝 프론트엔드 통합 문서 작성
 
-### v1.0.0 (2025-01-17)
+### v1.0.0 (2025-11-01)
 - ✨ 초기 릴리즈
 - 🔐 이메일 인증 시스템 구현
 - 🔑 JWT 기반 인증 구현
