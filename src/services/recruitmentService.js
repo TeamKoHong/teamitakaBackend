@@ -12,8 +12,8 @@ const getAllRecruitmentsWithApplicationCount = async () => {
       "created_at",
       [
         sequelize.literal(`(
-          SELECT COUNT(*) FROM Applications AS a
-          WHERE a.recruitment_id = recruitments.recruitment_id
+          SELECT COUNT(*) FROM "Applications" AS a
+          WHERE a.recruitment_id = "Recruitment"."recruitment_id"
         )`),
         "applicationCount",
       ],
