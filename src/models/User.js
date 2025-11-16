@@ -55,6 +55,11 @@ module.exports = (sequelize) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      experience_years: { // 경력 (년)
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        comment: "경력 (년 단위)",
+      },
       portfolio_url: { // 포트폴리오 링크
         type: DataTypes.STRING(255),
         allowNull: true,
