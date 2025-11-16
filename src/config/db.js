@@ -40,12 +40,12 @@ const dbConfig = {
       require: true,
       rejectUnauthorized: false
     },
-    connectTimeout: 10000,
+    connectTimeout: 30000, // Increased from 10s to 30s for Render cold starts
     // Force IPv4 to avoid IPv6 connection issues on Render
     family: 4,
   } : {
     ssl: false,
-    connectTimeout: 10000,
+    connectTimeout: 30000, // Increased from 10s to 30s
   },
   define: {
     underscored: false
@@ -77,7 +77,27 @@ const sequelize = new Sequelize(
     dialect: dbConfig.dialect,
     logging: hasRequiredEnvVars ? dbConfig.logging : false, // 환경변수가 없으면 로깅 비활성화
     dialectOptions: dbConfig.dialectOptions,
-    define: dbConfig.define
+    define: dbConfig.define,
+    // Connection pool configuration
+    pool: {
+      max: 5,          // Maximum 5 connections for Render free tier
+      min: 0,          // Minimum connections (0 to save resources)
+      acquire: 30000,  // 30 seconds max time to acquire connection
+      idle: 10000,     // 10 seconds idle time before releasing connection
+    },
+    // Retry configuration for connection failures
+    retry: {
+      max: 5,          // Maximum 5 retry attempts
+      timeout: 30000,  // 30 seconds timeout for each retry
+      match: [
+        /ECONNREFUSED/,  // Connection refused (common on Render)
+        /ETIMEDOUT/,     // Connection timeout
+        /ECONNRESET/,    // Connection reset
+        /EHOSTUNREACH/,  // Host unreachable
+      ],
+      backoffBase: 1000,      // Start with 1 second delay
+      backoffExponent: 1.5,   // Increase delay by 1.5x each retry (1s, 1.5s, 2.25s, 3.375s, 5.0625s)
+    },
   }
 );
 
