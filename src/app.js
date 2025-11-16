@@ -22,6 +22,7 @@ const draftRoutes = require("./routes/draftRoutes");  // draftRoutes 추가
 const scrapRoutes = require("./routes/scrapRoutes");  // scrapRoutes 추가
 const applicationRoutes = require("./routes/applicationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes"); // ✅ 대시보드 라우트 추가
+const uploadRoutes = require("./routes/uploadRoutes"); // ✅ 업로드 라우트 추가
 
 const verificationRoutes = require("./routes/verificationRoutes");
 
@@ -67,6 +68,7 @@ app.use("/api/drafts", draftRoutes);    // draftRoutes 라우트 추가
 app.use("/api/scraps", scrapRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/dashboard", dashboardRoutes); // ✅ 대시보드 라우트 추가
+app.use("/api/upload", uploadRoutes); // ✅ 업로드 라우트 추가
 
 app.use("/api/auth", verificationRoutes);
 
