@@ -18,7 +18,7 @@ const getAllRecruitmentsWithApplicationCount = async () => {
         "applicationCount",
       ],
     ],
-    order: [[sequelize.literal('"applicationCount"'), "DESC"]], // 지원 수 기준 정렬
+    order: [[sequelize.col("applicationCount"), "DESC"]], // 지원 수 기준 정렬
   });
 };
 
