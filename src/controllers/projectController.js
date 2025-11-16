@@ -4,40 +4,15 @@ const createProject = async (req, res) => {
   try {
     // JWT에서 user_id 가져오기 (authMiddleware가 설정)
     const user_id = req.user.userId;
-    const { sequelize } = require("../models");
 
-    // TODO: 임시 해결책 - recruitment_id가 없으면 자동 생성
-    // 아키텍처 결정 후 리팩토링 필요 (Recruitment/Project 통합 or 분리)
-    let recruitment_id = req.body.recruitment_id;
-
-    // Transaction으로 Recruitment + Project 생성을 원자적으로 처리
-    const result = await sequelize.transaction(async (t) => {
-      // recruitment_id가 없으면 자동으로 Recruitment 생성
-      if (!recruitment_id) {
-        const autoRecruitment = await Recruitment.create({
-          title: req.body.title || "Untitled Project",
-          description: req.body.description || "No description provided",
-          status: "CLOSED",  // 바로 프로젝트로 전환되므로 CLOSED
-          user_id,
-          photo: req.body.photo || null,
-        }, { transaction: t });
-
-        recruitment_id = autoRecruitment.recruitment_id;
-        console.log(`✅ Auto-created recruitment: ${recruitment_id}`);
-      }
-
-      // 프로젝트 생성
-      const newProject = await Project.create({
-        ...req.body,
-        user_id,
-        recruitment_id,  // 기존 또는 자동 생성된 recruitment_id 사용
-        status: req.body.status || "예정"
-      }, { transaction: t });
-
-      return newProject;
+    // 프로젝트 생성 (recruitment_id 불필요)
+    const newProject = await Project.create({
+      ...req.body,
+      user_id,
+      status: req.body.status || "예정"
     });
 
-    res.status(201).json(result);
+    res.status(201).json(newProject);
   } catch (error) {
     console.error("🚨 createProject Error:", error.message);
     res.status(400).json({ error: error.message });
@@ -51,7 +26,7 @@ const getAllProjects = async (req, res) => {
       order: [["createdAt", "DESC"]],
       include: [
         { model: User, as: "User", attributes: ["username"] },  // 프로젝트 생성자
-        { model: Recruitment, as: "Recruitment", attributes: ["title"] },
+        { model: Recruitment, as: "Recruitments", attributes: ["title", "status"] },  // 프로젝트의 모집공고들
         {
           model: ProjectMembers,  // 프로젝트 팀원들
           include: [{ model: User, attributes: ["username"] }],
@@ -74,7 +49,7 @@ const getProjectById = async (req, res) => {
     const project = await Project.findByPk(project_id, {
       include: [
         { model: User, as: "User", attributes: ["username"] },
-        { model: Recruitment, as: "Recruitment", attributes: ["title"] },
+        { model: Recruitment, as: "Recruitments", attributes: ["title", "status", "description"] },  // 프로젝트의 모집공고들
         { model: Todo },
         { model: Timeline },
         {

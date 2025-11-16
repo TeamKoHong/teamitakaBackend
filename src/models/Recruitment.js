@@ -32,6 +32,15 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE",
       },
+      project_id: {
+        type: DataTypes.UUID,
+        allowNull: true,  // 모집공고가 프로젝트 없이도 존재 가능
+        references: {
+          model: "Projects",
+          key: "project_id",
+        },
+        onDelete: "CASCADE",
+      },
       photo: {
         type: DataTypes.STRING,
         allowNull: true,
