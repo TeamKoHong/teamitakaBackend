@@ -12,6 +12,7 @@ db.sequelize = sequelize;
 // ✅ 모델 불러오기
 db.Admin = require("./Admin")(sequelize, Sequelize.DataTypes);
 db.Application = require("./Application")(sequelize, Sequelize.DataTypes);
+db.ApplicationPortfolio = require("./ApplicationPortfolio")(sequelize, Sequelize.DataTypes);
 db.College = require("./College")(sequelize, Sequelize.DataTypes);
 db.Comment = require("./Comment")(sequelize, Sequelize.DataTypes);
 db.Department = require("./Department")(sequelize, Sequelize.DataTypes);
@@ -40,6 +41,12 @@ db.VoteResponse = require("./VoteResponse")(sequelize, Sequelize.DataTypes);
 db.Application.associate = (models) => {
   db.Application.belongsTo(models.User, { foreignKey: "user_id", onDelete: "CASCADE" });
   db.Application.belongsTo(models.Recruitment, { foreignKey: "recruitment_id", onDelete: "CASCADE" });
+  db.Application.hasMany(models.ApplicationPortfolio, { foreignKey: "application_id", onDelete: "CASCADE" });
+};
+
+db.ApplicationPortfolio.associate = (models) => {
+  db.ApplicationPortfolio.belongsTo(models.Application, { foreignKey: "application_id", onDelete: "CASCADE" });
+  db.ApplicationPortfolio.belongsTo(models.Project, { foreignKey: "project_id", onDelete: "CASCADE" });
 };
 
 db.College.associate = (models) => {
