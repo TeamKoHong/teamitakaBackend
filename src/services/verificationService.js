@@ -204,7 +204,7 @@ class VerificationService {
           consumed_at: null,
           expires_at: { [Op.gt]: new Date() }
         },
-        order: [['createdAt', 'DESC']]
+        order: [['created_at', 'DESC']]
       });
 
       if (!verification) {
