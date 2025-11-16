@@ -40,25 +40,19 @@ const getRecruitmentById = async (recruitment_id, cookies, setCookie) => {
   });
 };
 
-// 📌 모집공고 생성 (태그, 이미지 저장 포함)
-const createRecruitment = async ({ title, description, status, start_date, end_date, hashtags, is_draft, user_id, photoPath }) => {
+// 📌 모집공고 생성
+const createRecruitment = async ({ title, description, max_applicants, user_id, recruitment_start, recruitment_end, project_type, photo_url }) => {
   const recruitment = await Recruitment.create({
     title,
     description,
-    status: is_draft ? "임시저장" : status,
-    start_date,
-    end_date,
+    max_applicants,
     user_id,
-    is_draft: is_draft || false,
-    photo: photoPath || null,
+    recruitment_start,
+    recruitment_end,
+    project_type,
+    photo_url,
+    status: "ACTIVE", // DB 기본값에 맞춤
   });
-
-  if (hashtags && hashtags.length > 0) {
-    const hashtagResults = await Promise.all(
-      hashtags.map(tag => Hashtag.findOrCreate({ where: { content: tag } }))
-    );
-    await recruitment.addHashtags(hashtagResults.map(([tag]) => tag));
-  }
 
   return recruitment;
 };

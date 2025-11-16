@@ -41,13 +41,15 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE",
       },
-      photo: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
       views: { // 추가
         type: DataTypes.INTEGER,
         defaultValue: 0,
+      },
+      max_applicants: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 10,
+        comment: "최대 지원자 수",
       },
       recruitment_start: {
         type: DataTypes.DATE,
@@ -64,20 +66,17 @@ module.exports = (sequelize) => {
         allowNull: true,
         comment: "프로젝트 타입 (수업/사이드)",
       },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
+      photo_url: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "모집공고 대표 이미지 URL",
       },
-      updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-      },
-      
     },
     {
+      tableName: "recruitments",
       timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
     }
   );
 
