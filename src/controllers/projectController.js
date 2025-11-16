@@ -1,13 +1,14 @@
-const { Project, Recruitment, User, Todo, Timeline, ProjectMembers } = require("../models");
+const { Project, Recruitment, User, Todo, Timeline, ProjectMembers, Application, sequelize } = require("../models");
 
 const createProject = async (req, res) => {
   try {
     // JWT에서 user_id 가져오기 (authMiddleware가 설정)
     const user_id = req.user.userId;
 
+    // 프로젝트 생성 (recruitment_id 불필요)
     const newProject = await Project.create({
       ...req.body,
-      user_id,  // JWT에서 가져온 user_id 사용
+      user_id,
       status: req.body.status || "예정"
     });
 
@@ -25,7 +26,7 @@ const getAllProjects = async (req, res) => {
       order: [["createdAt", "DESC"]],
       include: [
         { model: User, as: "User", attributes: ["username"] },  // 프로젝트 생성자
-        { model: Recruitment, as: "Recruitment", attributes: ["title"] },
+        { model: Recruitment, as: "Recruitments", attributes: ["title", "status"] },  // 프로젝트의 모집공고들
         {
           model: ProjectMembers,  // 프로젝트 팀원들
           include: [{ model: User, attributes: ["username"] }],
@@ -48,7 +49,7 @@ const getProjectById = async (req, res) => {
     const project = await Project.findByPk(project_id, {
       include: [
         { model: User, as: "User", attributes: ["username"] },
-        { model: Recruitment, as: "Recruitment", attributes: ["title"] },
+        { model: Recruitment, as: "Recruitments", attributes: ["title", "status", "description"] },  // 프로젝트의 모집공고들
         { model: Todo },
         { model: Timeline },
         {
@@ -244,6 +245,120 @@ const getMyProjects = async (req, res) => {
   }
 };
 
+// createProjectFromRecruitment - 모집공고를 프로젝트로 전환
+const createProjectFromRecruitment = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const { recruitment_id } = req.params;
+    const { start_date, end_date } = req.body;
+
+    // 1. 모집공고 조회
+    const recruitment = await Recruitment.findByPk(recruitment_id, { transaction });
+    if (!recruitment) {
+      await transaction.rollback();
+      return res.status(404).json({ error: "모집공고를 찾을 수 없습니다." });
+    }
+
+    // 2. 이미 프로젝트로 전환되었는지 확인
+    if (recruitment.project_id) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: "이미 프로젝트로 전환된 모집공고입니다.",
+        project_id: recruitment.project_id
+      });
+    }
+
+    // 3. APPROVED된 지원자들 조회
+    const approvedApplications = await Application.findAll({
+      where: {
+        recruitment_id,
+        status: "APPROVED"
+      },
+      transaction
+    });
+
+    if (approvedApplications.length === 0) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: "승인된 지원자가 없어 프로젝트를 생성할 수 없습니다."
+      });
+    }
+
+    // 4. 새 프로젝트 생성 (모집공고 정보 복사)
+    const newProject = await Project.create({
+      title: recruitment.title,
+      description: recruitment.description,
+      user_id: recruitment.user_id,  // 모집공고 작성자
+      start_date: start_date || null,
+      end_date: end_date || null,
+      status: "진행 중"
+    }, { transaction });
+
+    // 5. 프로젝트 멤버 추가
+    const members = [];
+
+    // 5-1. 모집공고 작성자를 리더로 추가
+    const leaderMember = await ProjectMembers.create({
+      project_id: newProject.project_id,
+      user_id: recruitment.user_id,
+      role: "LEADER",
+      status: "ACTIVE",
+      joined_at: new Date()
+    }, { transaction });
+    members.push(leaderMember);
+
+    // 5-2. APPROVED 지원자들을 멤버로 추가
+    for (const application of approvedApplications) {
+      const member = await ProjectMembers.create({
+        project_id: newProject.project_id,
+        user_id: application.user_id,
+        role: "MEMBER",
+        status: "ACTIVE",
+        joined_at: new Date()
+      }, { transaction });
+      members.push(member);
+    }
+
+    // 6. 모집공고 업데이트 (프로젝트 연결 + 상태 CLOSED)
+    await recruitment.update({
+      project_id: newProject.project_id,
+      status: "CLOSED"
+    }, { transaction });
+
+    // 7. Transaction commit
+    await transaction.commit();
+
+    // 8. 응답 반환
+    return res.status(201).json({
+      project_id: newProject.project_id,
+      title: newProject.title,
+      description: newProject.description,
+      user_id: newProject.user_id,
+      start_date: newProject.start_date,
+      end_date: newProject.end_date,
+      status: newProject.status,
+      created_at: newProject.createdAt,
+      members: members.map(m => ({
+        user_id: m.user_id,
+        role: m.role,
+        status: m.status,
+        joined_at: m.joined_at
+      })),
+      recruitment: {
+        recruitment_id: recruitment.recruitment_id,
+        status: recruitment.status,
+        project_id: recruitment.project_id
+      }
+    });
+
+  } catch (error) {
+    await transaction.rollback();
+    console.error("🚨 createProjectFromRecruitment Error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createProject,
   getAllProjects,
@@ -251,4 +366,5 @@ module.exports = {
   updateProject,
   getCompletedProjects,
   getMyProjects,
+  createProjectFromRecruitment,
 };

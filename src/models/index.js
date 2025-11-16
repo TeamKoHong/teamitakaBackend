@@ -73,17 +73,7 @@ db.Hashtag.associate = (models) => {
   });
 };
 
-db.Project.beforeCreate((project, options) => {
-  if (!project.user_id) throw new Error("User ID is required");
-  if (!project.recruitment_id) throw new Error("Recruitment ID is required");
-});
-
 db.Project.associate = (models) => {
-  db.Project.belongsTo(models.Recruitment, {
-    foreignKey: "recruitment_id",
-    onDelete: "CASCADE",
-    as: "Recruitment",
-  });
   db.Project.belongsTo(db.User, {
     as: "User",
     foreignKey: "user_id",
@@ -103,6 +93,11 @@ db.Project.associate = (models) => {
   });
   db.Project.hasMany(db.ProjectPost, {
     foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Project.hasMany(models.Recruitment, {
+    foreignKey: "project_id",
+    as: "Recruitments",
     onDelete: "CASCADE",
   });
 };
@@ -131,8 +126,9 @@ db.Recruitment.associate = (models) => {
     foreignKey: "user_id",
     onDelete: "CASCADE",
   });
-  db.Recruitment.hasOne(models.Project, {
-    foreignKey: "recruitment_id",
+  db.Recruitment.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    as: "Project",
     onDelete: "CASCADE",
   });
   db.Recruitment.hasMany(db.Application, { 

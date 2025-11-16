@@ -19,6 +19,9 @@ router.get("/mine", authMiddleware, projectController.getMyProjects);
 // 완료된 프로젝트 조회 (특정 프로젝트 조회보다 먼저 와야 함)
 router.get("/completed", projectController.getCompletedProjects);
 
+// 모집공고를 프로젝트로 전환 (특정 프로젝트 조회보다 먼저 와야 함)
+router.post("/from-recruitment/:recruitment_id", authMiddleware, projectController.createProjectFromRecruitment);
+
 // 특정 프로젝트 조회
 router.get("/:project_id", projectController.getProjectById);
 
