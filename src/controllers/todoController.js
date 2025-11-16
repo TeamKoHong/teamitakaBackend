@@ -7,7 +7,7 @@ const getTodos = async (req, res) => {
     const { project_id } = req.params;
     const todos = await Todo.findAll({
       where: { project_id },
-      order: [["createdAt", "ASC"]],
+      order: [["created_at", "ASC"]],
     });
     res.status(200).json(todos);
   } catch (error) {

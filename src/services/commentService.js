@@ -4,13 +4,13 @@ const getComments = async (recruitment_id) => {
   return await Comment.findAll({
     where: { recruitment_id },
     include: [
-      { 
-        model: User, 
+      {
+        model: User,
         attributes: ["username", "avatar"],
         as: "User"
       }
     ],
-    order: [["createdAt", "ASC"]]
+    order: [["created_at", "ASC"]]
   });
 };
 

@@ -23,7 +23,7 @@ const createProject = async (req, res) => {
 const getAllProjects = async (req, res) => {
   try {
     const projects = await Project.findAll({
-      order: [["createdAt", "DESC"]],
+      order: [["created_at", "DESC"]],
       include: [
         { model: User, as: "User", attributes: ["username"] },  // 프로젝트 생성자
         { model: Recruitment, as: "Recruitments", attributes: ["title", "status"] },  // 프로젝트의 모집공고들

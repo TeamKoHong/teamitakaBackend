@@ -48,7 +48,7 @@ class ProfileService {
                 where: { user_id },
                 required: true
             }],
-            attributes: ["project_id", "title", "description", "status", "start_date", "end_date", "createdAt"]
+            attributes: ["project_id", "title", "description", "status", "start_date", "end_date", "created_at"]
         });
     }
 }

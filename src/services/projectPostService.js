@@ -16,7 +16,7 @@ const getPostsByProject = async (project_id) => {
   return await ProjectPost.findAll({
     where: { project_id },
     include: [{ model: User, attributes: ["username", "profileImageUrl"] }],
-    order: [["createdAt", "DESC"]],
+    order: [["created_at", "DESC"]],
   });
 };
 
