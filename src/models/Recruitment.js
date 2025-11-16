@@ -49,6 +49,21 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
+      recruitment_start: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "모집 시작일",
+      },
+      recruitment_end: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "모집 마감일",
+      },
+      project_type: {
+        type: DataTypes.ENUM("course", "side"),
+        allowNull: true,
+        comment: "프로젝트 타입 (수업/사이드)",
+      },
       createdAt: {
         type: DataTypes.DATE,
         allowNull: false,

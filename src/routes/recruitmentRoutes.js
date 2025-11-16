@@ -1,10 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const recruitmentController = require("../controllers/recruitmentController");
+const applicationController = require("../controllers/applicationController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 // 모집공고 전체 조회
 router.get("/", recruitmentController.getAllRecruitments);
+
+// 모집공고별 지원자 목록 조회 (RESTful 설계)
+router.get("/:recruitment_id/applications", authMiddleware, applicationController.getApplicants);
 
 // 모집공고 상세 조회
 router.get("/:recruitment_id", recruitmentController.getRecruitmentById);

@@ -25,7 +25,22 @@ const applyToRecruitment = async (user_id, recruitment_id) => {
 const getApplicants = async (recruitment_id) => {
   return await Application.findAll({
     where: { recruitment_id },
-    include: [{ model: User, attributes: ["user_id", "username", "email"] }],
+    include: [{
+      model: User,
+      attributes: [
+        "user_id",
+        "username",
+        "email",
+        "university",
+        "major",
+        "skills",
+        "experience_years",
+        "avatar",
+        "bio",
+        "awards",
+        "portfolio_url"
+      ]
+    }],
   });
 };
 

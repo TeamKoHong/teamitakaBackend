@@ -12,9 +12,9 @@ router.post("/:recruitment_id", authMiddleware, applicationController.applyToRec
 router.get("/:recruitment_id", authMiddleware, applicationController.getApplicants);
 
 // ✅ 모집공고 지원 승인
-router.patch("/:application_id/approve", authMiddleware, applicationController.approveApplication);
+router.post("/:application_id/approve", authMiddleware, applicationController.approveApplication);
 
 // ✅ 모집공고 지원 거절
-router.patch("/:application_id/reject", authMiddleware, applicationController.rejectApplication);
+router.post("/:application_id/reject", authMiddleware, applicationController.rejectApplication);
 
 module.exports = router;
