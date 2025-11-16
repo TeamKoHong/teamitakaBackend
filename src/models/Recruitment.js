@@ -71,6 +71,16 @@ module.exports = (sequelize) => {
         allowNull: true,
         comment: "모집공고 대표 이미지 URL",
       },
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
       tableName: "recruitments",
