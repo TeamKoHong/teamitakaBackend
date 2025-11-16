@@ -9,7 +9,7 @@ const getAllRecruitmentsWithApplicationCount = async () => {
       "title",
       "description",
       "status",
-      "createdAt",
+      "created_at",
       [
         sequelize.literal(`(
           SELECT COUNT(*) FROM Applications AS a
