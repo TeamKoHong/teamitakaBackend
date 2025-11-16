@@ -28,13 +28,19 @@ const getRecruitmentById = async (req, res) => {
 
 const createRecruitment = async (req, res) => {
   try {
-    const { title, description, max_applicants, user_id, photo } = req.body;
+    // JWT에서 user_id 가져오기 (authMiddleware가 설정)
+    const user_id = req.user.userId;
+
+    const { title, description, max_applicants, photo, recruitment_start, recruitment_end, project_type } = req.body;
     const newRecruitment = await recruitmentService.createRecruitment({
       title,
       description,
       max_applicants,
       user_id,
       photo,
+      recruitment_start,
+      recruitment_end,
+      project_type,
     });
     res.status(201).json(newRecruitment);
   } catch (error) {

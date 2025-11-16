@@ -32,6 +32,15 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE",
       },
+      project_id: {
+        type: DataTypes.UUID,
+        allowNull: true,  // 모집공고가 프로젝트 없이도 존재 가능
+        references: {
+          model: "Projects",
+          key: "project_id",
+        },
+        onDelete: "CASCADE",
+      },
       photo: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -39,6 +48,21 @@ module.exports = (sequelize) => {
       views: { // 추가
         type: DataTypes.INTEGER,
         defaultValue: 0,
+      },
+      recruitment_start: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "모집 시작일",
+      },
+      recruitment_end: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "모집 마감일",
+      },
+      project_type: {
+        type: DataTypes.ENUM("course", "side"),
+        allowNull: true,
+        comment: "프로젝트 타입 (수업/사이드)",
       },
       createdAt: {
         type: DataTypes.DATE,

@@ -28,16 +28,6 @@ module.exports = (sequelize) => {
         },
         onDelete: "CASCADE",
       },
-      recruitment_id: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        unique: true,
-        references: {
-          model: "Recruitments",
-          key: "recruitment_id",
-        },
-        onDelete: "CASCADE",
-      },
       start_date: {
         type: DataTypes.DATE,
         allowNull: true,
@@ -63,11 +53,6 @@ module.exports = (sequelize) => {
       timestamps: true,
     }
   );
-
-  Project.beforeCreate((project, options) => {
-    if (!project.user_id) throw new Error("User ID is required");
-    if (!project.recruitment_id) throw new Error("Recruitment ID is required");
-  });
 
   return Project;
 };
