@@ -27,6 +27,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("PENDING", "APPROVED", "REJECTED"),
         defaultValue: "PENDING",
       },
+      introduction: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        validate: {
+          len: {
+            args: [1, 500],
+            msg: "자기소개는 1자 이상 500자 이하여야 합니다.",
+          },
+        },
+      },
     });
   
     return Application;
