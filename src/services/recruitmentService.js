@@ -44,7 +44,7 @@ const getRecruitmentById = async (recruitment_id, cookies, setCookie) => {
   }
 
   return await Recruitment.findByPk(recruitment_id, {
-    include: [{ model: Hashtag, attributes: ["content"] }],
+    include: [{ model: Hashtag, attributes: ["name"] }],
   });
 };
 

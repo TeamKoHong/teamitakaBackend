@@ -33,7 +33,7 @@ module.exports = {
             allowNull: false,
             references: {
               model: 'hashtags',  // 실제 DB 테이블명 (소문자)
-              key: 'id'
+              key: 'hashtag_id'   // 실제 DB 컬럼명
             },
             onUpdate: 'CASCADE',
             onDelete: 'CASCADE'
