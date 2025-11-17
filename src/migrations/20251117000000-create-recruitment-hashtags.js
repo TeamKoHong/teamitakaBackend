@@ -32,7 +32,7 @@ module.exports = {
             type: Sequelize.UUID,
             allowNull: false,
             references: {
-              model: 'Hashtags',  // Sequelize 기본 복수형 테이블명
+              model: 'hashtags',  // 실제 DB 테이블명 (소문자)
               key: 'id'
             },
             onUpdate: 'CASCADE',
