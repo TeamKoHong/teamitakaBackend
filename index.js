@@ -1,5 +1,8 @@
 // index.js
 const { loadEnvFile, validateRequiredEnvVars, printEnvStatus } = require('./src/config/envLoader');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 
 // 환경 변수 로드
 loadEnvFile();
@@ -11,14 +14,36 @@ validateRequiredEnvVars();
 printEnvStatus();
 
 const app = require("./src/app");  // Express 앱
-// 여기서 db.js가 필요하다면 import (단, 일반적으로 db.js는 다른 곳에서 import되며,
-// NODE_ENV !== 'test' 조건 하에 connectDB()가 이미 실행될 것)
 
 const PORT = process.env.PORT || 8080;
 const HOST = process.env.HOST || '0.0.0.0';
 
-app.listen(PORT, HOST, () => {
-  console.log(`🚀 Server listening on ${HOST}:${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  setInterval(() => console.log('✅ Server still running...'), 5000);
+// 🔄 Production 환경에서 자동 migration 실행
+async function runMigrations() {
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      console.log('🔄 Running production migrations...');
+      const { stdout, stderr } = await execPromise('npx sequelize-cli db:migrate');
+      console.log('✅ Migrations completed successfully');
+      if (stdout) console.log(stdout);
+      if (stderr) console.error('Migration warnings:', stderr);
+    } catch (error) {
+      console.error('❌ Migration execution failed:', error.message);
+      console.error('⚠️ Server will start anyway, but database schema may be outdated');
+    }
+  } else {
+    console.log('ℹ️ Skipping auto-migration (not production environment)');
+  }
+}
+
+// Migration 실행 후 서버 시작
+runMigrations().then(() => {
+  app.listen(PORT, HOST, () => {
+    console.log(`🚀 Server listening on ${HOST}:${PORT}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    setInterval(() => console.log('✅ Server still running...'), 5000);
+  });
+}).catch(error => {
+  console.error('💥 Critical error during startup:', error);
+  process.exit(1);
 });
