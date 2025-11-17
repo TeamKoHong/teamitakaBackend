@@ -23,7 +23,10 @@ async function runMigrations() {
   if (process.env.NODE_ENV === 'production') {
     try {
       console.log('🔄 Running production migrations...');
-      const { stdout, stderr } = await execPromise('npx sequelize-cli db:migrate');
+      const { stdout, stderr } = await execPromise('npx sequelize-cli db:migrate', {
+        env: process.env,  // 환경 변수 명시적 전달
+        timeout: 60000,    // 60초 타임아웃 (기본값보다 길게)
+      });
       console.log('✅ Migrations completed successfully');
       if (stdout) console.log(stdout);
       if (stderr) console.error('Migration warnings:', stderr);
