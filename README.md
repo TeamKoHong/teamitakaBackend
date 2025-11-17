@@ -233,6 +233,7 @@ DELETE /api/projects/:id               # 프로젝트 삭제
 
 #### 🏷️ 모집공고 (Recruitments)
 ```
+POST   /api/recruitments               # 모집공고 생성 (해시태그 지원)
 GET    /api/recruitments/:id           # 모집공고 상세 조회 (Hashtags 배열 포함)
 ```
 
@@ -664,6 +665,10 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 - 🏷️ **모집공고-해시태그 시스템 구현**
   - recruitment_hashtags 중간 테이블 생성 (M:N 관계)
   - Hashtag 모델 스키마 PostgreSQL 호환성 작업
+  - POST /api/recruitments 해시태그 생성 지원
+    - # 기호 자동 제거 및 유효성 검사
+    - 중복 필터링, 빈 값 제거, 최대 5개 제한
+    - findOrCreate로 기존 태그 재사용
   - GET /api/recruitments/:id 응답에 Hashtags 배열 추가
   - 해시태그 필드: hashtag_id (UUID), name (문자열)
 - 🔄 **Programmatic Migration 시스템**
