@@ -30,6 +30,53 @@ const getAllRecruitmentsWithApplicationCount = async () => {
   });
 };
 
+// 📋 내가 작성한 모집공고 목록 조회 (조회수 증가 X)
+const getMyRecruitments = async (user_id, { limit, offset }) => {
+  const { count, rows } = await Recruitment.findAndCountAll({
+    where: { user_id },
+    attributes: [
+      'recruitment_id',
+      'title',
+      'description',
+      'status',
+      'user_id',
+      'project_id',
+      'views',
+      'max_applicants',
+      'recruitment_start',
+      'recruitment_end',
+      'project_type',
+      'photo_url',
+      'created_at',
+      'updated_at',
+      [
+        sequelize.literal(`(
+          SELECT COUNT(*) FROM applications AS a
+          WHERE a.recruitment_id = "Recruitment"."recruitment_id"
+        )`),
+        'applicant_count',
+      ],
+    ],
+    include: [{
+      model: Hashtag,
+      attributes: ["name"]
+    }],
+    limit,
+    offset,
+    order: [['created_at', 'DESC']],
+  });
+
+  return {
+    success: true,
+    items: rows,
+    page: {
+      total: count,
+      limit,
+      offset
+    }
+  };
+};
+
 // 👀 조회수 증가 로직 최적화
 const getRecruitmentById = async (recruitment_id, cookies, setCookie) => {
   let viewedRecruitments = cookies.viewedRecruitments ? JSON.parse(cookies.viewedRecruitments) : [];
@@ -151,6 +198,7 @@ const deleteRecruitment = async (recruitment_id) => {
 
 module.exports = {
   getAllRecruitmentsWithApplicationCount,
+  getMyRecruitments,
   getRecruitmentById,
   createRecruitment,
   updateRecruitment,
