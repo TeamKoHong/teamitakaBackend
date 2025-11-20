@@ -10,6 +10,22 @@ const getAllRecruitments = async (req, res) => {
   }
 };
 
+const getMyRecruitments = async (req, res) => {
+  try {
+    const user_id = req.user.userId; // authMiddleware에서 설정
+    const { limit = 10, offset = 0 } = req.query;
+
+    const recruitments = await recruitmentService.getMyRecruitments(user_id, {
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+
+    res.status(200).json(recruitments);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 const getRecruitmentById = async (req, res) => {
   try {
     const { recruitment_id } = req.params;
@@ -71,6 +87,7 @@ const deleteRecruitment = async (req, res) => {
 
 module.exports = {
   getAllRecruitments,
+  getMyRecruitments,
   getRecruitmentById,
   createRecruitment,
   updateRecruitment,
