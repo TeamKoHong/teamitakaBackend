@@ -231,6 +231,12 @@ PUT    /api/projects/:id               # 프로젝트 수정
 DELETE /api/projects/:id               # 프로젝트 삭제
 ```
 
+#### 🏷️ 모집공고 (Recruitments)
+```
+POST   /api/recruitments               # 모집공고 생성 (해시태그 지원)
+GET    /api/recruitments/:id           # 모집공고 상세 조회 (Hashtags 배열 포함)
+```
+
 #### 📝 지원서 (Applications)
 ```
 POST   /api/applications/:recruitment_id          # 지원서 제출 (자기소개 + 포트폴리오)
@@ -291,9 +297,11 @@ GET    /api/health                     # 서버 상태 확인
 | **Users** | 사용자 계정 및 프로필 |
 | **Projects** | 프로젝트 정보 |
 | **ProjectMembers** | 프로젝트 팀 멤버 |
-| **Recruitments** | 프로젝트 모집 공고 (이미지 지원) |
+| **Recruitments** | 프로젝트 모집 공고 (이미지 지원, 해시태그 지원) |
 | **Applications** | 프로젝트 지원서 (자기소개 + 포트폴리오) |
 | **ApplicationPortfolios** | 지원서-포트폴리오 연결 (M:N 관계) |
+| **Hashtags** | 해시태그 태그 관리 |
+| **recruitment_hashtags** | 모집공고-해시태그 연결 (M:N 관계) |
 | **Comments** | 프로젝트 댓글 |
 | **Reviews** | 프로젝트 리뷰 및 팀원 평가 |
 | **Notifications** | 사용자 알림 |
@@ -645,13 +653,33 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.3.0 |
-| **마지막 업데이트** | 2025-11-16 |
+| **버전** | 1.3.1 |
+| **마지막 업데이트** | 2025-11-17 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
 
 ## 🔄 변경 이력
+
+### v1.3.1 (2025-11-17)
+- 🏷️ **모집공고-해시태그 시스템 구현**
+  - recruitment_hashtags 중간 테이블 생성 (M:N 관계)
+  - Hashtag 모델 스키마 PostgreSQL 호환성 작업
+  - POST /api/recruitments 해시태그 생성 지원
+    - # 기호 자동 제거 및 유효성 검사
+    - 중복 필터링, 빈 값 제거, 최대 5개 제한
+    - findOrCreate로 기존 태그 재사용
+  - GET /api/recruitments/:id 응답에 Hashtags 배열 추가
+  - 해시태그 필드: hashtag_id (UUID), name (문자열)
+- 🔄 **Programmatic Migration 시스템**
+  - Render Free Tier 대응 (Shell 없이 자동 마이그레이션)
+  - SequelizeMeta 테이블로 마이그레이션 이력 추적
+  - Production 환경 서버 시작 시 자동 실행
+  - 마이그레이션 실패 시에도 서버 시작 보장
+- 🔧 **데이터베이스 스키마 일치화**
+  - Hashtag 모델: id → hashtag_id, content → name
+  - 실제 PostgreSQL 스키마와 Sequelize 모델 동기화
+  - 외래 키 제약조건 올바른 컬럼 참조 (hashtags.hashtag_id)
 
 ### v1.3.0 (2025-11-16)
 - 📝 **지원서 제출 API 포트폴리오 연결 기능**

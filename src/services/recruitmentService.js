@@ -75,7 +75,7 @@ const getRecruitmentById = async (recruitment_id, cookies, setCookie) => {
 };
 
 // 📌 모집공고 생성
-const createRecruitment = async ({ title, description, max_applicants, user_id, recruitment_start, recruitment_end, project_type, photo_url }) => {
+const createRecruitment = async ({ title, description, max_applicants, user_id, recruitment_start, recruitment_end, project_type, photo_url, hashtags }) => {
   const recruitment = await Recruitment.create({
     title,
     description,
@@ -87,6 +87,23 @@ const createRecruitment = async ({ title, description, max_applicants, user_id, 
     photo_url,
     status: "ACTIVE", // DB 기본값에 맞춤
   });
+
+  // 해시태그 처리
+  if (hashtags && Array.isArray(hashtags) && hashtags.length > 0) {
+    // # 기호 제거 및 유효성 검사
+    const cleanedTags = hashtags
+      .map(tag => tag.replace(/^#/, '').trim()) // # 제거
+      .filter(tag => tag.length > 0) // 빈 문자열 제거
+      .filter((tag, index, self) => self.indexOf(tag) === index) // 중복 제거
+      .slice(0, 5); // 최대 5개
+
+    if (cleanedTags.length > 0) {
+      const hashtagResults = await Promise.all(
+        cleanedTags.map(tag => Hashtag.findOrCreate({ where: { name: tag } }))
+      );
+      await recruitment.setHashtags(hashtagResults.map(([tag]) => tag));
+    }
+  }
 
   return recruitment;
 };
@@ -115,7 +132,7 @@ const updateRecruitment = async (recruitment_id, { title, description, status, s
   // 해시태그 업데이트
   if (hashtags && hashtags.length > 0) {
     const hashtagResults = await Promise.all(
-      hashtags.map(tag => Hashtag.findOrCreate({ where: { content: tag } }))
+      hashtags.map(tag => Hashtag.findOrCreate({ where: { name: tag } }))
     );
     await recruitment.setHashtags(hashtagResults.map(([tag]) => tag));
   }
