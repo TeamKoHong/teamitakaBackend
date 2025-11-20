@@ -231,6 +231,15 @@ PUT    /api/projects/:id               # 프로젝트 수정
 DELETE /api/projects/:id               # 프로젝트 삭제
 ```
 
+#### 📢 모집공고 (Recruitments)
+```
+GET    /api/recruitments               # 전체 모집공고 목록 (지원자 수 포함)
+GET    /api/recruitments/:id           # 모집공고 상세 조회 (작성자 ID, 지원자 수 포함)
+POST   /api/recruitments               # 모집공고 작성 (해시태그 지원)
+PUT    /api/recruitments/:id           # 모집공고 수정
+DELETE /api/recruitments/:id           # 모집공고 삭제
+```
+
 #### 📝 지원서 (Applications)
 ```
 POST   /api/applications/:recruitment_id          # 지원서 제출 (자기소개 + 포트폴리오)
@@ -652,6 +661,16 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 | **테스트 커버리지** | 진행 중 |
 
 ## 🔄 변경 이력
+
+### v1.3.1 (2025-11-20)
+- 🎯 **모집공고 상세 조회 API 개선** (`GET /api/recruitments/:id`)
+  - `user_id` 필드 추가: 모집글 작성자 ID 반환 (프론트엔드 소유자 확인용)
+  - `applicant_count` 필드 추가: 실시간 지원자 수 계산 (서브쿼리)
+  - `created_at` 필드 포함: 모집글 생성 시간
+  - 프론트엔드 조건부 렌더링 지원 (작성자: "지원자 보기", 일반 사용자: "지원하기")
+- 🐛 **Hashtag 모델 버그 수정**
+  - 해시태그 attributes 수정: `content` → `name`
+  - 모집공고 상세 조회 시 해시태그 정상 반환
 
 ### v1.3.0 (2025-11-16)
 - 📝 **지원서 제출 API 포트폴리오 연결 기능**
