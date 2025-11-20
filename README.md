@@ -231,10 +231,13 @@ PUT    /api/projects/:id               # 프로젝트 수정
 DELETE /api/projects/:id               # 프로젝트 삭제
 ```
 
-#### 🏷️ 모집공고 (Recruitments)
+#### 📢 모집공고 (Recruitments)
 ```
-POST   /api/recruitments               # 모집공고 생성 (해시태그 지원)
-GET    /api/recruitments/:id           # 모집공고 상세 조회 (Hashtags 배열 포함)
+GET    /api/recruitments               # 전체 모집공고 목록 (지원자 수 포함)
+GET    /api/recruitments/:id           # 모집공고 상세 조회 (작성자 ID, 지원자 수 포함)
+POST   /api/recruitments               # 모집공고 작성 (해시태그 지원)
+PUT    /api/recruitments/:id           # 모집공고 수정
+DELETE /api/recruitments/:id           # 모집공고 삭제
 ```
 
 #### 📝 지원서 (Applications)
@@ -661,25 +664,15 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 ## 🔄 변경 이력
 
-### v1.3.1 (2025-11-17)
-- 🏷️ **모집공고-해시태그 시스템 구현**
-  - recruitment_hashtags 중간 테이블 생성 (M:N 관계)
-  - Hashtag 모델 스키마 PostgreSQL 호환성 작업
-  - POST /api/recruitments 해시태그 생성 지원
-    - # 기호 자동 제거 및 유효성 검사
-    - 중복 필터링, 빈 값 제거, 최대 5개 제한
-    - findOrCreate로 기존 태그 재사용
-  - GET /api/recruitments/:id 응답에 Hashtags 배열 추가
-  - 해시태그 필드: hashtag_id (UUID), name (문자열)
-- 🔄 **Programmatic Migration 시스템**
-  - Render Free Tier 대응 (Shell 없이 자동 마이그레이션)
-  - SequelizeMeta 테이블로 마이그레이션 이력 추적
-  - Production 환경 서버 시작 시 자동 실행
-  - 마이그레이션 실패 시에도 서버 시작 보장
-- 🔧 **데이터베이스 스키마 일치화**
-  - Hashtag 모델: id → hashtag_id, content → name
-  - 실제 PostgreSQL 스키마와 Sequelize 모델 동기화
-  - 외래 키 제약조건 올바른 컬럼 참조 (hashtags.hashtag_id)
+### v1.3.1 (2025-11-20)
+- 🎯 **모집공고 상세 조회 API 개선** (`GET /api/recruitments/:id`)
+  - `user_id` 필드 추가: 모집글 작성자 ID 반환 (프론트엔드 소유자 확인용)
+  - `applicant_count` 필드 추가: 실시간 지원자 수 계산 (서브쿼리)
+  - `created_at` 필드 포함: 모집글 생성 시간
+  - 프론트엔드 조건부 렌더링 지원 (작성자: "지원자 보기", 일반 사용자: "지원하기")
+- 🐛 **Hashtag 모델 버그 수정**
+  - 해시태그 attributes 수정: `content` → `name`
+  - 모집공고 상세 조회 시 해시태그 정상 반환
 
 ### v1.3.0 (2025-11-16)
 - 📝 **지원서 제출 API 포트폴리오 연결 기능**
