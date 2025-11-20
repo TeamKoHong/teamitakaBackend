@@ -103,12 +103,11 @@ const getMyProjects = async (req, res) => {
     const { sequelize } = require("../models");
     const { QueryTypes } = require("sequelize");
 
-    // 상태 매핑: ongoing/recruiting → ACTIVE, completed → COMPLETED, cancelled → CANCELLED
+    // 상태 매핑: Project 모델 ENUM 값에 맞춤 ("예정", "진행 중", "완료")
     const statusMap = {
-      'ongoing': 'ACTIVE',
-      'recruiting': 'ACTIVE',  // 프론트엔드에서 recruiting으로 요청하는 경우도 처리
-      'completed': 'COMPLETED',
-      'cancelled': 'CANCELLED'
+      'ongoing': '진행 중',      // 진행 중인 프로젝트
+      'recruiting': '예정',      // 모집 중 (시작 전)
+      'completed': '완료'        // 완료된 프로젝트
     };
 
     let statusFilter = '';
@@ -163,8 +162,11 @@ const getMyProjects = async (req, res) => {
         p.title,
         p.description,
         p.status,
+        p.start_date,
+        p.end_date,
         p.created_at,
         p.updated_at,
+        MIN(r.recruitment_id) as recruitment_id,
         COUNT(DISTINCT r.recruitment_id) as recruitment_count,
         COALESCE(mc.member_count, 0) as member_count,
         COALESCE(urc.completed_reviews, 0) as completed_reviews,
@@ -178,7 +180,7 @@ const getMyProjects = async (req, res) => {
       LEFT JOIN member_counts mc ON p.project_id = mc.project_id
       LEFT JOIN user_review_counts urc ON p.project_id = urc.project_id
       WHERE p.project_id IN (:projectIds) ${statusFilter}
-      GROUP BY p.project_id, p.title, p.description, p.status, p.created_at, p.updated_at, mc.member_count, urc.completed_reviews
+      GROUP BY p.project_id, p.title, p.description, p.status, p.start_date, p.end_date, p.created_at, p.updated_at, mc.member_count, urc.completed_reviews
       ORDER BY p.created_at DESC
     `;
 
@@ -214,8 +216,11 @@ const getMyProjects = async (req, res) => {
       title: p.title,
       description: p.description,
       status: p.status,
+      start_date: p.start_date,
+      end_date: p.end_date,
       created_at: p.created_at,
       updated_at: p.updated_at,
+      recruitment_id: p.recruitment_id || null,
       recruitment_count: parseInt(p.recruitment_count) || 0,
       evaluation_status: p.evaluation_status,
       // 추가 정보 (디버깅용, 프론트엔드에서 활용 가능)
