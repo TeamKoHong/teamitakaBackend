@@ -166,7 +166,7 @@ const getMyProjects = async (req, res) => {
         p.end_date,
         p.created_at,
         p.updated_at,
-        MIN(r.recruitment_id) as recruitment_id,
+        (ARRAY_AGG(r.recruitment_id))[1] as recruitment_id,
         COUNT(DISTINCT r.recruitment_id) as recruitment_count,
         COALESCE(mc.member_count, 0) as member_count,
         COALESCE(urc.completed_reviews, 0) as completed_reviews,
