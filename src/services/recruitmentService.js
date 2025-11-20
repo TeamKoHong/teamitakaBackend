@@ -44,7 +44,33 @@ const getRecruitmentById = async (recruitment_id, cookies, setCookie) => {
   }
 
   return await Recruitment.findByPk(recruitment_id, {
-    include: [{ model: Hashtag, attributes: ["content"] }],
+    attributes: [
+      'recruitment_id',
+      'title',
+      'description',
+      'status',
+      'user_id',              // 작성자 ID (프론트엔드 소유자 확인용)
+      'project_id',
+      'views',
+      'max_applicants',
+      'recruitment_start',
+      'recruitment_end',
+      'project_type',
+      'photo_url',
+      'created_at',           // 생성 시간
+      'updated_at',
+      [
+        sequelize.literal(`(
+          SELECT COUNT(*) FROM applications AS a
+          WHERE a.recruitment_id = "Recruitment"."recruitment_id"
+        )`),
+        'applicant_count',    // 지원자 수
+      ],
+    ],
+    include: [{
+      model: Hashtag,
+      attributes: ["name"]    // 수정: "content" → "name"
+    }],
   });
 };
 
