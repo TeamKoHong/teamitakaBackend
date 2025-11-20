@@ -31,7 +31,7 @@ const createRecruitment = async (req, res) => {
     // JWT에서 user_id 가져오기 (authMiddleware가 설정)
     const user_id = req.user.userId;
 
-    const { title, description, max_applicants, recruitment_start, recruitment_end, project_type, photo_url } = req.body;
+    const { title, description, max_applicants, recruitment_start, recruitment_end, project_type, photo_url, hashtags } = req.body;
     const newRecruitment = await recruitmentService.createRecruitment({
       title,
       description,
@@ -41,6 +41,7 @@ const createRecruitment = async (req, res) => {
       recruitment_end,
       project_type,
       photo_url,
+      hashtags,
     });
     res.status(201).json(newRecruitment);
   } catch (error) {
