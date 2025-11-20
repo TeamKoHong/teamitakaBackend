@@ -7,6 +7,9 @@ const authMiddleware = require("../middlewares/authMiddleware");
 // 모집공고 전체 조회
 router.get("/", recruitmentController.getAllRecruitments);
 
+// 내가 작성한 모집공고 목록 조회 (/:id보다 먼저 정의해야 함!)
+router.get("/mine", authMiddleware, recruitmentController.getMyRecruitments);
+
 // 모집공고별 지원자 목록 조회 (RESTful 설계)
 router.get("/:recruitment_id/applications", authMiddleware, applicationController.getApplicants);
 
