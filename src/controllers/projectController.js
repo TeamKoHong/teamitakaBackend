@@ -9,7 +9,7 @@ const createProject = async (req, res) => {
     const newProject = await Project.create({
       ...req.body,
       user_id,
-      status: req.body.status || "예정"
+      status: req.body.status || "ACTIVE"
     });
 
     res.status(201).json(newProject);
@@ -74,7 +74,7 @@ const getProjectById = async (req, res) => {
 // getCompletedProjects
 const getCompletedProjects = async (req, res) => {
   try {
-    const projects = await Project.findAll({ where: { status: "완료" } });
+    const projects = await Project.findAll({ where: { status: "COMPLETED" } });
     res.json(projects);
   } catch (err) {
     res.status(500).json({ message: "완료된 프로젝트 조회 실패" });
@@ -86,8 +86,8 @@ const updateProject = async (project_id, updateData) => {
   const project = await Project.findByPk(project_id);
   if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
 
-  // status가 "완료"일 경우, end_date가 없으면 현재 날짜로 설정
-  if (updateData.status === "완료" && !project.end_date) {
+  // status가 "COMPLETED"일 경우, end_date가 없으면 현재 날짜로 설정
+  if (updateData.status === "COMPLETED" && !project.end_date) {
     updateData.end_date = new Date();
   }
 
@@ -103,11 +103,12 @@ const getMyProjects = async (req, res) => {
     const { sequelize } = require("../models");
     const { QueryTypes } = require("sequelize");
 
-    // 상태 매핑: Project 모델 ENUM 값에 맞춤 ("예정", "진행 중", "완료")
+    // 상태 매핑: Project 모델 ENUM 값에 맞춤 ("ACTIVE", "COMPLETED", "CANCELLED")
     const statusMap = {
-      'ongoing': '진행 중',      // 진행 중인 프로젝트
-      'recruiting': '예정',      // 모집 중 (시작 전)
-      'completed': '완료'        // 완료된 프로젝트
+      'ongoing': 'ACTIVE',       // 진행 중인 프로젝트
+      'active': 'ACTIVE',        // 활성 프로젝트 (별칭)
+      'completed': 'COMPLETED',  // 완료된 프로젝트
+      'cancelled': 'CANCELLED'   // 취소된 프로젝트
     };
 
     let statusFilter = '';
@@ -297,7 +298,7 @@ const createProjectFromRecruitment = async (req, res) => {
       user_id: recruitment.user_id,  // 모집공고 작성자
       start_date: start_date || null,
       end_date: end_date || null,
-      status: "진행 중"
+      status: "ACTIVE"
     }, { transaction });
 
     // 5. 프로젝트 멤버 추가

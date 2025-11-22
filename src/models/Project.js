@@ -37,8 +37,8 @@ module.exports = (sequelize) => {
         allowNull: true,
       },
       status: {
-        type: DataTypes.ENUM("예정", "진행 중", "완료"),
-        defaultValue: "예정",
+        type: DataTypes.ENUM("ACTIVE", "COMPLETED", "CANCELLED"),
+        defaultValue: "ACTIVE",
         allowNull: false,
       },
       role: {
