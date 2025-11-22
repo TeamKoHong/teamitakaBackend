@@ -262,6 +262,26 @@ PUT    /api/comments/:id               # 댓글 수정
 DELETE /api/comments/:id               # 댓글 삭제
 ```
 
+#### 📅 일정 (Schedule)
+```
+POST   /api/schedule/create            # 일정 생성
+GET    /api/schedule/project/:project_id # 프로젝트별 일정 조회
+PUT    /api/schedule/:schedule_id      # 일정 수정
+DELETE /api/schedule/:schedule_id      # 일정 삭제
+```
+
+#### 📝 프로젝트 게시판 (Project Posts)
+```
+POST   /api/:project_id/posts          # 게시물 생성
+GET    /api/:project_id/posts          # 게시물 목록 조회
+GET    /api/posts/:post_id             # 게시물 상세 조회
+```
+
+#### 💾 임시저장 (Drafts)
+```
+POST   /api/recruitment/draft          # 모집공고 임시저장
+```
+
 #### 🔍 검색 (Search)
 ```
 GET    /api/search/projects            # 프로젝트 검색
@@ -656,13 +676,21 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.3.1 |
-| **마지막 업데이트** | 2025-11-17 |
+| **버전** | 1.4.0 |
+| **마지막 업데이트** | 2025-11-22 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
 
 ## 🔄 변경 이력
+
+### v1.4.0 (2025-11-22)
+- 📅 **일정 관리 기능 추가**
+  - 프로젝트별 일정 생성, 조회, 수정, 삭제 API 구현
+- 📝 **프로젝트 게시판 기능 추가**
+  - 프로젝트 내 게시물 작성 및 조회 기능 구현
+- 💾 **모집공고 임시저장 기능**
+  - 작성 중인 모집공고 임시저장 API 추가
 
 ### v1.3.1 (2025-11-20)
 - 🎯 **모집공고 상세 조회 API 개선** (`GET /api/recruitments/:id`)
