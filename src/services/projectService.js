@@ -13,7 +13,7 @@ const createProject = async (data) => {
     recruitment_id,
     start_date,
     end_date,
-    status: status || "예정",
+    status: status || "ACTIVE",
     role,
   });
 
@@ -50,14 +50,14 @@ const getProjectById = async (project_id) => {
 };
 
 const getCompletedProjects = async () => {
-  return await Project.findAll({ where: { status: "완료" } });
+  return await Project.findAll({ where: { status: "COMPLETED" } });
 };
 
 const updateProject = async (project_id, updateData) => {
   const project = await Project.findByPk(project_id);
   if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
 
-  if (updateData.status === "완료" && !project.end_date) {
+  if (updateData.status === "COMPLETED" && !project.end_date) {
     updateData.end_date = new Date();
   }
 
