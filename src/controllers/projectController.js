@@ -141,7 +141,7 @@ const getMyProjects = async (req, res) => {
 
     const projectIds = myProjects.map(p => p.project_id);
 
-    // 2. 프로젝트 기본 정보 + 팀원 수 + 평가 정보 조회
+    // 2. 프로젝트 기본 정보 + 팀원 수 + 평가 정보 + 멤버 목록 조회
     const query = `
       WITH member_counts AS (
         SELECT
@@ -157,6 +157,22 @@ const getMyProjects = async (req, res) => {
         FROM reviews
         WHERE reviewer_id = :user_id
         GROUP BY project_id
+      ),
+      project_members_details AS (
+        SELECT
+          pm.project_id,
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'id', u.user_id,
+              'name', u.username,
+              'position', pm.role,
+              'avatar', NULL,
+              'joined_at', pm.joined_at
+            ) ORDER BY pm.joined_at ASC
+          ) as members
+        FROM project_members pm
+        JOIN users u ON pm.user_id = u.user_id
+        GROUP BY pm.project_id
       )
       SELECT
         p.project_id,
@@ -167,21 +183,22 @@ const getMyProjects = async (req, res) => {
         p.end_date,
         p.created_at,
         p.updated_at,
-        (ARRAY_AGG(r.recruitment_id))[1] as recruitment_id,
-        COUNT(DISTINCT r.recruitment_id) as recruitment_count,
+        p.meeting_time,
+        (SELECT recruitment_id FROM recruitments WHERE project_id = p.project_id ORDER BY created_at DESC LIMIT 1) as recruitment_id,
+        (SELECT COUNT(*) FROM recruitments WHERE project_id = p.project_id) as recruitment_count,
         COALESCE(mc.member_count, 0) as member_count,
         COALESCE(urc.completed_reviews, 0) as completed_reviews,
+        COALESCE(pmd.members, '[]'::json) as members,
         CASE
           WHEN COALESCE(mc.member_count, 0) <= 1 THEN 'NOT_REQUIRED'
           WHEN COALESCE(urc.completed_reviews, 0) >= (COALESCE(mc.member_count, 0) - 1) THEN 'COMPLETED'
           ELSE 'PENDING'
         END as evaluation_status
       FROM projects p
-      LEFT JOIN recruitments r ON p.project_id = r.project_id
       LEFT JOIN member_counts mc ON p.project_id = mc.project_id
       LEFT JOIN user_review_counts urc ON p.project_id = urc.project_id
+      LEFT JOIN project_members_details pmd ON p.project_id = pmd.project_id
       WHERE p.project_id IN (:projectIds) ${statusFilter}
-      GROUP BY p.project_id, p.title, p.description, p.status, p.start_date, p.end_date, p.created_at, p.updated_at, mc.member_count, urc.completed_reviews
       ORDER BY p.created_at DESC
     `;
 
@@ -224,6 +241,8 @@ const getMyProjects = async (req, res) => {
       recruitment_id: p.recruitment_id || null,
       recruitment_count: parseInt(p.recruitment_count) || 0,
       evaluation_status: p.evaluation_status,
+      meeting_schedule: p.meeting_time || null,
+      members: typeof p.members === 'string' ? JSON.parse(p.members) : (p.members || []),
       // 추가 정보 (디버깅용, 프론트엔드에서 활용 가능)
       member_count: parseInt(p.member_count) || 0,
       completed_reviews: parseInt(p.completed_reviews) || 0,
