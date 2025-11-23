@@ -365,6 +365,62 @@ const createProjectFromRecruitment = async (req, res) => {
   }
 };
 
+// getEvalTargets - 프로젝트 평가 대상 목록 조회
+const getEvalTargets = async (req, res) => {
+  try {
+    const { project_id } = req.params;
+    const reviewer_id = req.user.userId;
+    const { sequelize } = require("../models");
+    const { QueryTypes } = require("sequelize");
+
+    // 프로젝트 존재 여부 확인
+    const project = await Project.findByPk(project_id);
+    if (!project) {
+      return res.status(404).json({ error: "프로젝트를 찾을 수 없습니다." });
+    }
+
+    // 평가 대상 목록 조회 (자기 자신 제외)
+    const query = `
+      SELECT
+        pm.user_id as id,
+        u.username as name,
+        pm.role,
+        CASE
+          WHEN r.review_id IS NOT NULL THEN 'completed'
+          ELSE 'pending'
+        END as status
+      FROM project_members pm
+      JOIN users u ON pm.user_id = u.user_id
+      LEFT JOIN reviews r ON r.project_id = pm.project_id
+        AND r.reviewer_id = :reviewer_id
+        AND r.reviewee_id = pm.user_id
+      WHERE pm.project_id = :project_id
+        AND pm.user_id != :reviewer_id
+      ORDER BY pm.joined_at ASC
+    `;
+
+    const targets = await sequelize.query(query, {
+      replacements: { project_id, reviewer_id },
+      type: QueryTypes.SELECT
+    });
+
+    // 다음 평가 대상자 찾기 (첫 번째 pending 상태)
+    const nextPendingMember = targets.find(t => t.status === 'pending') || null;
+
+    return res.status(200).json({
+      targets,
+      nextPendingMember
+    });
+
+  } catch (err) {
+    console.error("🔥 getEvalTargets Error:", err.message);
+    return res.status(500).json({
+      error: "평가 대상 목록 조회 실패",
+      message: err.message
+    });
+  }
+};
+
 module.exports = {
   createProject,
   getAllProjects,
@@ -373,4 +429,5 @@ module.exports = {
   getCompletedProjects,
   getMyProjects,
   createProjectFromRecruitment,
+  getEvalTargets,
 };
