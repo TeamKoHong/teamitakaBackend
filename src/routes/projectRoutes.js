@@ -44,5 +44,8 @@ router.delete("/:project_id/timeline/:event_id", authMiddleware, timelineControl
 router.get("/:project_id/members", memberController.getMembers);
 router.put("/:project_id/members", authMiddleware, memberController.updateMemberRole);
 
+// ✅ 평가 대상 목록 조회
+router.get("/:project_id/eval-targets", authMiddleware, projectController.getEvalTargets);
+
 router.post("/:project_id/posts", projectPostController.createPost);
 module.exports = router;
