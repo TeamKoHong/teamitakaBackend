@@ -32,8 +32,20 @@ const verificationRoutes = require("./routes/verificationRoutes");
 // const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 
 const app = express();
-const corsOrigin = process.env.CORS_ORIGIN || '*';
+
+// CORS 설정
+const corsOrigin = process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || '*';
 const allowAnyOrigin = process.env.ALLOW_ANY_ORIGIN === 'true';
+
+// 쉼표로 구분된 여러 origin 파싱
+const parseOrigins = (originString) => {
+  if (originString === '*') return originString;
+  const origins = originString.split(',').map(o => o.trim());
+  return origins.length === 1 ? origins[0] : origins;
+};
+
+const parsedOrigin = parseOrigins(corsOrigin);
+
 const corsOptions = allowAnyOrigin
   ? {
       origin: (origin, callback) => callback(null, true),
@@ -42,7 +54,13 @@ const corsOptions = allowAnyOrigin
       allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
       optionsSuccessStatus: 204,
     }
-  : { origin: corsOrigin, credentials: true };
+  : {
+      origin: parsedOrigin,
+      credentials: true,
+      methods: ['GET','HEAD','PUT','PATCH','POST','DELETE'],
+      allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
+      optionsSuccessStatus: 204,
+    };
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
