@@ -126,10 +126,10 @@ const updateApplicationStatus = async (application_id, status) => {
   const recruitment = await Recruitment.findByPk(application.recruitment_id);
   const applicationCount = await Application.count({ where: { recruitment_id: application.recruitment_id } });
 
-  // 승인된 인원이 max_applicants보다 작다면 모집 상태를 다시 OPEN으로 변경
+  // 승인된 인원이 max_applicants보다 작다면 모집 상태를 다시 ACTIVE로 변경
   if (status === "REJECTED" && recruitment.status === "CLOSED") {
     if (applicationCount < recruitment.max_applicants) {
-      await recruitment.update({ status: "OPEN" });
+      await recruitment.update({ status: "ACTIVE" });
     }
   }
 
