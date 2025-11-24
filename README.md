@@ -720,7 +720,7 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.4.1 |
+| **버전** | 1.5.0 |
 | **마지막 업데이트** | 2025-11-24 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
@@ -742,9 +742,12 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
   - `requirePhoneVerified` 미들웨어 추가 (전화번호 인증 필수 라우트용)
   - 로컬(MySQL) 및 프로덕션(Supabase PostgreSQL) 마이그레이션 완료
   - 전화번호 인증 테스트 스크립트 포함 ([test-phone-auth.js](test-phone-auth.js))
-- 🐛 **User 모델 버그 수정**
-  - `user_type` 필드 매핑 수정 (snake_case → camelCase)
-  - 타임스탬프 필드 설정 수정 (`createdAt`, `updatedAt`)
+- 🐛 **User 모델 버그 수정 및 환경별 호환성 개선**
+  - 중복된 `user_type` 필드 제거 (role 필드와 중복, 데이터베이스 컬럼 오류 해결)
+  - 환경별 타임스탬프 컬럼명 설정 추가:
+    - Local (MySQL): camelCase (`createdAt`, `updatedAt`)
+    - Production (PostgreSQL): snake_case (`created_at`, `updated_at`)
+    - `NODE_ENV`에 따른 자동 전환으로 데이터베이스 호환성 보장
   - 존재하지 않는 `experience_years` 필드 제거
 - 📝 **문서화**
   - Firebase 전화번호 인증 가이드 추가
