@@ -61,7 +61,7 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "Projects",
+      tableName: "projects",
       freezeTableName: true,
       timestamps: true,
       createdAt: 'created_at',
