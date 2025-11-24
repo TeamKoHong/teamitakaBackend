@@ -137,7 +137,7 @@ const createRecruitment = async ({ title, description, max_applicants, user_id, 
     recruitment_end,
     project_type,
     photo_url,
-    status: "open", // PostgreSQL CHECK constraint와 일치 (소문자)
+    status: "ACTIVE", // Production DB constraint: ACTIVE, CLOSED, FILLED
   });
 
   // 해시태그 처리
@@ -166,7 +166,7 @@ const updateRecruitment = async (recruitment_id, { title, description, status, s
   if (!recruitment) throw new Error("모집공고가 존재하지 않습니다.");
 
   // 모집이 마감될 때 프로젝트 자동 생성
-  if (status === "closed" && recruitment.status !== "closed") {
+  if (status === "CLOSED" && recruitment.status !== "CLOSED") {
     const existingProject = await Project.findOne({ where: { recruitment_id } });
     if (!existingProject) {
       await Project.create({
