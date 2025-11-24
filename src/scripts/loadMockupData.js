@@ -49,7 +49,7 @@ async function createRecruitment(data, users, transaction) {
       recruitment_id: data.recruitment_id || uuidv4(),
       title: data.title || "Untitled Recruitment",
       description: data.description || "No description provided",
-      status: data.status || "OPEN",
+      status: data.status || "ACTIVE",
       user_id: data.user_id,
       photo: data.photo || null,
       createdAt: new Date(data.createdAt || Date.now()),
