@@ -18,6 +18,11 @@ const getAllRecruitmentsWithApplicationCount = async () => {
         "applicationCount",
       ],
     ],
+    include: [{
+      model: Hashtag,
+      attributes: ["name"],
+      through: { attributes: [] } // 중간 테이블 데이터 제외
+    }],
     order: [
       [
         sequelize.literal(`(
@@ -132,7 +137,7 @@ const createRecruitment = async ({ title, description, max_applicants, user_id, 
     recruitment_end,
     project_type,
     photo_url,
-    status: "ACTIVE", // DB 기본값에 맞춤
+    status: "OPEN", // 모델 ENUM("OPEN", "CLOSED")과 일치
   });
 
   // 해시태그 처리
