@@ -276,3 +276,47 @@ exports.getCurrentUser = async (req, res) => {
     });
   }
 };
+
+// POST /api/auth/phone/verify - Firebase 전화번호 인증
+exports.verifyPhone = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    // 1️⃣ 필수 값 검증
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        error: "❌ Firebase ID Token이 필요합니다."
+      });
+    }
+
+    console.log("📱 전화번호 인증 요청 수신");
+
+    // 2️⃣ Phone Auth Service를 통한 인증 처리
+    const { verifyPhoneAndAuthenticate } = require("../services/phoneAuthService");
+    const result = await verifyPhoneAndAuthenticate(idToken);
+
+    // 3️⃣ JWT 토큰을 HttpOnly 쿠키로 설정
+    res.cookie("token", result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
+    // 4️⃣ 성공 응답
+    return res.status(200).json({
+      success: true,
+      message: result.isNewUser ? "✅ 회원가입 및 로그인 성공!" : "✅ 로그인 성공!",
+      token: result.token,
+      user: result.user,
+      isNewUser: result.isNewUser
+    });
+  } catch (error) {
+    console.error("🚨 전화번호 인증 오류:", error);
+    return res.status(401).json({
+      success: false,
+      error: "전화번호 인증에 실패했습니다.",
+      details: error.message
+    });
+  }
+};
