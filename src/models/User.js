@@ -89,8 +89,11 @@ module.exports = (sequelize) => {
     {
       tableName: "users",
       timestamps: true,
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt',
+      // 🔧 환경별 타임스탬프 컬럼명 설정
+      // - Local (MySQL): createdAt, updatedAt (camelCase)
+      // - Production (PostgreSQL): created_at, updated_at (snake_case)
+      createdAt: process.env.NODE_ENV === 'production' ? 'created_at' : 'createdAt',
+      updatedAt: process.env.NODE_ENV === 'production' ? 'updated_at' : 'updatedAt',
     }
   );
 
