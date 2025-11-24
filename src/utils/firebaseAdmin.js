@@ -54,11 +54,36 @@ const getAuth = () => {
  * @returns {Promise<admin.auth.DecodedIdToken>}
  */
 const verifyIdToken = async (idToken) => {
+  // 🧪 개발 환경: 테스트 토큰 허용
+  if (process.env.NODE_ENV === 'development' && idToken.startsWith('dev-test-token-')) {
+    console.log('🧪 [DEV MODE] 테스트 토큰 감지:', idToken);
+    console.log('🧪 [DEV MODE] Firebase 검증 건너뛰고 테스트 사용자 반환');
+
+    // 테스트용 고정 데이터 반환 (DecodedIdToken 형식)
+    return {
+      uid: `test-user-uid-${Date.now()}`,
+      phone_number: '+821012345678',
+      auth_time: Math.floor(Date.now() / 1000),
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      firebase: {
+        sign_in_provider: 'phone',
+        identities: {
+          phone: ['+821012345678']
+        }
+      }
+    };
+  }
+
+  // 프로덕션 환경: 실제 Firebase ID Token 검증
   const auth = getAuth();
   if (!auth) {
     throw new Error('Firebase Admin이 초기화되지 않았습니다.');
   }
-  return await auth.verifyIdToken(idToken);
+
+  const decodedToken = await auth.verifyIdToken(idToken);
+  console.log('✅ Firebase ID Token 검증 성공');
+  return decodedToken;
 };
 
 /**
