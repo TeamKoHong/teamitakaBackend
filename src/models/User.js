@@ -26,6 +26,7 @@ module.exports = (sequelize) => {
       user_type: {
         type: DataTypes.ENUM("ADMIN", "MEMBER"),
         defaultValue: "MEMBER",
+        field: 'userType', // 데이터베이스 컬럼명 매핑
       },
       role: {
         type: DataTypes.ENUM("ADMIN", "MEMBER"),
@@ -55,11 +56,11 @@ module.exports = (sequelize) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      experience_years: { // 경력 (년)
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        comment: "경력 (년 단위)",
-      },
+      // experience_years: { // 경력 (년) - 데이터베이스에 컬럼 없음
+      //   type: DataTypes.INTEGER,
+      //   allowNull: true,
+      //   comment: "경력 (년 단위)",
+      // },
       portfolio_url: { // 포트폴리오 링크
         type: DataTypes.STRING(255),
         allowNull: true,
@@ -89,22 +90,12 @@ module.exports = (sequelize) => {
         allowNull: true,
         comment: '전화번호 인증 완료 시각',
       },
-      created_at: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-      },
-      updated_at: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-      },
     },
     {
       tableName: "users",
       timestamps: true,
-      createdAt: 'created_at',
-      updatedAt: 'updated_at',
+      createdAt: 'createdAt',
+      updatedAt: 'updatedAt',
     }
   );
 
