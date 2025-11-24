@@ -749,6 +749,19 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
     - Production (PostgreSQL): snake_case (`created_at`, `updated_at`)
     - `NODE_ENV`에 따른 자동 전환으로 데이터베이스 호환성 보장
   - 존재하지 않는 `experience_years` 필드 제거
+- 🔧 **Recruitment Status 통일 (Database 호환성 해결)**
+  - Local과 Production DB 간 status 값 불일치 해결:
+    - Local (MySQL): ENUM('OPEN', 'CLOSED') → ENUM('ACTIVE', 'CLOSED', 'FILLED')
+    - Production (PostgreSQL): CHECK('ACTIVE', 'CLOSED', 'FILLED') - 기존 유지
+  - 코드 전체 통일: 'OPEN' → 'ACTIVE' 변경
+    - Recruitment 모델 ENUM 정의 수정
+    - recruitmentService, applicationService, loadMockupData 업데이트
+  - Local MySQL 마이그레이션 생성 및 실행 완료
+    - 기존 22개 레코드 자동 마이그레이션 (OPEN → ACTIVE)
+  - Status 값 정의:
+    - ACTIVE: 모집중 (기존 OPEN)
+    - CLOSED: 모집마감
+    - FILLED: 모집완료 (Production 기존 데이터)
 - 📝 **문서화**
   - Firebase 전화번호 인증 가이드 추가
   - 환경 변수 설정 가이드 업데이트
