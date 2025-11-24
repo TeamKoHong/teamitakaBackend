@@ -23,11 +23,6 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
-      user_type: {
-        type: DataTypes.ENUM("ADMIN", "MEMBER"),
-        defaultValue: "MEMBER",
-        field: 'userType', // 데이터베이스 컬럼명 매핑
-      },
       role: {
         type: DataTypes.ENUM("ADMIN", "MEMBER"),
         defaultValue: "MEMBER",
