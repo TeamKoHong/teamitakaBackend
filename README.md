@@ -28,6 +28,11 @@
 - 도메인 인증 완료 (teamitaka.com)
 - JWT 기반 인증 시스템
 - 구글 OAuth 소셜 로그인
+- **Firebase 전화번호 인증 (Phone Authentication)**
+  - Firebase Admin SDK 통합
+  - SMS 기반 전화번호 인증
+  - 자동 사용자 생성 및 JWT 토큰 발급
+  - 전화번호 인증 상태 추적
 - bcrypt 기반 안전한 비밀번호 암호화
 - Rate Limiting 적용 (중복 요청 방지)
 
@@ -92,6 +97,7 @@
 ### 인증 및 보안
 - **JWT**: jsonwebtoken, jose
 - **비밀번호 암호화**: bcrypt, bcryptjs
+- **Firebase**: firebase-admin (전화번호 인증)
 - **유효성 검증**: Joi, express-validator
 - **Rate Limiting**: express-rate-limit
 - **CORS**: cors
@@ -217,6 +223,7 @@ POST   /api/auth/logout                # 로그아웃
 POST   /api/auth/send-verification     # 이메일 인증 코드 전송
 POST   /api/auth/verify-code           # 이메일 인증 코드 확인
 GET    /api/auth/google                # 구글 OAuth 로그인
+POST   /api/auth/phone/verify          # Firebase 전화번호 인증
 ```
 
 #### 👤 사용자 (Users)
@@ -524,6 +531,7 @@ Render 대시보드의 **Environment** 탭에서 필요한 환경 변수 추가:
 - `SUPABASE_DB_PORT=5432`
 - `SENDGRID_API_KEY`
 - `EMAIL_FROM=noreply@teamitaka.com`
+- `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL` (전화번호 인증)
 - 기타 필수 환경 변수
 
 #### 3️⃣ 자동 배포
@@ -591,6 +599,12 @@ SENDGRID_API_KEY=SendGrid_API_키      # Full Access 권한 필요
 GOOGLE_CLIENT_ID=구글_클라이언트_ID
 GOOGLE_CLIENT_SECRET=구글_클라이언트_시크릿
 GOOGLE_CALLBACK_URL=http://localhost:8080/api/auth/google/callback
+
+# Firebase Phone Authentication
+FIREBASE_PROJECT_ID=your-firebase-project-id
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+FIREBASE_API_KEY=your_web_api_key                    # Firebase Console → 프로젝트 설정 → 웹 API 키
 
 # CORS
 CORS_ORIGIN=http://localhost:3000     # 프론트엔드 URL
@@ -713,6 +727,29 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 | **테스트 커버리지** | 진행 중 |
 
 ## 🔄 변경 이력
+
+### v1.5.0 (2025-11-24)
+- 📱 **Firebase 전화번호 인증 구현**
+  - Firebase Admin SDK 통합 (firebase-admin@^12.0.0)
+  - 전화번호 기반 사용자 인증 API 추가 (`POST /api/auth/phone/verify`)
+  - Users 테이블 스키마 확장:
+    - `firebase_phone_uid`: Firebase Phone Auth UID
+    - `phone_number`: E.164 형식 전화번호 저장
+    - `phone_verified`: 전화번호 인증 완료 여부
+    - `phone_verified_at`: 인증 완료 시각
+  - 신규 사용자 자동 생성 및 JWT 토큰 발급
+  - 기존 사용자 전화번호 업데이트 지원
+  - `requirePhoneVerified` 미들웨어 추가 (전화번호 인증 필수 라우트용)
+  - 로컬(MySQL) 및 프로덕션(Supabase PostgreSQL) 마이그레이션 완료
+  - 전화번호 인증 테스트 스크립트 포함 ([test-phone-auth.js](test-phone-auth.js))
+- 🐛 **User 모델 버그 수정**
+  - `user_type` 필드 매핑 수정 (snake_case → camelCase)
+  - 타임스탬프 필드 설정 수정 (`createdAt`, `updatedAt`)
+  - 존재하지 않는 `experience_years` 필드 제거
+- 📝 **문서화**
+  - Firebase 전화번호 인증 가이드 추가
+  - 환경 변수 설정 가이드 업데이트
+  - API 엔드포인트 문서 업데이트
 
 ### v1.4.1 (2025-11-24)
 - 🏷️ **모집글 키워드 기능 개선**
