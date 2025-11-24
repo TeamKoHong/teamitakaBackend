@@ -137,7 +137,7 @@ const createRecruitment = async ({ title, description, max_applicants, user_id, 
     recruitment_end,
     project_type,
     photo_url,
-    status: "OPEN", // 모델 ENUM("OPEN", "CLOSED")과 일치
+    status: "open", // PostgreSQL CHECK constraint와 일치 (소문자)
   });
 
   // 해시태그 처리
