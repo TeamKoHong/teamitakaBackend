@@ -68,6 +68,27 @@ module.exports = (sequelize) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      firebase_phone_uid: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        comment: 'Firebase Phone Auth UID',
+      },
+      phone_number: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        comment: 'E.164 형식 전화번호 (예: +821012345678)',
+      },
+      phone_verified: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        comment: '전화번호 인증 완료 여부',
+      },
+      phone_verified_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: '전화번호 인증 완료 시각',
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,
