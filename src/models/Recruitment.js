@@ -20,8 +20,8 @@ module.exports = (sequelize) => {
         defaultValue: "No description provided",
       },
       status: {
-        type: DataTypes.ENUM("OPEN", "CLOSED"),
-        defaultValue: "OPEN",
+        type: DataTypes.ENUM("ACTIVE", "CLOSED", "FILLED"),
+        defaultValue: "ACTIVE",
       },
       user_id: {
         type: DataTypes.UUID,
