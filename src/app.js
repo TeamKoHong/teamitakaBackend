@@ -26,10 +26,10 @@ const uploadRoutes = require("./routes/uploadRoutes"); // ✅ 업로드 라우�
 
 const verificationRoutes = require("./routes/verificationRoutes");
 
-// const swaggerUi = require('swagger-ui-express');
-// const yaml = require('yamljs');
-// const path = require('path');
-// const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
+const swaggerUi = require('swagger-ui-express');
+const yaml = require('yamljs');
+const path = require('path');
+const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 
 const app = express();
 
@@ -107,8 +107,8 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// swagger 라우트 추가 (임시 비활성화)
-// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Swagger API 문서
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // 앱 시작 시 DB 연결 시도 (테스트 환경 제외)
 if (process.env.NODE_ENV !== 'test') {
