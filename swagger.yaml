@@ -2411,8 +2411,9 @@ paths:
           application/json:
             schema:
               type: object
+              required: [introduction]
               properties:
-                title:
+                introduction:
                   type: string
                 description:
                   type: string
@@ -3521,7 +3522,7 @@ paths:
               type: object
               required: [content]
               properties:
-                content:
+                user_id:
                   type: string
                   example: "진행 상황 공유합니다."
       responses:
