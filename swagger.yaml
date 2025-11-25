@@ -312,6 +312,822 @@ components:
           type: string
           format: date-time
 
+    # ==================== 공통 응답 스키마 ====================
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "요청이 성공적으로 처리되었습니다"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "요청 처리 중 오류가 발생했습니다"
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "ERROR_CODE"
+            details:
+              type: string
+              example: "상세 오류 정보"
+
+    ValidationError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "유효성 검사에 실패했습니다"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "email"
+              message:
+                type: string
+                example: "유효한 이메일 형식이 아닙니다"
+
+    UnauthorizedError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "인증이 필요합니다"
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum: [MISSING_TOKEN, INVALID_TOKEN, EXPIRED_TOKEN]
+              example: "INVALID_TOKEN"
+
+    ForbiddenError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "이 작업을 수행할 권한이 없습니다"
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum: [INSUFFICIENT_PERMISSIONS, RESOURCE_OWNER_ONLY]
+              example: "INSUFFICIENT_PERMISSIONS"
+
+    NotFoundError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "요청한 리소스를 찾을 수 없습니다"
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "RESOURCE_NOT_FOUND"
+            resourceType:
+              type: string
+              example: "recruitment"
+            resourceId:
+              type: string
+              example: "550e8400-e29b-41d4-a716-446655440000"
+
+    ServerError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "서버 오류가 발생했습니다"
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "INTERNAL_SERVER_ERROR"
+            traceId:
+              type: string
+              example: "550e8400-e29b-41d4-a716-446655440000"
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+          minimum: 1
+        pageSize:
+          type: integer
+          example: 10
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          example: 156
+        totalPages:
+          type: integer
+          example: 16
+        hasNextPage:
+          type: boolean
+          example: true
+        hasPreviousPage:
+          type: boolean
+          example: false
+
+    # ==================== Auth 응답 스키마 ====================
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "로그인 성공"
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              description: JWT 액세스 토큰
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            user:
+              $ref: '#/components/schemas/User'
+
+    RegisterResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "회원가입 성공!"
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            user:
+              $ref: '#/components/schemas/User'
+            info:
+              type: object
+              properties:
+                generatedUsername:
+                  type: boolean
+                  example: true
+                university:
+                  type: string
+                  example: "서울대학교"
+                department:
+                  type: string
+                  example: "컴퓨터공학과"
+
+    PhoneVerifyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "전화번호 인증 및 로그인 성공!"
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            user:
+              $ref: '#/components/schemas/User'
+            isNewUser:
+              type: boolean
+              example: false
+
+    EmailVerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "인증번호가 이메일로 전송되었습니다"
+        data:
+          type: object
+          properties:
+            email:
+              type: string
+              example: "user@example.com"
+            expiresIn:
+              type: integer
+              description: 인증코드 만료 시간 (초)
+              example: 180
+
+    # ==================== 목록 응답 스키마 ====================
+    RecruitmentListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "모집글 목록을 조회했습니다"
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Recruitment'
+            pagination:
+              $ref: '#/components/schemas/PaginationMeta'
+
+    RecruitmentDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "모집글을 조회했습니다"
+        data:
+          $ref: '#/components/schemas/Recruitment'
+
+    ApplicationListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "지원 목록을 조회했습니다"
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Application'
+
+    ProjectListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "프로젝트 목록을 조회했습니다"
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Project'
+            pagination:
+              $ref: '#/components/schemas/PaginationMeta'
+
+    ProjectDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "프로젝트를 조회했습니다"
+        data:
+          $ref: '#/components/schemas/Project'
+
+    # ==================== Todo 관련 응답 ====================
+    TodoListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Todo 목록을 조회했습니다"
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Todo'
+            total:
+              type: integer
+              example: 5
+
+    TodoDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Todo'
+
+    # ==================== Timeline 관련 응답 ====================
+    TimelineListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "타임라인을 조회했습니다"
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Timeline'
+            total:
+              type: integer
+              example: 3
+
+    TimelineDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Timeline'
+
+    # ==================== Member 관련 응답 ====================
+    MemberListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "멤버 목록을 조회했습니다"
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                    format: uuid
+                  username:
+                    type: string
+                  profile_image:
+                    type: string
+                  role:
+                    type: string
+                    enum: [팀장, 팀원]
+                  joined_at:
+                    type: string
+                    format: date-time
+            total:
+              type: integer
+              example: 4
+
+    EvalTargetListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "평가 대상 목록을 조회했습니다"
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                    format: uuid
+                  username:
+                    type: string
+                  profile_image:
+                    type: string
+                  is_evaluated:
+                    type: boolean
+                    description: 이미 평가 완료 여부
+            project_id:
+              type: string
+              format: uuid
+
+    # ==================== Project Post 관련 응답 ====================
+    ProjectPostListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  post_id:
+                    type: string
+                    format: uuid
+                  project_id:
+                    type: string
+                    format: uuid
+                  author:
+                    type: object
+                    properties:
+                      user_id:
+                        type: string
+                        format: uuid
+                      username:
+                        type: string
+                  content:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+            total:
+              type: integer
+
+    # ==================== Review 관련 응답 ====================
+    ReviewResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Review'
+
+    ReviewListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Review'
+            average_rating:
+              type: number
+              format: float
+              description: 평균 평점
+            total:
+              type: integer
+
+    # ==================== Comment 관련 응답 ====================
+    CommentListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  comment_id:
+                    type: string
+                    format: uuid
+                  recruitment_id:
+                    type: string
+                    format: uuid
+                  author:
+                    type: object
+                    properties:
+                      user_id:
+                        type: string
+                        format: uuid
+                      username:
+                        type: string
+                      profile_image:
+                        type: string
+                  content:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+            total:
+              type: integer
+
+    CommentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            comment_id:
+              type: string
+              format: uuid
+            recruitment_id:
+              type: string
+              format: uuid
+            content:
+              type: string
+            created_at:
+              type: string
+              format: date-time
+
+    # ==================== Search 관련 응답 ====================
+    SearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            recruitments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Recruitment'
+            projects:
+              type: array
+              items:
+                $ref: '#/components/schemas/Project'
+            users:
+              type: array
+              items:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                    format: uuid
+                  username:
+                    type: string
+                  profile_image:
+                    type: string
+            total:
+              type: integer
+
+    # ==================== Profile 관련 응답 ====================
+    ProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            user_id:
+              type: string
+              format: uuid
+            username:
+              type: string
+            email:
+              type: string
+              format: email
+            profile_image:
+              type: string
+            university:
+              type: string
+            major:
+              type: string
+            bio:
+              type: string
+            skills:
+              type: array
+              items:
+                type: string
+            created_at:
+              type: string
+              format: date-time
+
+    ProfileRatingsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            overall_rating:
+              type: number
+              format: float
+              description: 종합 평점
+            ability:
+              type: number
+              format: float
+            effort:
+              type: number
+              format: float
+            commitment:
+              type: number
+              format: float
+            communication:
+              type: number
+              format: float
+            reflection:
+              type: number
+              format: float
+            review_count:
+              type: integer
+              description: 총 리뷰 수
+
+    # ==================== Scrap 관련 응답 ====================
+    ScrapListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Recruitment'
+            total:
+              type: integer
+
+    ScrapToggleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            is_scraped:
+              type: boolean
+              description: 현재 스크랩 상태
+            scrap_count:
+              type: integer
+              description: 해당 모집글의 총 스크랩 수
+
+    # ==================== Draft 관련 응답 ====================
+    DraftResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            draft_id:
+              type: string
+              format: uuid
+            title:
+              type: string
+            description:
+              type: string
+            saved_at:
+              type: string
+              format: date-time
+
+    # ==================== Dashboard 관련 응답 ====================
+    DashboardSummaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            my_recruitments:
+              type: object
+              properties:
+                active:
+                  type: integer
+                closed:
+                  type: integer
+                total:
+                  type: integer
+            my_applications:
+              type: object
+              properties:
+                pending:
+                  type: integer
+                approved:
+                  type: integer
+                rejected:
+                  type: integer
+            my_projects:
+              type: object
+              properties:
+                in_progress:
+                  type: integer
+                completed:
+                  type: integer
+            unread_notifications:
+              type: integer
+
+    # ==================== Upload 관련 응답 ====================
+    UploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            url:
+              type: string
+              format: uri
+              description: 업로드된 이미지 URL
+            filename:
+              type: string
+            size:
+              type: integer
+              description: 파일 크기 (bytes)
+
 paths:
   # ==================== Health ====================
   /:
@@ -400,11 +1216,72 @@ paths:
                   type: string
                 major:
                   type: string
+            examples:
+              basic:
+                summary: 기본 회원가입
+                value:
+                  username: "hong_gildong"
+                  email: "hong@university.ac.kr"
+                  password: "SecurePass123!"
+                  university: "서울대학교"
+                  major: "컴퓨터공학과"
       responses:
         '201':
           description: 회원가입 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              examples:
+                success:
+                  summary: 회원가입 성공
+                  value:
+                    success: true
+                    message: "✅ 회원가입 성공!"
+                    data:
+                      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      user:
+                        user_id: "550e8400-e29b-41d4-a716-446655440000"
+                        username: "hong_gildong"
+                        email: "hong@university.ac.kr"
+                        role: "MEMBER"
+                        university: "서울대학교"
+                        major: "컴퓨터공학과"
+                        created_at: "2024-01-15T10:30:00Z"
+                      info:
+                        generatedUsername: false
+                        university: "서울대학교"
+                        department: "컴퓨터공학과"
         '400':
-          description: 잘못된 요청
+          description: 잘못된 요청 (이메일 중복, 유효성 검사 실패)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                duplicate_email:
+                  summary: 이메일 중복
+                  value:
+                    success: false
+                    message: "이미 가입된 이메일입니다"
+                    error:
+                      code: "EMAIL_ALREADY_EXISTS"
+                validation_error:
+                  summary: 유효성 검사 실패
+                  value:
+                    success: false
+                    message: "유효성 검사에 실패했습니다"
+                    errors:
+                      - field: "email"
+                        message: "유효한 이메일 형식이 아닙니다"
+                      - field: "password"
+                        message: "비밀번호는 최소 8자 이상이어야 합니다"
+        '500':
+          description: 서버 오류
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
 
   /auth/login:
     post:
@@ -423,11 +1300,71 @@ paths:
                   format: email
                 password:
                   type: string
+            examples:
+              login:
+                summary: 로그인 요청
+                value:
+                  email: "hong@university.ac.kr"
+                  password: "SecurePass123!"
       responses:
         '200':
           description: 로그인 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  summary: 로그인 성공
+                  value:
+                    success: true
+                    message: "로그인 성공"
+                    data:
+                      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      user:
+                        user_id: "550e8400-e29b-41d4-a716-446655440000"
+                        username: "hong_gildong"
+                        email: "hong@university.ac.kr"
+                        role: "MEMBER"
+                        university: "서울대학교"
+                        major: "컴퓨터공학과"
+                        avatar: null
+                        bio: null
         '401':
           description: 인증 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+              examples:
+                invalid_password:
+                  summary: 비밀번호 불일치
+                  value:
+                    success: false
+                    message: "비밀번호가 일치하지 않습니다"
+                    error:
+                      code: "INVALID_PASSWORD"
+                user_not_found:
+                  summary: 사용자 없음
+                  value:
+                    success: false
+                    message: "등록되지 않은 이메일입니다"
+                    error:
+                      code: "USER_NOT_FOUND"
+        '400':
+          description: 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                missing_fields:
+                  summary: 필수 필드 누락
+                  value:
+                    success: false
+                    message: "이메일과 비밀번호를 입력해주세요"
+                    error:
+                      code: "MISSING_CREDENTIALS"
 
   /auth/me:
     get:
@@ -438,8 +1375,47 @@ paths:
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/User'
+              examples:
+                success:
+                  summary: 사용자 정보 조회 성공
+                  value:
+                    success: true
+                    data:
+                      user_id: "550e8400-e29b-41d4-a716-446655440000"
+                      username: "hong_gildong"
+                      email: "hong@university.ac.kr"
+                      role: "MEMBER"
+                      university: "서울대학교"
+                      major: "컴퓨터공학과"
+                      avatar: "https://example.com/avatar.jpg"
+                      bio: "풀스택 개발자를 꿈꾸는 학생입니다"
+                      skills: "React, Node.js, Python"
+                      phone_number: "+821012345678"
+                      phone_verified: true
+                      created_at: "2024-01-15T10:30:00Z"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+              examples:
+                invalid_token:
+                  summary: 유효하지 않은 토큰
+                  value:
+                    success: false
+                    message: "인증 토큰이 유효하지 않습니다"
+                    error:
+                      code: "INVALID_TOKEN"
 
   /auth/validate-password:
     post:
@@ -485,6 +1461,7 @@ paths:
     post:
       tags: [Auth]
       summary: Firebase 전화번호 인증
+      description: Firebase Phone Auth를 통한 전화번호 인증 및 로그인/회원가입
       requestBody:
         required: true
         content:
@@ -499,11 +1476,67 @@ paths:
                 phoneNumber:
                   type: string
                   description: E.164 형식 전화번호 (예: +821012345678)
+            examples:
+              verify:
+                summary: 전화번호 인증 요청
+                value:
+                  idToken: "eyJhbGciOiJSUzI1NiIsImtpZCI6..."
+                  phoneNumber: "+821012345678"
       responses:
         '200':
           description: 인증 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhoneVerifyResponse'
+              examples:
+                existing_user:
+                  summary: 기존 사용자 로그인
+                  value:
+                    success: true
+                    message: "✅ 로그인 성공!"
+                    data:
+                      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      user:
+                        user_id: "550e8400-e29b-41d4-a716-446655440000"
+                        username: "hong_gildong"
+                        phone_number: "+821012345678"
+                        phone_verified: true
+                      isNewUser: false
+                new_user:
+                  summary: 신규 사용자 가입
+                  value:
+                    success: true
+                    message: "✅ 회원가입 및 로그인 성공!"
+                    data:
+                      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      user:
+                        user_id: "550e8400-e29b-41d4-a716-446655440001"
+                        username: "user_1234567890"
+                        phone_number: "+821012345678"
+                        phone_verified: true
+                      isNewUser: true
         '400':
           description: 인증 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_token:
+                  summary: 유효하지 않은 Firebase 토큰
+                  value:
+                    success: false
+                    message: "Firebase 토큰이 유효하지 않습니다"
+                    error:
+                      code: "INVALID_FIREBASE_TOKEN"
+                phone_mismatch:
+                  summary: 전화번호 불일치
+                  value:
+                    success: false
+                    message: "토큰의 전화번호와 일치하지 않습니다"
+                    error:
+                      code: "PHONE_NUMBER_MISMATCH"
 
   /auth/send-verification:
     post:
@@ -518,17 +1551,46 @@ paths:
               type: object
               required: [email]
               properties:
-                email:
-                  type: string
-                  format: email
-                purpose:
+                idToken:
                   type: string
                   enum: [signup, login, change]
+            examples:
+              signup:
+                summary: 회원가입용 인증
+                value:
+                  email: "hong@university.ac.kr"
+                  purpose: "signup"
       responses:
         '200':
           description: 발송 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailVerificationResponse'
+              examples:
+                success:
+                  summary: 인증코드 발송 성공
+                  value:
+                    success: true
+                    message: "인증번호가 이메일로 전송되었습니다"
+                    data:
+                      email: "hong@university.ac.kr"
+                      expiresIn: 180
         '429':
           description: Rate Limit 초과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                rate_limit:
+                  summary: 요청 제한 초과
+                  value:
+                    success: false
+                    message: "잠시 후 다시 시도해주세요"
+                    error:
+                      code: "RATE_LIMIT_EXCEEDED"
+                      details: "1분 후 다시 시도할 수 있습니다"
 
   /auth/verify-code:
     post:
@@ -548,13 +1610,68 @@ paths:
                   format: email
                 code:
                   type: string
+            examples:
+              verify:
+                summary: 인증코드 확인
+                value:
+                  email: "hong@university.ac.kr"
+                  code: "123456"
       responses:
         '200':
           description: 인증 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                      verifiedAt:
+                        type: string
+                        format: date-time
+              examples:
+                success:
+                  summary: 인증 성공
+                  value:
+                    success: true
+                    message: "이메일 인증이 완료되었습니다"
+                    data:
+                      email: "hong@university.ac.kr"
+                      verifiedAt: "2024-01-15T10:35:00Z"
         '400':
           description: 잘못된 인증코드
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_code:
+                  summary: 잘못된 인증코드
+                  value:
+                    success: false
+                    message: "인증번호가 일치하지 않습니다"
+                    error:
+                      code: "INVALID_VERIFICATION_CODE"
+                expired_code:
+                  summary: 만료된 인증코드
+                  value:
+                    success: false
+                    message: "인증번호가 만료되었습니다"
+                    error:
+                      code: "VERIFICATION_CODE_EXPIRED"
         '429':
           description: Rate Limit 초과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /auth/status:
     get:
@@ -650,14 +1767,69 @@ paths:
           schema:
             type: string
             enum: [ACTIVE, CLOSED, FILLED]
+          description: "모집 상태 필터 (ACTIVE: 모집중, CLOSED: 마감, FILLED: 완료)"
         - name: project_type
           in: query
           schema:
             type: string
             enum: [course, side]
+          description: "프로젝트 타입 필터 (course: 수업, side: 사이드)"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: 페이지 번호
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: 페이지당 항목 수
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruitmentListResponse'
+              examples:
+                success:
+                  summary: 모집글 목록 조회 성공
+                  value:
+                    success: true
+                    message: "모집글 목록을 조회했습니다"
+                    data:
+                      items:
+                        - recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
+                          title: "AI 프로젝트 팀원 모집"
+                          description: "머신러닝 경험이 있는 분을 찾습니다"
+                          status: "ACTIVE"
+                          user_id: "550e8400-e29b-41d4-a716-446655440001"
+                          views: 145
+                          max_applicants: 5
+                          recruitment_start: "2024-01-01"
+                          recruitment_end: "2024-01-31"
+                          project_type: "side"
+                          created_at: "2024-01-01T10:00:00Z"
+                        - recruitment_id: "550e8400-e29b-41d4-a716-446655440002"
+                          title: "웹 개발 스터디원 모집"
+                          description: "React와 Node.js 스터디입니다"
+                          status: "ACTIVE"
+                          user_id: "550e8400-e29b-41d4-a716-446655440003"
+                          views: 89
+                          max_applicants: 3
+                          recruitment_start: "2024-01-05"
+                          recruitment_end: "2024-02-05"
+                          project_type: "course"
+                          created_at: "2024-01-05T14:30:00Z"
+                      pagination:
+                        page: 1
+                        pageSize: 10
+                        total: 25
+                        totalPages: 3
+                        hasNextPage: true
+                        hasPreviousPage: false
 
     post:
       tags: [Recruitment]
@@ -689,11 +1861,68 @@ paths:
                   enum: [course, side]
                 photo_url:
                   type: string
+            examples:
+              create:
+                summary: 모집글 생성 요청
+                value:
+                  title: "AI 프로젝트 팀원 모집"
+                  description: "머신러닝 프로젝트를 함께 진행할 팀원을 찾습니다"
+                  max_applicants: 5
+                  recruitment_start: "2024-01-01"
+                  recruitment_end: "2024-01-31"
+                  project_type: "side"
       responses:
         '201':
           description: 생성 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Recruitment'
+              examples:
+                success:
+                  summary: 모집글 생성 성공
+                  value:
+                    success: true
+                    message: "모집글이 생성되었습니다"
+                    data:
+                      recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
+                      title: "AI 프로젝트 팀원 모집"
+                      description: "머신러닝 프로젝트를 함께 진행할 팀원을 찾습니다"
+                      status: "ACTIVE"
+                      user_id: "550e8400-e29b-41d4-a716-446655440001"
+                      views: 0
+                      max_applicants: 5
+                      recruitment_start: "2024-01-01"
+                      recruitment_end: "2024-01-31"
+                      project_type: "side"
+                      created_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                missing_title:
+                  summary: 제목 누락
+                  value:
+                    success: false
+                    message: "제목을 입력해주세요"
+                    error:
+                      code: "MISSING_TITLE"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   /recruitments/mine:
     get:
@@ -704,8 +1933,30 @@ paths:
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruitmentListResponse'
+              examples:
+                success:
+                  summary: 내 모집글 조회 성공
+                  value:
+                    success: true
+                    message: "내 모집글 목록을 조회했습니다"
+                    data:
+                      items:
+                        - recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
+                          title: "AI 프로젝트 팀원 모집"
+                          status: "ACTIVE"
+                          views: 145
+                          max_applicants: 5
+                          created_at: "2024-01-01T10:00:00Z"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   /recruitments/{recruitment_id}:
     get:
@@ -721,8 +1972,57 @@ paths:
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecruitmentDetailResponse'
+              examples:
+                active:
+                  summary: 모집중인 모집글
+                  value:
+                    success: true
+                    message: "모집글을 조회했습니다"
+                    data:
+                      recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
+                      title: "AI 프로젝트 팀원 모집"
+                      description: "머신러닝 경험이 있는 분을 찾습니다. TensorFlow, PyTorch 사용 경험자 우대합니다."
+                      status: "ACTIVE"
+                      user_id: "550e8400-e29b-41d4-a716-446655440001"
+                      views: 145
+                      max_applicants: 5
+                      recruitment_start: "2024-01-01"
+                      recruitment_end: "2024-01-31"
+                      project_type: "side"
+                      photo_url: "https://example.com/image.jpg"
+                      created_at: "2024-01-01T10:00:00Z"
+                closed:
+                  summary: 마감된 모집글
+                  value:
+                    success: true
+                    message: "모집글을 조회했습니다"
+                    data:
+                      recruitment_id: "550e8400-e29b-41d4-a716-446655440002"
+                      title: "웹 개발 스터디원 모집"
+                      status: "CLOSED"
+                      views: 328
+                      max_applicants: 3
+                      created_at: "2023-12-01T10:00:00Z"
         '404':
           description: 모집글을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              examples:
+                not_found:
+                  summary: 모집글 없음
+                  value:
+                    success: false
+                    message: "모집글을 찾을 수 없습니다"
+                    error:
+                      code: "RESOURCE_NOT_FOUND"
+                      resourceType: "recruitment"
+                      resourceId: "550e8400-e29b-41d4-a716-446655440999"
 
     put:
       tags: [Recruitment]
@@ -750,13 +2050,63 @@ paths:
                 status:
                   type: string
                   enum: [ACTIVE, CLOSED, FILLED]
+            examples:
+              update:
+                summary: 모집글 수정 요청
+                value:
+                  title: "AI 프로젝트 팀원 모집 (수정)"
+                  description: "수정된 설명입니다"
+                  status: "CLOSED"
       responses:
         '200':
           description: 수정 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Recruitment'
+              examples:
+                success:
+                  summary: 수정 성공
+                  value:
+                    success: true
+                    message: "모집글이 수정되었습니다"
+                    data:
+                      recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
+                      title: "AI 프로젝트 팀원 모집 (수정)"
+                      status: "CLOSED"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
         '403':
           description: 권한 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+              examples:
+                not_owner:
+                  summary: 작성자가 아님
+                  value:
+                    success: false
+                    message: "본인의 모집글만 수정할 수 있습니다"
+                    error:
+                      code: "RESOURCE_OWNER_ONLY"
+        '404':
+          description: 모집글을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
     delete:
       tags: [Recruitment]
@@ -773,10 +2123,28 @@ paths:
       responses:
         '200':
           description: 삭제 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  summary: 삭제 성공
+                  value:
+                    success: true
+                    message: "모집글이 삭제되었습니다"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
         '403':
           description: 권한 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
 
   /recruitments/{recruitment_id}/applications:
     get:
@@ -794,8 +2162,34 @@ paths:
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationListResponse'
+              examples:
+                success:
+                  summary: 지원자 목록 조회 성공
+                  value:
+                    success: true
+                    message: "지원자 목록을 조회했습니다"
+                    data:
+                      items:
+                        - application_id: "550e8400-e29b-41d4-a716-446655440000"
+                          user_id: "550e8400-e29b-41d4-a716-446655440001"
+                          recruitment_id: "550e8400-e29b-41d4-a716-446655440002"
+                          status: "PENDING"
+                          introduction: "안녕하세요, 지원합니다."
+                          created_at: "2024-01-15T10:30:00Z"
+                          User:
+                            username: "kim_minsu"
+                            email: "kim@university.ac.kr"
+                            avatar: "https://example.com/avatar.jpg"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   # ==================== Application ====================
   /applications/{recruitment_id}:
@@ -823,13 +2217,65 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 500
+            examples:
+              apply:
+                summary: 지원 요청
+                value:
+                  introduction: "안녕하세요! AI 프로젝트에 관심이 있어 지원합니다. Python과 TensorFlow 경험이 있습니다."
       responses:
         '201':
           description: 지원 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Application'
+              examples:
+                success:
+                  summary: 지원 성공
+                  value:
+                    success: true
+                    message: "지원이 완료되었습니다"
+                    data:
+                      application_id: "550e8400-e29b-41d4-a716-446655440000"
+                      user_id: "550e8400-e29b-41d4-a716-446655440001"
+                      recruitment_id: "550e8400-e29b-41d4-a716-446655440002"
+                      status: "PENDING"
+                      introduction: "안녕하세요! AI 프로젝트에 관심이 있어 지원합니다."
+                      created_at: "2024-01-15T10:30:00Z"
         '400':
           description: 이미 지원함 또는 본인 모집글
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                already_applied:
+                  summary: 이미 지원함
+                  value:
+                    success: false
+                    message: "이미 지원한 모집글입니다"
+                    error:
+                      code: "ALREADY_APPLIED"
+                own_recruitment:
+                  summary: 본인 모집글
+                  value:
+                    success: false
+                    message: "본인의 모집글에는 지원할 수 없습니다"
+                    error:
+                      code: "CANNOT_APPLY_OWN"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
     get:
       tags: [Application]
@@ -846,8 +2292,16 @@ paths:
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationListResponse'
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   /applications/{application_id}/approve:
     post:
@@ -865,8 +2319,32 @@ paths:
       responses:
         '200':
           description: 승인 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Application'
+              examples:
+                success:
+                  summary: 승인 성공
+                  value:
+                    success: true
+                    message: "지원이 승인되었습니다"
+                    data:
+                      application_id: "550e8400-e29b-41d4-a716-446655440000"
+                      status: "APPROVED"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
         '403':
           description: 권한 없음
 
@@ -899,6 +2377,25 @@ paths:
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectListResponse'
+              examples:
+                success:
+                  summary: 프로젝트 목록 조회 성공
+                  value:
+                    success: true
+                    message: "프로젝트 목록을 조회했습니다"
+                    data:
+                      items:
+                        - project_id: "550e8400-e29b-41d4-a716-446655440000"
+                          title: "AI 연구 프로젝트"
+                          description: "머신러닝 연구"
+                          status: "ACTIVE"
+                          start_date: "2024-01-01"
+                          end_date: "2024-06-30"
+                          created_at: "2024-01-01T10:00:00Z"
 
     post:
       tags: [Project]
@@ -911,8 +2408,9 @@ paths:
           application/json:
             schema:
               type: object
+              required: [introduction]
               properties:
-                title:
+                introduction:
                   type: string
                 description:
                   type: string
@@ -922,11 +2420,45 @@ paths:
                 end_date:
                   type: string
                   format: date
+            examples:
+              create:
+                summary: 프로젝트 생성 요청
+                value:
+                  title: "AI 연구 프로젝트"
+                  description: "머신러닝을 활용한 연구 프로젝트"
+                  start_date: "2024-01-01"
+                  end_date: "2024-06-30"
       responses:
         '201':
           description: 생성 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Project'
+              examples:
+                success:
+                  summary: 프로젝트 생성 성공
+                  value:
+                    success: true
+                    message: "프로젝트가 생성되었습니다"
+                    data:
+                      project_id: "550e8400-e29b-41d4-a716-446655440000"
+                      title: "AI 연구 프로젝트"
+                      status: "ACTIVE"
+                      created_at: "2024-01-15T10:30:00Z"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   /projects/mine:
     get:
@@ -937,8 +2469,29 @@ paths:
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectListResponse'
+              examples:
+                success:
+                  summary: 내 프로젝트 목록
+                  value:
+                    success: true
+                    message: "내 프로젝트 목록을 조회했습니다"
+                    data:
+                      items:
+                        - project_id: "550e8400-e29b-41d4-a716-446655440000"
+                          title: "AI 연구 프로젝트"
+                          status: "ACTIVE"
+                          member_count: 5
+                          evaluation_status: "PENDING"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   /projects/completed:
     get:
@@ -947,11 +2500,16 @@ paths:
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectListResponse'
 
   /projects/from-recruitment/{recruitment_id}:
     post:
       tags: [Project]
       summary: 모집글에서 프로젝트 생성
+      description: 모집글을 프로젝트로 전환하고 승인된 지원자들을 팀원으로 등록합니다
       security:
         - bearerAuth: []
       parameters:
@@ -964,8 +2522,52 @@ paths:
       responses:
         '201':
           description: 생성 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Project'
+              examples:
+                success:
+                  summary: 프로젝트 전환 성공
+                  value:
+                    success: true
+                    message: "모집글이 프로젝트로 전환되었습니다"
+                    data:
+                      project_id: "550e8400-e29b-41d4-a716-446655440000"
+                      title: "AI 프로젝트 팀원 모집"
+                      status: "ACTIVE"
+                      members:
+                        - user_id: "550e8400-e29b-41d4-a716-446655440001"
+                          role: "팀장"
+                        - user_id: "550e8400-e29b-41d4-a716-446655440002"
+                          role: "팀원"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '409':
+          description: 이미 프로젝트로 전환됨
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                already_converted:
+                  summary: 이미 전환됨
+                  value:
+                    success: false
+                    message: "이미 프로젝트로 전환된 모집글입니다"
+                    error:
+                      code: "ALREADY_CONVERTED"
 
   /projects/{project_id}:
     get:
@@ -981,8 +2583,38 @@ paths:
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetailResponse'
+              examples:
+                success:
+                  summary: 프로젝트 상세 조회 성공
+                  value:
+                    success: true
+                    message: "프로젝트를 조회했습니다"
+                    data:
+                      project_id: "550e8400-e29b-41d4-a716-446655440000"
+                      title: "AI 연구 프로젝트"
+                      description: "머신러닝 연구 프로젝트입니다"
+                      status: "ACTIVE"
+                      user_id: "550e8400-e29b-41d4-a716-446655440001"
+                      start_date: "2024-01-01"
+                      end_date: "2024-06-30"
+                      created_at: "2024-01-01T10:00:00Z"
+                      User:
+                        username: "hong_gildong"
+                      ProjectMembers:
+                        - user_id: "550e8400-e29b-41d4-a716-446655440001"
+                          role: "팀장"
+                        - user_id: "550e8400-e29b-41d4-a716-446655440002"
+                          role: "팀원"
         '404':
           description: 프로젝트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
     put:
       tags: [Project]
@@ -1013,14 +2645,40 @@ paths:
       responses:
         '200':
           description: 수정 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Project'
+              examples:
+                success:
+                  summary: 프로젝트 수정 성공
+                  value:
+                    success: true
+                    message: "프로젝트가 수정되었습니다"
+                    data:
+                      project_id: "550e8400-e29b-41d4-a716-446655440000"
+                      title: "AI 연구 프로젝트 (수정)"
+                      status: "COMPLETED"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   # ==================== Project Todo ====================
   /projects/{project_id}/todo:
     get:
       tags: [ProjectTodo]
       summary: Todo 목록 조회
+      description: 프로젝트의 Todo 목록을 조회합니다.
       parameters:
         - name: project_id
           in: path
@@ -1028,13 +2686,51 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoListResponse'
+              examples:
+                success:
+                  summary: 성공 응답
+                  value:
+                    success: true
+                    message: "Todo 목록을 조회했습니다"
+                    data:
+                      items:
+                        - todo_id: "550e8400-e29b-41d4-a716-446655440000"
+                          project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          content: "프로젝트 기획안 작성"
+                          is_completed: true
+                          created_at: "2024-01-15T09:00:00Z"
+                        - todo_id: "550e8400-e29b-41d4-a716-446655440001"
+                          project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          content: "UI 디자인 초안 리뷰"
+                          is_completed: false
+                          created_at: "2024-01-16T10:30:00Z"
+                      total: 2
+        '404':
+          description: 프로젝트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              examples:
+                not_found:
+                  value:
+                    success: false
+                    message: "프로젝트를 찾을 수 없습니다"
+                    error:
+                      code: "PROJECT_NOT_FOUND"
 
     post:
       tags: [ProjectTodo]
       summary: Todo 추가
+      description: 프로젝트에 새로운 Todo를 추가합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1044,6 +2740,7 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
       requestBody:
         required: true
         content:
@@ -1054,16 +2751,70 @@ paths:
               properties:
                 content:
                   type: string
+                  example: "API 연동 테스트"
+            examples:
+              new_todo:
+                summary: 새 Todo 생성
+                value:
+                  content: "API 연동 테스트"
       responses:
         '201':
           description: 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoDetailResponse'
+              examples:
+                success:
+                  summary: 생성 성공
+                  value:
+                    success: true
+                    message: "Todo가 추가되었습니다"
+                    data:
+                      todo_id: "550e8400-e29b-41d4-a716-446655440002"
+                      project_id: "660f9511-f30c-52e5-b827-557766551111"
+                      content: "API 연동 테스트"
+                      is_completed: false
+                      created_at: "2024-01-17T14:00:00Z"
+        '400':
+          description: 유효성 검사 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                empty_content:
+                  value:
+                    success: false
+                    message: "내용을 입력해주세요"
+                    errors:
+                      - field: "content"
+                        message: "필수 입력 항목입니다"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '403':
+          description: 권한 없음 (프로젝트 멤버가 아님)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+              examples:
+                not_member:
+                  value:
+                    success: false
+                    message: "프로젝트 멤버만 Todo를 추가할 수 있습니다"
+                    error:
+                      code: "NOT_PROJECT_MEMBER"
 
   /projects/{project_id}/todo/{todo_id}:
     put:
       tags: [ProjectTodo]
       summary: Todo 수정
+      description: Todo 내용 또는 완료 상태를 수정합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1073,12 +2824,14 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
         - name: todo_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
+          description: Todo ID
       requestBody:
         required: true
         content:
@@ -1090,15 +2843,58 @@ paths:
                   type: string
                 is_completed:
                   type: boolean
+            examples:
+              update_content:
+                summary: 내용 수정
+                value:
+                  content: "API 연동 테스트 (수정됨)"
+              mark_complete:
+                summary: 완료 처리
+                value:
+                  is_completed: true
       responses:
         '200':
           description: 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoDetailResponse'
+              examples:
+                success:
+                  summary: 수정 성공
+                  value:
+                    success: true
+                    message: "Todo가 수정되었습니다"
+                    data:
+                      todo_id: "550e8400-e29b-41d4-a716-446655440002"
+                      project_id: "660f9511-f30c-52e5-b827-557766551111"
+                      content: "API 연동 테스트 (수정됨)"
+                      is_completed: true
+                      updated_at: "2024-01-17T15:00:00Z"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '404':
+          description: Todo를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              examples:
+                not_found:
+                  value:
+                    success: false
+                    message: "Todo를 찾을 수 없습니다"
+                    error:
+                      code: "TODO_NOT_FOUND"
 
     delete:
       tags: [ProjectTodo]
       summary: Todo 삭제
+      description: Todo를 삭제합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1108,23 +2904,45 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
         - name: todo_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
+          description: Todo ID
       responses:
         '200':
           description: 삭제 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "Todo가 삭제되었습니다"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '404':
+          description: Todo를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
   # ==================== Project Timeline ====================
   /projects/{project_id}/timeline:
     get:
       tags: [ProjectTimeline]
       summary: 타임라인 조회
+      description: 프로젝트의 타임라인 이벤트 목록을 조회합니다.
       parameters:
         - name: project_id
           in: path
@@ -1132,13 +2950,49 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimelineListResponse'
+              examples:
+                success:
+                  summary: 성공 응답
+                  value:
+                    success: true
+                    message: "타임라인을 조회했습니다"
+                    data:
+                      items:
+                        - timeline_id: "770e8400-e29b-41d4-a716-446655440000"
+                          project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          event_title: "프로젝트 킥오프"
+                          description: "팀 첫 미팅 및 역할 분담"
+                          date: "2024-01-15"
+                        - timeline_id: "770e8400-e29b-41d4-a716-446655440001"
+                          project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          event_title: "중간 발표"
+                          description: "프로젝트 진행 상황 공유"
+                          date: "2024-02-01"
+                        - timeline_id: "770e8400-e29b-41d4-a716-446655440002"
+                          project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          event_title: "최종 발표"
+                          description: "프로젝트 결과 발표"
+                          date: "2024-03-01"
+                      total: 3
+        '404':
+          description: 프로젝트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
     post:
       tags: [ProjectTimeline]
       summary: 타임라인 이벤트 추가
+      description: 프로젝트에 새로운 타임라인 이벤트를 추가합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1148,6 +3002,7 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
       requestBody:
         required: true
         content:
@@ -1158,21 +3013,82 @@ paths:
               properties:
                 event_title:
                   type: string
+                  example: "1차 데모"
                 description:
                   type: string
+                  example: "MVP 데모 시연"
                 date:
                   type: string
                   format: date
+                  example: "2024-01-20"
+            examples:
+              new_event:
+                summary: 새 이벤트 추가
+                value:
+                  event_title: "1차 데모"
+                  description: "MVP 데모 시연"
+                  date: "2024-01-20"
       responses:
         '201':
           description: 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimelineDetailResponse'
+              examples:
+                success:
+                  summary: 생성 성공
+                  value:
+                    success: true
+                    message: "타임라인 이벤트가 추가되었습니다"
+                    data:
+                      timeline_id: "770e8400-e29b-41d4-a716-446655440003"
+                      project_id: "660f9511-f30c-52e5-b827-557766551111"
+                      event_title: "1차 데모"
+                      description: "MVP 데모 시연"
+                      date: "2024-01-20"
+                      created_at: "2024-01-17T10:00:00Z"
+        '400':
+          description: 유효성 검사 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                missing_fields:
+                  value:
+                    success: false
+                    message: "필수 필드가 누락되었습니다"
+                    errors:
+                      - field: "event_title"
+                        message: "이벤트 제목을 입력해주세요"
+                      - field: "date"
+                        message: "날짜를 입력해주세요"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '403':
+          description: 권한 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+              examples:
+                not_member:
+                  value:
+                    success: false
+                    message: "프로젝트 멤버만 타임라인을 추가할 수 있습니다"
+                    error:
+                      code: "NOT_PROJECT_MEMBER"
 
   /projects/{project_id}/timeline/{event_id}:
     put:
       tags: [ProjectTimeline]
       summary: 타임라인 이벤트 수정
+      description: 타임라인 이벤트 정보를 수정합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1182,12 +3098,14 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
         - name: event_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
+          description: 타임라인 이벤트 ID
       requestBody:
         required: true
         content:
@@ -1202,15 +3120,61 @@ paths:
                 date:
                   type: string
                   format: date
+            examples:
+              update_date:
+                summary: 날짜 변경
+                value:
+                  date: "2024-01-25"
+              update_all:
+                summary: 전체 수정
+                value:
+                  event_title: "1차 데모 (연기)"
+                  description: "MVP 데모 시연 - 일정 변경"
+                  date: "2024-01-25"
       responses:
         '200':
           description: 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimelineDetailResponse'
+              examples:
+                success:
+                  summary: 수정 성공
+                  value:
+                    success: true
+                    message: "타임라인 이벤트가 수정되었습니다"
+                    data:
+                      timeline_id: "770e8400-e29b-41d4-a716-446655440003"
+                      project_id: "660f9511-f30c-52e5-b827-557766551111"
+                      event_title: "1차 데모 (연기)"
+                      description: "MVP 데모 시연 - 일정 변경"
+                      date: "2024-01-25"
+                      updated_at: "2024-01-18T11:00:00Z"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '404':
+          description: 이벤트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              examples:
+                not_found:
+                  value:
+                    success: false
+                    message: "타임라인 이벤트를 찾을 수 없습니다"
+                    error:
+                      code: "EVENT_NOT_FOUND"
 
     delete:
       tags: [ProjectTimeline]
       summary: 타임라인 이벤트 삭제
+      description: 타임라인 이벤트를 삭제합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1220,23 +3184,45 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
         - name: event_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
+          description: 타임라인 이벤트 ID
       responses:
         '200':
           description: 삭제 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "타임라인 이벤트가 삭제되었습니다"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '404':
+          description: 이벤트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
   # ==================== Project Member ====================
   /projects/{project_id}/members:
     get:
       tags: [ProjectMember]
       summary: 프로젝트 멤버 목록 조회
+      description: 프로젝트에 속한 모든 멤버 목록을 조회합니다.
       parameters:
         - name: project_id
           in: path
@@ -1244,13 +3230,49 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberListResponse'
+              examples:
+                success:
+                  summary: 성공 응답
+                  value:
+                    success: true
+                    message: "멤버 목록을 조회했습니다"
+                    data:
+                      items:
+                        - user_id: "880e8400-e29b-41d4-a716-446655440000"
+                          username: "kim_leader"
+                          profile_image: "https://example.com/images/kim.jpg"
+                          role: "팀장"
+                          joined_at: "2024-01-15T09:00:00Z"
+                        - user_id: "880e8400-e29b-41d4-a716-446655440001"
+                          username: "lee_dev"
+                          profile_image: "https://example.com/images/lee.jpg"
+                          role: "팀원"
+                          joined_at: "2024-01-15T09:00:00Z"
+                        - user_id: "880e8400-e29b-41d4-a716-446655440002"
+                          username: "park_designer"
+                          profile_image: null
+                          role: "팀원"
+                          joined_at: "2024-01-15T09:00:00Z"
+                      total: 3
+        '404':
+          description: 프로젝트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
     put:
       tags: [ProjectMember]
       summary: 멤버 역할 수정
+      description: 프로젝트 멤버의 역할(팀장/팀원)을 수정합니다. 팀장만 수정 가능합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1260,6 +3282,7 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
       requestBody:
         required: true
         content:
@@ -1271,19 +3294,90 @@ paths:
                 user_id:
                   type: string
                   format: uuid
+                  description: 역할을 변경할 멤버의 ID
                 role:
                   type: string
                   enum: [팀장, 팀원]
+                  description: 새로운 역할
+            examples:
+              promote_to_leader:
+                summary: 팀장으로 승격
+                value:
+                  user_id: "880e8400-e29b-41d4-a716-446655440001"
+                  role: "팀장"
+              demote_to_member:
+                summary: 팀원으로 변경
+                value:
+                  user_id: "880e8400-e29b-41d4-a716-446655440001"
+                  role: "팀원"
       responses:
         '200':
           description: 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "멤버 역할이 수정되었습니다"
+                    data:
+                      user_id: "880e8400-e29b-41d4-a716-446655440001"
+                      username: "lee_dev"
+                      role: "팀장"
+        '400':
+          description: 유효성 검사 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                invalid_role:
+                  value:
+                    success: false
+                    message: "잘못된 역할입니다"
+                    errors:
+                      - field: "role"
+                        message: "역할은 '팀장' 또는 '팀원'만 가능합니다"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '403':
+          description: 권한 없음 (팀장만 가능)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+              examples:
+                not_leader:
+                  value:
+                    success: false
+                    message: "팀장만 멤버 역할을 수정할 수 있습니다"
+                    error:
+                      code: "NOT_PROJECT_LEADER"
+        '404':
+          description: 멤버를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              examples:
+                member_not_found:
+                  value:
+                    success: false
+                    message: "해당 멤버를 찾을 수 없습니다"
+                    error:
+                      code: "MEMBER_NOT_FOUND"
 
   /projects/{project_id}/eval-targets:
     get:
       tags: [ProjectMember]
       summary: 평가 대상 목록 조회
+      description: 프로젝트에서 내가 평가할 수 있는 팀원 목록을 조회합니다. 이미 평가한 팀원 여부도 표시됩니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1293,17 +3387,79 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvalTargetListResponse'
+              examples:
+                success:
+                  summary: 성공 응답
+                  value:
+                    success: true
+                    message: "평가 대상 목록을 조회했습니다"
+                    data:
+                      project_id: "660f9511-f30c-52e5-b827-557766551111"
+                      items:
+                        - user_id: "880e8400-e29b-41d4-a716-446655440001"
+                          username: "lee_dev"
+                          profile_image: "https://example.com/images/lee.jpg"
+                          is_evaluated: true
+                        - user_id: "880e8400-e29b-41d4-a716-446655440002"
+                          username: "park_designer"
+                          profile_image: null
+                          is_evaluated: false
+                all_evaluated:
+                  summary: 모든 평가 완료
+                  value:
+                    success: true
+                    message: "평가 대상 목록을 조회했습니다"
+                    data:
+                      project_id: "660f9511-f30c-52e5-b827-557766551111"
+                      items:
+                        - user_id: "880e8400-e29b-41d4-a716-446655440001"
+                          username: "lee_dev"
+                          profile_image: "https://example.com/images/lee.jpg"
+                          is_evaluated: true
+                        - user_id: "880e8400-e29b-41d4-a716-446655440002"
+                          username: "park_designer"
+                          profile_image: null
+                          is_evaluated: true
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '403':
+          description: 권한 없음 (프로젝트 멤버가 아님)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+              examples:
+                not_member:
+                  value:
+                    success: false
+                    message: "프로젝트 멤버만 평가 대상을 조회할 수 있습니다"
+                    error:
+                      code: "NOT_PROJECT_MEMBER"
+        '404':
+          description: 프로젝트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
   # ==================== Project Post ====================
   /projects/{project_id}/posts:
     get:
       tags: [ProjectPost]
       summary: 프로젝트 게시글 목록 조회
+      description: 프로젝트 팀원들이 작성한 게시글 목록을 조회합니다.
       parameters:
         - name: project_id
           in: path
@@ -1311,13 +3467,40 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectPostListResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "게시글 목록을 조회했습니다"
+                    data:
+                      items:
+                        - post_id: "990e8400-e29b-41d4-a716-446655440000"
+                          project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          author:
+                            user_id: "880e8400-e29b-41d4-a716-446655440000"
+                            username: "kim_leader"
+                          content: "오늘 회의 결과 공유드립니다."
+                          created_at: "2024-01-18T10:00:00Z"
+                      total: 1
+        '404':
+          description: 프로젝트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
     post:
       tags: [ProjectPost]
       summary: 프로젝트 게시글 작성
+      description: 프로젝트에 새로운 게시글을 작성합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1327,6 +3510,7 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
       requestBody:
         required: true
         content:
@@ -1335,18 +3519,41 @@ paths:
               type: object
               required: [content]
               properties:
-                content:
+                user_id:
                   type: string
+                  example: "진행 상황 공유합니다."
       responses:
         '201':
           description: 생성 성공
+          content:
+            application/json:
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "게시글이 작성되었습니다"
+                    data:
+                      post_id: "990e8400-e29b-41d4-a716-446655440001"
+                      content: "진행 상황 공유합니다."
+                      created_at: "2024-01-18T11:00:00Z"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '403':
+          description: 권한 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
 
   /projects/posts/{post_id}:
     get:
       tags: [ProjectPost]
       summary: 게시글 상세 조회
+      description: 프로젝트 게시글의 상세 내용을 조회합니다.
       parameters:
         - name: post_id
           in: path
@@ -1354,17 +3561,46 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 게시글 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "게시글을 조회했습니다"
+                    data:
+                      post_id: "990e8400-e29b-41d4-a716-446655440000"
+                      project_id: "660f9511-f30c-52e5-b827-557766551111"
+                      author:
+                        user_id: "880e8400-e29b-41d4-a716-446655440000"
+                        username: "kim_leader"
+                        profile_image: "https://example.com/images/kim.jpg"
+                      content: "오늘 회의 결과 공유드립니다."
+                      created_at: "2024-01-18T10:00:00Z"
         '404':
           description: 게시글을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              examples:
+                not_found:
+                  value:
+                    success: false
+                    message: "게시글을 찾을 수 없습니다"
+                    error:
+                      code: "POST_NOT_FOUND"
 
   # ==================== Review ====================
   /reviews:
     post:
       tags: [Review]
       summary: 리뷰 작성
+      description: 프로젝트 팀원에 대한 리뷰를 작성합니다. 자기 자신에게는 리뷰를 작성할 수 없습니다.
       security:
         - bearerAuth: []
       requestBody:
@@ -1381,46 +3617,107 @@ paths:
                 reviewee_id:
                   type: string
                   format: uuid
+                  description: 리뷰 대상자 ID
                 role_description:
                   type: string
+                  description: 역할 설명
                 ability:
                   type: integer
                   minimum: 1
                   maximum: 5
+                  description: 업무능력 (1-5점)
                 effort:
                   type: integer
                   minimum: 1
                   maximum: 5
+                  description: 노력 (1-5점)
                 commitment:
                   type: integer
                   minimum: 1
                   maximum: 5
+                  description: 책임감 (1-5점)
                 communication:
                   type: integer
                   minimum: 1
                   maximum: 5
+                  description: 의사소통 (1-5점)
                 reflection:
                   type: integer
                   minimum: 1
                   maximum: 5
+                  description: 자기성찰 (1-5점)
                 overall_rating:
                   type: integer
                   minimum: 1
                   maximum: 5
+                  description: 종합 평점 (1-5점)
                 comment:
                   type: string
+                  description: 리뷰 코멘트
+            examples:
+              good_review:
+                summary: 좋은 리뷰
+                value:
+                  project_id: "660f9511-f30c-52e5-b827-557766551111"
+                  reviewee_id: "880e8400-e29b-41d4-a716-446655440001"
+                  role_description: "프론트엔드 개발"
+                  ability: 5
+                  effort: 4
+                  commitment: 5
+                  communication: 4
+                  reflection: 4
+                  overall_rating: 5
+                  comment: "매우 열심히 참여해주셨습니다. 추천합니다!"
       responses:
         '201':
           description: 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "리뷰가 작성되었습니다"
+                    data:
+                      review_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                      project_id: "660f9511-f30c-52e5-b827-557766551111"
+                      reviewer_id: "880e8400-e29b-41d4-a716-446655440000"
+                      reviewee_id: "880e8400-e29b-41d4-a716-446655440001"
+                      overall_rating: 5
+                      created_at: "2024-01-20T10:00:00Z"
         '400':
-          description: 자기 자신에게 리뷰 불가
+          description: 유효성 검사 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                self_review:
+                  value:
+                    success: false
+                    message: "자기 자신에게는 리뷰를 작성할 수 없습니다"
+                    error:
+                      code: "SELF_REVIEW_NOT_ALLOWED"
+                already_reviewed:
+                  value:
+                    success: false
+                    message: "이미 해당 팀원을 리뷰했습니다"
+                    error:
+                      code: "ALREADY_REVIEWED"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   /reviews/user/{user_id}:
     get:
       tags: [Review]
       summary: 사용자 리뷰 목록 조회
+      description: 특정 사용자가 받은 리뷰 목록을 조회합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1430,16 +3727,48 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 사용자 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewListResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "리뷰 목록을 조회했습니다"
+                    data:
+                      items:
+                        - review_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                          project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          reviewer:
+                            user_id: "880e8400-e29b-41d4-a716-446655440000"
+                            username: "kim_leader"
+                          ability: 5
+                          effort: 4
+                          commitment: 5
+                          communication: 4
+                          reflection: 4
+                          overall_rating: 5
+                          comment: "매우 열심히 참여해주셨습니다."
+                          created_at: "2024-01-20T10:00:00Z"
+                      average_rating: 4.5
+                      total: 1
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   /reviews/project/{project_id}:
     get:
       tags: [Review]
       summary: 프로젝트 리뷰 목록 조회
+      description: 특정 프로젝트의 모든 리뷰를 조회합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1449,16 +3778,49 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 프로젝트 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewListResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "프로젝트 리뷰 목록을 조회했습니다"
+                    data:
+                      items:
+                        - review_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                          reviewer:
+                            user_id: "880e8400-e29b-41d4-a716-446655440000"
+                            username: "kim_leader"
+                          reviewee:
+                            user_id: "880e8400-e29b-41d4-a716-446655440001"
+                            username: "lee_dev"
+                          overall_rating: 5
+                          created_at: "2024-01-20T10:00:00Z"
+                      total: 1
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '404':
+          description: 프로젝트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
   /reviews/{review_id}:
     delete:
       tags: [Review]
       summary: 리뷰 삭제
+      description: 본인이 작성한 리뷰를 삭제합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1468,19 +3830,51 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 리뷰 ID
       responses:
         '200':
           description: 삭제 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "리뷰가 삭제되었습니다"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
         '403':
-          description: 권한 없음
+          description: 권한 없음 (본인 리뷰가 아님)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenError'
+              examples:
+                not_owner:
+                  value:
+                    success: false
+                    message: "본인이 작성한 리뷰만 삭제할 수 있습니다"
+                    error:
+                      code: "NOT_REVIEW_OWNER"
+        '404':
+          description: 리뷰를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
   # ==================== Comment ====================
   /comments/{recruitment_id}:
     get:
       tags: [Comment]
       summary: 댓글 목록 조회
+      description: 모집글에 작성된 댓글 목록을 조회합니다.
       parameters:
         - name: recruitment_id
           in: path
@@ -1488,13 +3882,41 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 모집글 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "댓글 목록을 조회했습니다"
+                    data:
+                      items:
+                        - comment_id: "bb0e8400-e29b-41d4-a716-446655440000"
+                          recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
+                          author:
+                            user_id: "880e8400-e29b-41d4-a716-446655440000"
+                            username: "kim_user"
+                            profile_image: "https://example.com/images/kim.jpg"
+                          content: "모집 기간이 언제까지인가요?"
+                          created_at: "2024-01-18T14:00:00Z"
+                      total: 1
+        '404':
+          description: 모집글을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
     post:
       tags: [Comment]
       summary: 댓글 작성
+      description: 모집글에 댓글을 작성합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1504,6 +3926,7 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 모집글 ID
       requestBody:
         required: true
         content:
@@ -1514,17 +3937,43 @@ paths:
               properties:
                 content:
                   type: string
+                  example: "궁금한 점이 있습니다."
       responses:
         '201':
           description: 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "댓글이 작성되었습니다"
+                    data:
+                      comment_id: "bb0e8400-e29b-41d4-a716-446655440001"
+                      recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
+                      content: "궁금한 점이 있습니다."
+                      created_at: "2024-01-18T15:00:00Z"
+        '400':
+          description: 유효성 검사 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   # ==================== Search ====================
   /search:
     get:
       tags: [Search]
       summary: 검색
+      description: 모집글, 프로젝트, 사용자를 검색합니다.
       parameters:
         - name: q
           in: query
@@ -1532,20 +3981,57 @@ paths:
           schema:
             type: string
           description: 검색어
+          example: "AI 프로젝트"
         - name: type
           in: query
           schema:
             type: string
             enum: [recruitment, project, user]
+          description: 검색 타입 (미지정시 전체 검색)
       responses:
         '200':
           description: 검색 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+              examples:
+                all_types:
+                  summary: 전체 검색 결과
+                  value:
+                    success: true
+                    message: "검색 결과입니다"
+                    data:
+                      recruitments:
+                        - recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
+                          title: "AI 프로젝트 팀원 모집"
+                          status: "ACTIVE"
+                      projects:
+                        - project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          name: "AI 챗봇 프로젝트"
+                          status: "IN_PROGRESS"
+                      users:
+                        - user_id: "880e8400-e29b-41d4-a716-446655440000"
+                          username: "ai_developer"
+                          profile_image: null
+                      total: 3
+                no_results:
+                  summary: 검색 결과 없음
+                  value:
+                    success: true
+                    message: "검색 결과가 없습니다"
+                    data:
+                      recruitments: []
+                      projects: []
+                      users: []
+                      total: 0
 
   # ==================== Profile ====================
   /profile/{user_id}:
     get:
       tags: [Profile]
       summary: 사용자 프로필 조회
+      description: 특정 사용자의 프로필 정보를 조회합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1555,18 +4041,54 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 사용자 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "프로필을 조회했습니다"
+                    data:
+                      user_id: "880e8400-e29b-41d4-a716-446655440000"
+                      username: "kim_developer"
+                      email: "kim@example.com"
+                      profile_image: "https://example.com/images/kim.jpg"
+                      university: "서울대학교"
+                      major: "컴퓨터공학"
+                      bio: "풀스택 개발자를 꿈꾸고 있습니다."
+                      skills: ["React", "Node.js", "Python"]
+                      created_at: "2024-01-01T00:00:00Z"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
         '404':
           description: 사용자를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              examples:
+                not_found:
+                  value:
+                    success: false
+                    message: "사용자를 찾을 수 없습니다"
+                    error:
+                      code: "USER_NOT_FOUND"
 
   /profile/{user_id}/ratings:
     get:
       tags: [Profile]
       summary: 사용자 평점 조회
+      description: 사용자가 받은 리뷰들의 평균 평점을 조회합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1576,16 +4098,52 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 사용자 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileRatingsResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "평점을 조회했습니다"
+                    data:
+                      overall_rating: 4.5
+                      ability: 4.8
+                      effort: 4.3
+                      commitment: 4.5
+                      communication: 4.2
+                      reflection: 4.7
+                      review_count: 5
+                no_reviews:
+                  summary: 리뷰 없음
+                  value:
+                    success: true
+                    message: "평점을 조회했습니다"
+                    data:
+                      overall_rating: null
+                      ability: null
+                      effort: null
+                      commitment: null
+                      communication: null
+                      reflection: null
+                      review_count: 0
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   /profile/{user_id}/projects:
     get:
       tags: [Profile]
       summary: 사용자 프로젝트 목록 조회
+      description: 사용자가 참여한 프로젝트 목록을 조회합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1595,29 +4153,85 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 사용자 ID
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectListResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "프로젝트 목록을 조회했습니다"
+                    data:
+                      items:
+                        - project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          name: "AI 챗봇 프로젝트"
+                          status: "COMPLETED"
+                          role: "팀원"
+                        - project_id: "660f9511-f30c-52e5-b827-557766551112"
+                          name: "웹 앱 개발"
+                          status: "IN_PROGRESS"
+                          role: "팀장"
+                      total: 2
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   # ==================== Scrap ====================
   /scraps/recruitments:
     get:
       tags: [Scrap]
       summary: 스크랩한 모집글 목록 조회
+      description: 내가 스크랩한 모집글 목록을 조회합니다.
       security:
         - bearerAuth: []
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrapListResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "스크랩 목록을 조회했습니다"
+                    data:
+                      items:
+                        - recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
+                          title: "AI 프로젝트 팀원 모집"
+                          status: "ACTIVE"
+                          views: 150
+                          scraped_at: "2024-01-18T10:00:00Z"
+                      total: 1
+                empty:
+                  summary: 스크랩 없음
+                  value:
+                    success: true
+                    message: "스크랩 목록을 조회했습니다"
+                    data:
+                      items: []
+                      total: 0
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   /scraps/recruitment/{recruitment_id}/scrap:
     put:
       tags: [Scrap]
       summary: 스크랩 토글
+      description: 모집글 스크랩을 추가하거나 취소합니다.
       security:
         - bearerAuth: []
       parameters:
@@ -1627,17 +4241,50 @@ paths:
           schema:
             type: string
             format: uuid
+          description: 모집글 ID
       responses:
         '200':
           description: 스크랩 상태 변경 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrapToggleResponse'
+              examples:
+                added:
+                  summary: 스크랩 추가
+                  value:
+                    success: true
+                    message: "스크랩이 추가되었습니다"
+                    data:
+                      is_scraped: true
+                      scrap_count: 15
+                removed:
+                  summary: 스크랩 취소
+                  value:
+                    success: true
+                    message: "스크랩이 취소되었습니다"
+                    data:
+                      is_scraped: false
+                      scrap_count: 14
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '404':
+          description: 모집글을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
 
   # ==================== Draft ====================
   /drafts/recruitment/draft:
     post:
       tags: [Draft]
       summary: 모집글 임시저장
+      description: 작성 중인 모집글을 임시저장합니다.
       security:
         - bearerAuth: []
       requestBody:
@@ -1649,32 +4296,98 @@ paths:
               properties:
                 title:
                   type: string
+                  example: "프로젝트 팀원 모집 (작성중)"
                 description:
                   type: string
+                  example: "프로젝트 설명 작성 중..."
       responses:
         '200':
           description: 저장 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DraftResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "임시저장되었습니다"
+                    data:
+                      draft_id: "cc0e8400-e29b-41d4-a716-446655440000"
+                      title: "프로젝트 팀원 모집 (작성중)"
+                      description: "프로젝트 설명 작성 중..."
+                      saved_at: "2024-01-18T16:00:00Z"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   # ==================== Dashboard ====================
   /dashboard/summary:
     get:
       tags: [Dashboard]
       summary: 대시보드 요약 정보 조회
+      description: 내 활동 요약 정보를 조회합니다.
       security:
         - bearerAuth: []
       responses:
         '200':
           description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummaryResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "대시보드 요약 정보를 조회했습니다"
+                    data:
+                      my_recruitments:
+                        active: 2
+                        closed: 1
+                        total: 3
+                      my_applications:
+                        pending: 1
+                        approved: 2
+                        rejected: 0
+                      my_projects:
+                        in_progress: 2
+                        completed: 1
+                      unread_notifications: 5
+                new_user:
+                  summary: 신규 사용자
+                  value:
+                    success: true
+                    message: "대시보드 요약 정보를 조회했습니다"
+                    data:
+                      my_recruitments:
+                        active: 0
+                        closed: 0
+                        total: 0
+                      my_applications:
+                        pending: 0
+                        approved: 0
+                        rejected: 0
+                      my_projects:
+                        in_progress: 0
+                        completed: 0
+                      unread_notifications: 0
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   # ==================== Upload ====================
   /upload/recruitment-image:
     post:
       tags: [Upload]
       summary: 모집글 이미지 업로드
+      description: 모집글에 첨부할 이미지를 업로드합니다. 지원 형식은 JPG, PNG, GIF입니다.
       security:
         - bearerAuth: []
       requestBody:
@@ -1683,41 +4396,150 @@ paths:
           multipart/form-data:
             schema:
               type: object
+              required: [image]
               properties:
                 image:
                   type: string
                   format: binary
+                  description: 업로드할 이미지 파일 (최대 5MB)
       responses:
         '200':
           description: 업로드 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "이미지가 업로드되었습니다"
+                    data:
+                      url: "https://storage.example.com/images/recruitment-12345.jpg"
+                      filename: "recruitment-12345.jpg"
+                      size: 245678
         '400':
-          description: 잘못된 파일 형식
+          description: 잘못된 파일 형식 또는 크기 초과
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_format:
+                  value:
+                    success: false
+                    message: "지원하지 않는 파일 형식입니다"
+                    error:
+                      code: "INVALID_FILE_FORMAT"
+                      details: "지원 형식: JPG, PNG, GIF"
+                file_too_large:
+                  value:
+                    success: false
+                    message: "파일 크기가 초과되었습니다"
+                    error:
+                      code: "FILE_TOO_LARGE"
+                      details: "최대 크기: 5MB"
         '401':
           description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
 
   # ==================== Dev ====================
   /dev/clear-verified-emails:
     delete:
       tags: [Dev]
       summary: 인증 이메일 초기화 (개발용)
+      description: |
+        **⚠️ 개발 환경 전용 API**
+
+        모든 인증된 이메일을 초기화합니다. 테스트 목적으로만 사용하세요.
       responses:
         '200':
           description: 초기화 성공
+          content:
+            application/json:
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "인증 이메일이 초기화되었습니다"
+                    data:
+                      cleared_count: 15
+        '403':
+          description: 프로덕션 환경에서는 사용 불가
+          content:
+            application/json:
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: "개발 환경에서만 사용 가능합니다"
+                    error:
+                      code: "DEV_ONLY"
 
   /dev/test-sendgrid:
     post:
       tags: [Dev]
       summary: SendGrid 테스트 (개발용)
+      description: |
+        **⚠️ 개발 환경 전용 API**
+
+        SendGrid 이메일 발송 테스트를 수행합니다.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [email]
               properties:
                 email:
                   type: string
                   format: email
+                  example: "test@example.com"
       responses:
         '200':
           description: 테스트 성공
+          content:
+            application/json:
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "테스트 이메일이 발송되었습니다"
+                    data:
+                      email: "test@example.com"
+                      sent_at: "2024-01-18T17:00:00Z"
+        '400':
+          description: 유효하지 않은 이메일 형식
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '403':
+          description: 프로덕션 환경에서는 사용 불가
+          content:
+            application/json:
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: "개발 환경에서만 사용 가능합니다"
+                    error:
+                      code: "DEV_ONLY"
+        '500':
+          description: SendGrid 발송 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+              examples:
+                sendgrid_error:
+                  value:
+                    success: false
+                    message: "이메일 발송에 실패했습니다"
+                    error:
+                      code: "SENDGRID_ERROR"
+                      details: "서비스 일시 장애"
