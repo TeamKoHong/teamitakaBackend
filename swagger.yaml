@@ -1551,10 +1551,7 @@ paths:
               type: object
               required: [email]
               properties:
-                email:
-                  type: string
-                  format: email
-                purpose:
+                idToken:
                   type: string
                   enum: [signup, login, change]
             examples:
