@@ -1,7 +1,7 @@
 const { Recruitment, Project, Hashtag, Application, sequelize } = require("../models");
 const { Op } = require("sequelize");
 
-// 🔥 지원자 수 포함해서 모집공고 가져오기 (핫 게시물 기능 추가)
+// 🔥 1. 전체 모집공고 가져오기 (이미지, 조회수, 프로젝트 타입, 지원자 수 포함)
 const getAllRecruitmentsWithApplicationCount = async () => {
   return await Recruitment.findAll({
     attributes: [
@@ -9,7 +9,10 @@ const getAllRecruitmentsWithApplicationCount = async () => {
       "title",
       "description",
       "status",
-      "created_at",
+      "created_at",   // DB 컬럼명 (createdAt vs created_at 주의)
+      "photo_url",    // ★ [핵심] 목록 페이지에 이미지를 띄우기 위해 필수
+      "views",        // ★ Hot 공고 정렬 및 조회수 표시에 필요
+      "project_type", // ★ '수업' vs '사이드' 구분에 필요
       [
         sequelize.literal(`(
           SELECT COUNT(*) FROM applications AS a
@@ -18,24 +21,20 @@ const getAllRecruitmentsWithApplicationCount = async () => {
         "applicationCount",
       ],
     ],
+    // ★ [핵심] 해시태그 모델을 include 해야 필터링 및 태그 표시가 가능합니다.
     include: [{
       model: Hashtag,
-      attributes: ["name"],
+      attributes: ["name"], // (주의: DB 컬럼명이 content라면 "content"로 변경 필요)
       through: { attributes: [] } // 중간 테이블 데이터 제외
     }],
     order: [
-      [
-        sequelize.literal(`(
-          SELECT COUNT(*) FROM applications AS a
-          WHERE a.recruitment_id = "Recruitment"."recruitment_id"
-        )`),
-        "DESC"
-      ]
-    ], // 지원 수 기준 정렬
+      [sequelize.literal("applicationCount"), "DESC"], // 지원자 순 정렬
+      ["created_at", "DESC"] // (선택) 최신순 보조 정렬
+    ],
   });
 };
 
-// 📋 내가 작성한 모집공고 목록 조회 (조회수 증가 X)
+// 📋 2. 내가 작성한 모집공고 목록 조회
 const getMyRecruitments = async (user_id, { limit, offset }) => {
   const { count, rows } = await Recruitment.findAndCountAll({
     where: { user_id },
@@ -82,51 +81,48 @@ const getMyRecruitments = async (user_id, { limit, offset }) => {
   };
 };
 
-// 👀 조회수 증가 로직 최적화
+// 👀 3. 상세 조회 (조회수 증가 포함)
 const getRecruitmentById = async (recruitment_id, cookies, setCookie) => {
-  let viewedRecruitments = cookies.viewedRecruitments ? JSON.parse(cookies.viewedRecruitments) : [];
+  // 쿠키가 존재하면 파싱, 없으면 빈 배열
+  let viewedRecruitments = cookies && cookies.viewedRecruitments 
+    ? JSON.parse(cookies.viewedRecruitments) 
+    : [];
 
+  // 조회수 증가 로직
   if (!viewedRecruitments.includes(recruitment_id)) {
     await Recruitment.increment("views", { where: { recruitment_id } });
     viewedRecruitments.push(recruitment_id);
-    setCookie("viewedRecruitments", JSON.stringify(viewedRecruitments), {
-      maxAge: 60 * 60 * 1000, // 1시간
-      httpOnly: true,
-    });
+    
+    // setCookie가 함수로 전달되었다고 가정 (Controller에서 처리하는 경우도 있음)
+    if (setCookie) {
+        setCookie("viewedRecruitments", JSON.stringify(viewedRecruitments), {
+        maxAge: 60 * 60 * 1000, // 1시간
+        httpOnly: true,
+        });
+    }
   }
 
   return await Recruitment.findByPk(recruitment_id, {
     attributes: [
-      'recruitment_id',
-      'title',
-      'description',
-      'status',
-      'user_id',              // 작성자 ID (프론트엔드 소유자 확인용)
-      'project_id',
-      'views',
-      'max_applicants',
-      'recruitment_start',
-      'recruitment_end',
-      'project_type',
-      'photo_url',
-      'created_at',           // 생성 시간
-      'updated_at',
-      [
-        sequelize.literal(`(
-          SELECT COUNT(*) FROM applications AS a
-          WHERE a.recruitment_id = "Recruitment"."recruitment_id"
-        )`),
-        'applicant_count',    // 지원자 수
-      ],
+        'recruitment_id', 'title', 'description', 'status', 'user_id', 
+        'project_id', 'views', 'max_applicants', 'recruitment_start', 
+        'recruitment_end', 'project_type', 'photo_url', 'created_at', 'updated_at',
+        [
+            sequelize.literal(`(
+              SELECT COUNT(*) FROM applications AS a
+              WHERE a.recruitment_id = "Recruitment"."recruitment_id"
+            )`),
+            'applicant_count',
+        ],
     ],
-    include: [{
-      model: Hashtag,
-      attributes: ["name"]    // 수정: "content" → "name"
+    include: [{ 
+        model: Hashtag, 
+        attributes: ["name"] // DB에 따라 "content"일 수 있음
     }],
   });
 };
 
-// 📌 모집공고 생성
+// 📌 4. 모집공고 생성
 const createRecruitment = async ({ title, description, max_applicants, user_id, recruitment_start, recruitment_end, project_type, photo_url, hashtags }) => {
   const recruitment = await Recruitment.create({
     title,
@@ -136,20 +132,18 @@ const createRecruitment = async ({ title, description, max_applicants, user_id, 
     recruitment_start,
     recruitment_end,
     project_type,
-    photo_url,
-    status: "ACTIVE", // Production DB constraint: ACTIVE, CLOSED, FILLED
+    photo_url, // 받아온 이미지 URL 저장
+    status: "ACTIVE",
   });
 
-  // 해시태그 처리
+  // 해시태그 저장 및 연결
   if (hashtags && Array.isArray(hashtags) && hashtags.length > 0) {
-    // # 기호 제거 및 유효성 검사
     const cleanedTags = hashtags
-      .map(tag => tag.replace(/^#/, '').trim()) // # 제거
-      .filter(tag => tag.length > 0) // 빈 문자열 제거
-      .filter((tag, index, self) => self.indexOf(tag) === index) // 중복 제거
-      .slice(0, 5); // 최대 5개
+      .map(tag => tag.replace(/^#/, '').trim())
+      .filter(tag => tag.length > 0);
 
     if (cleanedTags.length > 0) {
+      // name 컬럼을 기준으로 찾거나 생성 (DB 컬럼이 content라면 name -> content 로 수정 필요)
       const hashtagResults = await Promise.all(
         cleanedTags.map(tag => Hashtag.findOrCreate({ where: { name: tag } }))
       );
@@ -160,12 +154,12 @@ const createRecruitment = async ({ title, description, max_applicants, user_id, 
   return recruitment;
 };
 
-// ✏ 모집공고 수정
+// ✏ 5. 모집공고 수정
 const updateRecruitment = async (recruitment_id, { title, description, status, start_date, end_date, hashtags }) => {
   const recruitment = await Recruitment.findByPk(recruitment_id);
   if (!recruitment) throw new Error("모집공고가 존재하지 않습니다.");
 
-  // 모집이 마감될 때 프로젝트 자동 생성
+  // 모집이 마감될 때 프로젝트 자동 생성 로직
   if (status === "CLOSED" && recruitment.status !== "CLOSED") {
     const existingProject = await Project.findOne({ where: { recruitment_id } });
     if (!existingProject) {
@@ -178,13 +172,23 @@ const updateRecruitment = async (recruitment_id, { title, description, status, s
     }
   }
 
-  // 모집공고 업데이트
-  await recruitment.update({ title, description, status, start_date, end_date });
+  // 업데이트
+  await recruitment.update({ 
+      title, 
+      description, 
+      status, 
+      recruitment_start: start_date, // 필드명 매핑 확인 필요 (DB가 recruitment_start라면 이것 사용)
+      recruitment_end: end_date 
+  });
 
   // 해시태그 업데이트
-  if (hashtags && hashtags.length > 0) {
+  if (hashtags && Array.isArray(hashtags)) {
+    const cleanedTags = hashtags
+      .map(tag => tag.replace(/^#/, '').trim())
+      .filter(tag => tag.length > 0);
+
     const hashtagResults = await Promise.all(
-      hashtags.map(tag => Hashtag.findOrCreate({ where: { name: tag } }))
+      cleanedTags.map(tag => Hashtag.findOrCreate({ where: { name: tag } }))
     );
     await recruitment.setHashtags(hashtagResults.map(([tag]) => tag));
   }
@@ -192,7 +196,7 @@ const updateRecruitment = async (recruitment_id, { title, description, status, s
   return recruitment;
 };
 
-// ❌ 모집공고 삭제 (연관된 해시태그 연결 해제 후 삭제)
+// ❌ 6. 모집공고 삭제
 const deleteRecruitment = async (recruitment_id) => {
   const recruitment = await Recruitment.findByPk(recruitment_id);
   if (!recruitment) throw new Error("삭제할 모집공고가 없습니다.");
