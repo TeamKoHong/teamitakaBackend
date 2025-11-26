@@ -9,10 +9,10 @@ const getAllRecruitmentsWithApplicationCount = async () => {
       "title",
       "description",
       "status",
-      "created_at",   // DB 컬럼명 (createdAt vs created_at 주의)
-      "photo_url",    // ★ [핵심] 목록 페이지에 이미지를 띄우기 위해 필수
-      "views",        // ★ Hot 공고 정렬 및 조회수 표시에 필요
-      "project_type", // ★ '수업' vs '사이드' 구분에 필요
+      "created_at",   
+      "photo_url",    
+      "views",        
+      "project_type", 
       [
         sequelize.literal(`(
           SELECT COUNT(*) FROM applications AS a
@@ -21,15 +21,15 @@ const getAllRecruitmentsWithApplicationCount = async () => {
         "applicationCount",
       ],
     ],
-    // ★ [핵심] 해시태그 모델을 include 해야 필터링 및 태그 표시가 가능합니다.
     include: [{
       model: Hashtag,
-      attributes: ["name"], // (주의: DB 컬럼명이 content라면 "content"로 변경 필요)
-      through: { attributes: [] } // 중간 테이블 데이터 제외
+      attributes: ["name"], 
+      through: { attributes: [] } 
     }],
     order: [
-      [sequelize.literal("applicationCount"), "DESC"], // 지원자 순 정렬
-      ["created_at", "DESC"] // (선택) 최신순 보조 정렬
+      // ★ [수정됨] PostgreSQL에서는 대소문자 구분을 위해 컬럼명에 쌍따옴표("")가 필수입니다.
+      [sequelize.literal('"applicationCount"'), "DESC"], 
+      ["created_at", "DESC"]
     ],
   });
 };
