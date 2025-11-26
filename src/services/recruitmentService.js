@@ -9,79 +9,20 @@ const getAllRecruitmentsWithApplicationCount = async () => {
       "title",
       "description",
       "status",
+      "createdAt",
       "photo_url",    // ★ [추가] 이게 있어야 목록에 이미지가 뜹니다!
       "views",        // ★ [추가] 조회수 (Hot 공고 정렬 등에 필요)
       "project_type", // ★ [추가] 프로젝트 유형 (카드에 '수업/사이드' 표시용)
       [
         sequelize.literal(`(
-          SELECT COUNT(*) FROM applications AS a
-          WHERE a.recruitment_id = "Recruitment"."recruitment_id"
+          SELECT COUNT(*) FROM Applications AS a
+          WHERE a.recruitment_id = Recruitment.recruitment_id
         )`),
         "applicationCount",
       ],
     ],
-    include: [{
-      model: Hashtag,
-      attributes: ["name"],
-      through: { attributes: [] } // 중간 테이블 데이터 제외
-    }],
-    order: [
-      [
-        sequelize.literal(`(
-          SELECT COUNT(*) FROM applications AS a
-          WHERE a.recruitment_id = "Recruitment"."recruitment_id"
-        )`),
-        "DESC"
-      ]
-    ], // 지원 수 기준 정렬
+    order: [[sequelize.literal("applicationCount"), "DESC"]], // 지원 수 기준 정렬
   });
-};
-
-// 📋 내가 작성한 모집공고 목록 조회 (조회수 증가 X)
-const getMyRecruitments = async (user_id, { limit, offset }) => {
-  const { count, rows } = await Recruitment.findAndCountAll({
-    where: { user_id },
-    attributes: [
-      'recruitment_id',
-      'title',
-      'description',
-      'status',
-      'user_id',
-      'project_id',
-      'views',
-      'max_applicants',
-      'recruitment_start',
-      'recruitment_end',
-      'project_type',
-      'photo_url',
-      'created_at',
-      'updated_at',
-      [
-        sequelize.literal(`(
-          SELECT COUNT(*) FROM applications AS a
-          WHERE a.recruitment_id = "Recruitment"."recruitment_id"
-        )`),
-        'applicant_count',
-      ],
-    ],
-    include: [{
-      model: Hashtag,
-      attributes: ["name"]
-    }],
-    limit,
-    offset,
-    order: [['created_at', 'DESC']],
-  });
-
-  return {
-    success: true,
-    items: rows,
-    page: {
-      total: count,
-      limit,
-      offset
-    }
-  };
 };
 
 // 👀 조회수 증가 로직 최적화
@@ -98,65 +39,28 @@ const getRecruitmentById = async (recruitment_id, cookies, setCookie) => {
   }
 
   return await Recruitment.findByPk(recruitment_id, {
-    attributes: [
-      'recruitment_id',
-      'title',
-      'description',
-      'status',
-      'user_id',              // 작성자 ID (프론트엔드 소유자 확인용)
-      'project_id',
-      'views',
-      'max_applicants',
-      'recruitment_start',
-      'recruitment_end',
-      'project_type',
-      'photo_url',
-      'created_at',           // 생성 시간
-      'updated_at',
-      [
-        sequelize.literal(`(
-          SELECT COUNT(*) FROM applications AS a
-          WHERE a.recruitment_id = "Recruitment"."recruitment_id"
-        )`),
-        'applicant_count',    // 지원자 수
-      ],
-    ],
-    include: [{
-      model: Hashtag,
-      attributes: ["name"]    // 수정: "content" → "name"
-    }],
+    include: [{ model: Hashtag, attributes: ["content"] }],
   });
 };
 
-// 📌 모집공고 생성
-const createRecruitment = async ({ title, description, max_applicants, user_id, recruitment_start, recruitment_end, project_type, photo_url, hashtags }) => {
+// 📌 모집공고 생성 (태그, 이미지 저장 포함)
+const createRecruitment = async ({ title, description, status, start_date, end_date, hashtags, is_draft, user_id, photoPath }) => {
   const recruitment = await Recruitment.create({
     title,
     description,
-    max_applicants,
+    status: is_draft ? "임시저장" : status,
+    start_date,
+    end_date,
     user_id,
-    recruitment_start,
-    recruitment_end,
-    project_type,
-    photo_url,
-    status: "ACTIVE", // Production DB constraint: ACTIVE, CLOSED, FILLED
+    is_draft: is_draft || false,
+    photo: photoPath || null,
   });
 
-  // 해시태그 처리
-  if (hashtags && Array.isArray(hashtags) && hashtags.length > 0) {
-    // # 기호 제거 및 유효성 검사
-    const cleanedTags = hashtags
-      .map(tag => tag.replace(/^#/, '').trim()) // # 제거
-      .filter(tag => tag.length > 0) // 빈 문자열 제거
-      .filter((tag, index, self) => self.indexOf(tag) === index) // 중복 제거
-      .slice(0, 5); // 최대 5개
-
-    if (cleanedTags.length > 0) {
-      const hashtagResults = await Promise.all(
-        cleanedTags.map(tag => Hashtag.findOrCreate({ where: { name: tag } }))
-      );
-      await recruitment.setHashtags(hashtagResults.map(([tag]) => tag));
-    }
+  if (hashtags && hashtags.length > 0) {
+    const hashtagResults = await Promise.all(
+      hashtags.map(tag => Hashtag.findOrCreate({ where: { content: tag } }))
+    );
+    await recruitment.addHashtags(hashtagResults.map(([tag]) => tag));
   }
 
   return recruitment;
@@ -168,7 +72,7 @@ const updateRecruitment = async (recruitment_id, { title, description, status, s
   if (!recruitment) throw new Error("모집공고가 존재하지 않습니다.");
 
   // 모집이 마감될 때 프로젝트 자동 생성
-  if (status === "CLOSED" && recruitment.status !== "CLOSED") {
+  if (status === "closed" && recruitment.status !== "closed") {
     const existingProject = await Project.findOne({ where: { recruitment_id } });
     if (!existingProject) {
       await Project.create({
@@ -186,7 +90,7 @@ const updateRecruitment = async (recruitment_id, { title, description, status, s
   // 해시태그 업데이트
   if (hashtags && hashtags.length > 0) {
     const hashtagResults = await Promise.all(
-      hashtags.map(tag => Hashtag.findOrCreate({ where: { name: tag } }))
+      hashtags.map(tag => Hashtag.findOrCreate({ where: { content: tag } }))
     );
     await recruitment.setHashtags(hashtagResults.map(([tag]) => tag));
   }
@@ -205,7 +109,6 @@ const deleteRecruitment = async (recruitment_id) => {
 
 module.exports = {
   getAllRecruitmentsWithApplicationCount,
-  getMyRecruitments,
   getRecruitmentById,
   createRecruitment,
   updateRecruitment,
