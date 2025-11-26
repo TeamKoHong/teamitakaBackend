@@ -9,7 +9,9 @@ const getAllRecruitmentsWithApplicationCount = async () => {
       "title",
       "description",
       "status",
-      "created_at",
+      "photo_url",    // ★ [추가] 이게 있어야 목록에 이미지가 뜹니다!
+      "views",        // ★ [추가] 조회수 (Hot 공고 정렬 등에 필요)
+      "project_type", // ★ [추가] 프로젝트 유형 (카드에 '수업/사이드' 표시용)
       [
         sequelize.literal(`(
           SELECT COUNT(*) FROM applications AS a
