@@ -25,8 +25,7 @@ const getAllProjects = async (req, res) => {
     const projects = await Project.findAll({
       order: [["created_at", "DESC"]],
       include: [
-        // TODO: user_id 마이그레이션 완료 후 복원
-        // { model: User, as: "User", attributes: ["username"] },  // 프로젝트 생성자
+        { model: User, as: "User", attributes: ["username"] },  // 프로젝트 생성자
         { model: Recruitment, as: "Recruitments", attributes: ["title", "status"] },  // 프로젝트의 모집공고들
         {
           model: ProjectMembers,  // 프로젝트 팀원들
@@ -49,8 +48,7 @@ const getProjectById = async (req, res) => {
     const { project_id } = req.params;
     const project = await Project.findByPk(project_id, {
       include: [
-        // TODO: user_id 마이그레이션 완료 후 복원
-        // { model: User, as: "User", attributes: ["username"] },
+        { model: User, as: "User", attributes: ["username"] },  // 프로젝트 생성자
         { model: Recruitment, as: "Recruitments", attributes: ["title", "status", "description"] },  // 프로젝트의 모집공고들
         { model: Todo },
         { model: Timeline },
