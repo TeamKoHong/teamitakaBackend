@@ -56,3 +56,39 @@ exports.deleteReview = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.getReviewsByReviewer = async (req, res) => {
+  try {
+    const { project_id, reviewer_id } = req.params;
+    const reviews = await ReviewService.getReviewsByReviewer(project_id, reviewer_id);
+    res.status(200).json({
+      success: true,
+      data: { reviews }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+exports.getProjectReviewSummary = async (req, res) => {
+  try {
+    const { project_id } = req.params;
+    const summary = await ReviewService.getProjectReviewSummary(project_id);
+    res.status(200).json({
+      success: true,
+      data: {
+        averageRating: parseFloat(summary.average_rating) || 0,
+        totalReviews: parseInt(summary.total_reviews) || 0,
+        categoryAverages: {
+          ability: parseFloat(summary.avg_ability) || 0,
+          effort: parseFloat(summary.avg_effort) || 0,
+          commitment: parseFloat(summary.avg_commitment) || 0,
+          communication: parseFloat(summary.avg_communication) || 0,
+          reflection: parseFloat(summary.avg_reflection) || 0
+        }
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
