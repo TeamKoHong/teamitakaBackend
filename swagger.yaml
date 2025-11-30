@@ -3764,6 +3764,182 @@ paths:
               schema:
                 $ref: '#/components/schemas/UnauthorizedError'
 
+  /reviews/project/{project_id}/reviewer/{reviewer_id}:
+    get:
+      tags: [Review]
+      summary: 내가 한 평가 조회
+      description: 특정 프로젝트에서 특정 사용자가 작성한 리뷰 목록을 조회합니다.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 프로젝트 ID
+        - name: reviewer_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 리뷰 작성자(reviewer) ID
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      reviews:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            review_id:
+                              type: string
+                              format: uuid
+                            reviewee_id:
+                              type: string
+                              format: uuid
+                            reviewee_username:
+                              type: string
+                            ability:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            effort:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            commitment:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            communication:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            reflection:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            overall_rating:
+                              type: number
+                              format: float
+                            comment:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+              examples:
+                success:
+                  value:
+                    success: true
+                    data:
+                      reviews:
+                        - review_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                          reviewee_id: "880e8400-e29b-41d4-a716-446655440001"
+                          reviewee_username: "lee_dev"
+                          ability: 4
+                          effort: 5
+                          commitment: 4
+                          communication: 5
+                          reflection: 4
+                          overall_rating: 4.5
+                          comment: "협업이 좋았습니다"
+                          created_at: "2024-01-15T10:00:00Z"
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+
+  /reviews/project/{project_id}/summary:
+    get:
+      tags: [Review]
+      summary: 프로젝트 평가 요약
+      description: 특정 프로젝트의 평가 통계(평균 점수, 카테고리별 평균)를 조회합니다.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 프로젝트 ID
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      averageRating:
+                        type: number
+                        format: float
+                        description: 전체 평균 평점
+                      totalReviews:
+                        type: integer
+                        description: 총 리뷰 수
+                      categoryAverages:
+                        type: object
+                        description: 카테고리별 평균 점수
+                        properties:
+                          ability:
+                            type: number
+                            format: float
+                          effort:
+                            type: number
+                            format: float
+                          commitment:
+                            type: number
+                            format: float
+                          communication:
+                            type: number
+                            format: float
+                          reflection:
+                            type: number
+                            format: float
+              examples:
+                success:
+                  value:
+                    success: true
+                    data:
+                      averageRating: 4.2
+                      totalReviews: 12
+                      categoryAverages:
+                        ability: 4.1
+                        effort: 4.3
+                        commitment: 4.0
+                        communication: 4.5
+                        reflection: 4.2
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+
   /reviews/project/{project_id}:
     get:
       tags: [Review]
