@@ -102,6 +102,64 @@ class ReviewService {
       throw error;
     }
   }
+
+  async getReviewsByReviewer(project_id, reviewer_id) {
+    try {
+      const reviews = await sequelize.query(
+        `SELECT
+          r.review_id,
+          r.reviewee_id,
+          u.username as reviewee_username,
+          r.ability,
+          r.effort,
+          r.commitment,
+          r.communication,
+          r.reflection,
+          r.overall_rating,
+          r.comment,
+          r.created_at
+        FROM reviews r
+        JOIN users u ON r.reviewee_id = u.user_id
+        WHERE r.project_id = :project_id AND r.reviewer_id = :reviewer_id
+        ORDER BY r.created_at DESC`,
+        {
+          replacements: { project_id, reviewer_id },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      return reviews;
+    } catch (error) {
+      console.error("🚨 getReviewsByReviewer Error:", error.message);
+      throw error;
+    }
+  }
+
+  async getProjectReviewSummary(project_id) {
+    try {
+      const summary = await sequelize.query(
+        `SELECT
+          COUNT(*) as total_reviews,
+          AVG(overall_rating) as average_rating,
+          AVG(ability) as avg_ability,
+          AVG(effort) as avg_effort,
+          AVG(commitment) as avg_commitment,
+          AVG(communication) as avg_communication,
+          AVG(reflection) as avg_reflection
+        FROM reviews
+        WHERE project_id = :project_id`,
+        {
+          replacements: { project_id },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      return summary[0];
+    } catch (error) {
+      console.error("🚨 getProjectReviewSummary Error:", error.message);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ReviewService();
