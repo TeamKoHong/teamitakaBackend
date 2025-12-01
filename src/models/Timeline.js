@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
   }, {
-    tableName: "Timelines",
+    tableName: "timelines",  // PostgreSQL 실제 테이블명 (lowercase)
     freezeTableName: true,
     timestamps: true,
   });
