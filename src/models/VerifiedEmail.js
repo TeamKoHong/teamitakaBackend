@@ -35,6 +35,10 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
+  }, {
+    tableName: "verified_emails",
+    freezeTableName: true,
+    timestamps: true,
   });
 
   return VerifiedEmail;

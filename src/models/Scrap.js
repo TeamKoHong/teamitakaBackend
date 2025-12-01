@@ -35,6 +35,10 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
+  }, {
+    tableName: "scraps",
+    freezeTableName: true,
+    timestamps: true,
   });
 
 

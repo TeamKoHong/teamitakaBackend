@@ -25,6 +25,10 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
+  }, {
+    tableName: "notifications",
+    freezeTableName: true,
+    timestamps: true,
   });
 
   return Notification;
