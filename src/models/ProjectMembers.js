@@ -44,7 +44,7 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "ProjectMembers",  // 테이블 이름을 마이그레이션과 일치
+      tableName: "project_members",  // PostgreSQL 실제 테이블명 (snake_case)
       freezeTableName: true,
       timestamps: true,
     }
