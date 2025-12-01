@@ -41,10 +41,6 @@ module.exports = (sequelize) => {
         defaultValue: "ACTIVE",
         allowNull: false,
       },
-      role: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
       meeting_time: {
         type: DataTypes.STRING(255),
         allowNull: true,
