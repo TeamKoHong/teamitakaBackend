@@ -29,9 +29,8 @@ const getAllProjects = async (req, res) => {
         { model: Recruitment, as: "Recruitments", attributes: ["title", "status"] },  // 프로젝트의 모집공고들
         {
           model: ProjectMembers,
-          as: "ProjectMembers",  // 명시적 별칭 사용
+          as: "ProjectMembers",
           include: [{ model: User, attributes: ["username"] }],
-          attributes: ["role", "status", "joined_at"],
         },
       ],
     });
@@ -55,9 +54,8 @@ const getProjectById = async (req, res) => {
         { model: Timeline },
         {
           model: ProjectMembers,
-          as: "ProjectMembers",  // 명시적 별칭 사용
+          as: "ProjectMembers",
           include: [{ model: User, attributes: ["username"] }],
-          attributes: ["role", "status", "joined_at"],
         },
       ],
     });
