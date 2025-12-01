@@ -29,24 +29,28 @@ module.exports = (sequelize) => {
         onDelete: "CASCADE",
       },
       role: {
-        type: DataTypes.ENUM("팀장", "팀원"),
-        defaultValue: "팀원",
+        type: DataTypes.STRING(50),
         allowNull: false,
       },
       joined_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
       },
-      status: {
-        type: DataTypes.ENUM("활성", "비활성"),
-        defaultValue: "활성",
-        allowNull: false,
+      created_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
       },
     },
     {
-      tableName: "project_members",  // PostgreSQL 실제 테이블명 (snake_case)
+      tableName: "project_members",
       freezeTableName: true,
       timestamps: true,
+      createdAt: "created_at",
+      updatedAt: "updated_at",
     }
   );
 
