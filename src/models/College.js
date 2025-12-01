@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.NOW,
     },
   }, {
-    tableName: "Colleges",
+    tableName: "colleges",  // PostgreSQL 실제 테이블명 (lowercase)
     timestamps: true,
   });
 
