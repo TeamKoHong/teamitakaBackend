@@ -14,13 +14,17 @@ module.exports = (sequelize, DataTypes) => {
       },
       onDelete: "CASCADE",
     },
-    content: {
-      type: DataTypes.STRING,
+    task: {
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
-    is_completed: {
+    completed: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    due_date: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   }, {
     tableName: "todos",
