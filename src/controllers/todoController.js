@@ -7,7 +7,7 @@ const getTodos = async (req, res) => {
     const { project_id } = req.params;
     const todos = await Todo.findAll({
       where: { project_id },
-      order: [["created_at", "ASC"]],
+      order: [["createdAt", "ASC"]],
     });
     res.status(200).json(todos);
   } catch (error) {
@@ -19,12 +19,12 @@ const getTodos = async (req, res) => {
 const addTodo = async (req, res) => {
   try {
     const { project_id } = req.params;
-    const { content, is_completed } = req.body;
+    const { task, completed } = req.body;
 
     const newTodo = await Todo.create({
       project_id,
-      content,
-      is_completed: is_completed || false,
+      task,
+      completed: completed || false,
     });
 
     res.status(201).json(newTodo);
@@ -37,14 +37,14 @@ const addTodo = async (req, res) => {
 const updateTodo = async (req, res) => {
   try {
     const { todo_id } = req.params;
-    const { is_completed } = req.body;
+    const { completed } = req.body;
 
     const todo = await Todo.findByPk(todo_id);
     if (!todo) {
       return res.status(404).json({ message: "할 일을 찾을 수 없습니다." });
     }
 
-    await todo.update({ is_completed });
+    await todo.update({ completed });
     res.json(todo);
   } catch (error) {
     handleError(res, error);
