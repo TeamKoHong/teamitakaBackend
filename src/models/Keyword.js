@@ -16,6 +16,10 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+  }, {
+    tableName: "keywords",
+    freezeTableName: true,
+    timestamps: false,
   });
 
   return Keyword;
