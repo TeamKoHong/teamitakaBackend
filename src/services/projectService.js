@@ -1,7 +1,7 @@
 const { Project, Recruitment, User, Todo, Timeline } = require("../models");
 
 const createProject = async (data) => {
-  const { title, description, user_id, recruitment_id, start_date, end_date, status, role } = data;
+  const { title, description, user_id, recruitment_id, start_date, end_date, status } = data;
 
   const recruitment = await Recruitment.findByPk(recruitment_id);
   if (!recruitment) throw new Error("유효한 모집공고가 필요합니다.");
@@ -14,7 +14,6 @@ const createProject = async (data) => {
     start_date,
     end_date,
     status: status || "ACTIVE",
-    role,
   });
 
   return newProject;
