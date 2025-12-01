@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       {
-        tableName: 'VoteResponses',
+        tableName: 'vote_responses',  // PostgreSQL 실제 테이블명 (snake_case)
         freezeTableName: true,
         timestamps: true,
       }
