@@ -29,8 +29,12 @@ module.exports = (sequelize) => {
       },
       onDelete: "CASCADE",
     },
+  }, {
+    tableName: "comments",
+    freezeTableName: true,
+    timestamps: true,
   });
-  
+
   Comment.associate = (models) => {
     Comment.belongsTo(models.User, { foreignKey: 'user_id', targetKey: 'user_id' });
     Comment.belongsTo(models.Recruitment, { foreignKey: 'recruitment_id', targetKey: 'recruitment_id' });

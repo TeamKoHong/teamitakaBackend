@@ -15,6 +15,10 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+  }, {
+    tableName: "searches",
+    freezeTableName: true,
+    timestamps: false,
   });
 
   return Search;
