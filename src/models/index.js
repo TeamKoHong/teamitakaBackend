@@ -87,6 +87,7 @@ db.Project.associate = (models) => {
     onDelete: "CASCADE",
   });
   db.Project.hasMany(models.ProjectMembers, {
+    as: "ProjectMembers",  // 명시적 별칭 추가
     foreignKey: "project_id",
     onDelete: "CASCADE",
   });
