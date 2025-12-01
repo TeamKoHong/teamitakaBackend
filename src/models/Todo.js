@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+  }, {
+    tableName: "todos",
+    freezeTableName: true,
+    timestamps: true,
   });
 
   return Todo;

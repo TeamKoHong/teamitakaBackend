@@ -37,8 +37,12 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+    }, {
+      tableName: "applications",
+      freezeTableName: true,
+      timestamps: true,
     });
-  
+
     return Application;
   };
   
