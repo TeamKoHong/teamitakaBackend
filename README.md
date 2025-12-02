@@ -720,13 +720,24 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.5.0 |
-| **마지막 업데이트** | 2025-11-24 |
+| **버전** | 1.5.1 |
+| **마지막 업데이트** | 2025-12-02 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
 
 ## 🔄 변경 이력
+
+### v1.5.1 (2025-12-02)
+- 🔧 **Sequelize 모델 PostgreSQL 호환성 개선**
+  - 12개 모델에 `tableName` 속성 추가 (PostgreSQL snake_case 테이블명 매핑)
+  - 영향받는 모델: User, Project, ProjectMembers, Recruitment, Application, Review, Comment, Todo, Timeline, Vote, Schedule, Notification 등
+- 🐛 **모델 스키마 버그 수정**
+  - ProjectMembers 모델: 데이터베이스 스키마와 일치하도록 수정
+  - Todo 모델: 컬럼 정의를 데이터베이스 스키마에 맞게 수정
+  - Project 모델: 존재하지 않는 `role` 컬럼 제거
+- ⚡ **쿼리 최적화**
+  - ProjectMembers include에서 불필요한 attributes 제약 제거
 
 ### v1.5.0 (2025-11-24)
 - 📱 **Firebase 전화번호 인증 구현**
