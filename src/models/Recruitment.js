@@ -71,6 +71,11 @@ module.exports = (sequelize) => {
         allowNull: true,
         comment: "모집공고 대표 이미지 URL",
       },
+      scrap_count: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: "스크랩(북마크) 수",
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,

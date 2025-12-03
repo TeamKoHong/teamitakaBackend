@@ -1,7 +1,7 @@
 const { Recruitment, Project, Hashtag, Application, sequelize } = require("../models");
 const { Op } = require("sequelize");
 
-// 🔥 1. 전체 모집공고 가져오기 (이미지, 조회수, 프로젝트 타입, 지원자 수 포함)
+// 🔥 1. 전체 모집공고 가져오기
 const getAllRecruitmentsWithApplicationCount = async () => {
   return await Recruitment.findAll({
     attributes: [
@@ -9,10 +9,11 @@ const getAllRecruitmentsWithApplicationCount = async () => {
       "title",
       "description",
       "status",
-      "created_at",   
-      "photo_url",    
-      "views",        
-      "project_type", 
+      "created_at",
+      "photo_url",
+      "views",
+      "project_type",
+      "scrap_count", // ★ [수정] 목록에서도 북마크 수 반환
       [
         sequelize.literal(`(
           SELECT COUNT(*) FROM applications AS a
@@ -21,15 +22,13 @@ const getAllRecruitmentsWithApplicationCount = async () => {
         "applicationCount",
       ],
     ],
-    // ★ include는 attributes 배열 밖, findAll 객체 안에 있어야 합니다.
     include: [{
       model: Hashtag,
-      attributes: ["name"], 
-      through: { attributes: [] } 
+      attributes: ["name"],
+      through: { attributes: [] }
     }],
-    // ★ order도 findAll 객체의 속성입니다. (Postgres 대소문자 구분 적용)
     order: [
-      [sequelize.literal('"applicationCount"'), "DESC"], 
+      [sequelize.literal('"applicationCount"'), "DESC"],
       ["created_at", "DESC"]
     ],
   });
@@ -47,6 +46,7 @@ const getMyRecruitments = async (user_id, { limit, offset }) => {
       'user_id',
       'project_id',
       'views',
+      'scrap_count', // ★ [수정] 북마크 수 추가
       'max_applicants',
       'recruitment_start',
       'recruitment_end',
@@ -82,28 +82,14 @@ const getMyRecruitments = async (user_id, { limit, offset }) => {
   };
 };
 
-// 👀 3. 상세 조회 (조회수 증가 포함)
-const getRecruitmentById = async (recruitment_id, cookies, setCookie) => {
-  let viewedRecruitments = cookies && cookies.viewedRecruitments 
-    ? JSON.parse(cookies.viewedRecruitments) 
-    : [];
-
-  if (!viewedRecruitments.includes(recruitment_id)) {
-    await Recruitment.increment("views", { where: { recruitment_id } });
-    viewedRecruitments.push(recruitment_id);
-    
-    if (setCookie) {
-        setCookie("viewedRecruitments", JSON.stringify(viewedRecruitments), {
-        maxAge: 60 * 60 * 1000, 
-        httpOnly: true,
-        });
-    }
-  }
-
+// 👀 3. 상세 조회
+// ★ [수정] 쿠키 로직 및 increment 로직 제거 (컨트롤러에서 RecruitmentView로 처리함)
+const getRecruitmentById = async (recruitment_id) => {
   return await Recruitment.findByPk(recruitment_id, {
     attributes: [
-        'recruitment_id', 'title', 'description', 'status', 'user_id', 
-        'project_id', 'views', 'max_applicants', 'recruitment_start', 
+        'recruitment_id', 'title', 'description', 'status', 'user_id',
+        'project_id', 'views', 'scrap_count', // ★ [수정] 북마크 수 포함
+        'max_applicants', 'recruitment_start',
         'recruitment_end', 'project_type', 'photo_url', 'created_at', 'updated_at',
         [
             sequelize.literal(`(
@@ -113,9 +99,9 @@ const getRecruitmentById = async (recruitment_id, cookies, setCookie) => {
             'applicant_count',
         ],
     ],
-    include: [{ 
-        model: Hashtag, 
-        attributes: ["name"] 
+    include: [{
+        model: Hashtag,
+        attributes: ["name"]
     }],
   });
 };
@@ -130,8 +116,9 @@ const createRecruitment = async ({ title, description, max_applicants, user_id, 
     recruitment_start,
     recruitment_end,
     project_type,
-    photo_url, 
+    photo_url,
     status: "ACTIVE",
+    scrap_count: 0, // 초기값 명시 (모델 default가 0이라 생략 가능하지만 명시적으로 적음)
   });
 
   if (hashtags && Array.isArray(hashtags) && hashtags.length > 0) {
@@ -167,12 +154,12 @@ const updateRecruitment = async (recruitment_id, { title, description, status, s
     }
   }
 
-  await recruitment.update({ 
-      title, 
-      description, 
-      status, 
-      recruitment_start: start_date, 
-      recruitment_end: end_date 
+  await recruitment.update({
+      title,
+      description,
+      status,
+      recruitment_start: start_date,
+      recruitment_end: end_date
   });
 
   if (hashtags && Array.isArray(hashtags)) {
@@ -194,7 +181,7 @@ const deleteRecruitment = async (recruitment_id) => {
   const recruitment = await Recruitment.findByPk(recruitment_id);
   if (!recruitment) throw new Error("삭제할 모집공고가 없습니다.");
 
-  await recruitment.setHashtags([]); 
+  await recruitment.setHashtags([]);
   await recruitment.destroy();
 };
 
