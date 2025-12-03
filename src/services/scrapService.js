@@ -4,9 +4,9 @@ const getUserScraps = async (user_id) => {
   return await Scrap.findAll({
     where: { user_id },
     raw: true,
-    attributes: ["Recruitment.user_id", "Recruitment.title", "Recruitment.content", "Recruitment.scrap_cnt"],
+    attributes: ["Recruitment.user_id", "Recruitment.title", "Recruitment.content", "Recruitment.scrap_count"],
     include: [{ model: Recruitment, attributes: [] }],
-    order: [[Recruitment, "scrap_cnt", "desc"]],
+    order: [[Recruitment, "scrap_count", "desc"]],
   });
 };
 
@@ -17,11 +17,11 @@ const toggleScrap = async (user_id, recruitment_id) => {
 
   if (!existScrap) {
     await Scrap.create({ user_id, recruitment_id });
-    await Recruitment.increment({ scrap_cnt: 1 }, { where: { recruitment_id } });
+    await Recruitment.increment({ scrap_count: 1 }, { where: { recruitment_id } });
     return "스크랩 추가";
   } else {
     await Scrap.destroy({ where: { user_id, recruitment_id } });
-    await Recruitment.decrement({ scrap_cnt: 1 }, { where: { recruitment_id } });
+    await Recruitment.decrement({ scrap_count: 1 }, { where: { recruitment_id } });
     return "스크랩 취소";
   }
 };

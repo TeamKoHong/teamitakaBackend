@@ -14,8 +14,7 @@ router.get("/mine", authMiddleware, recruitmentController.getMyRecruitments);
 router.get("/:recruitment_id/applications", authMiddleware, applicationController.getApplicants);
 
 // 모집공고 상세 조회
-router.get("/:recruitment_id", recruitmentController.getRecruitmentById);
-
+router.get("/:recruitment_id", authMiddleware, recruitmentController.getRecruitmentById);
 // 모집공고 생성
 router.post("/", authMiddleware, recruitmentController.createRecruitment);
 
