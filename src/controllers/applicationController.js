@@ -96,9 +96,27 @@ const getApplicants = async (req, res) => {
 const approveApplication = async (req, res) => {
   try {
     const { application_id } = req.params;
-    const updatedApplication = await applicationService.updateApplicationStatus(application_id, "APPROVED");
-    res.status(200).json({ message: "지원이 승인되었습니다.", updatedApplication });
+    const updatedApplication = await applicationService.updateApplicationStatus(application_id, "ACCEPTED");
+    res.status(200).json({
+      success: true,
+      message: "지원이 승인되었습니다.",
+      application: updatedApplication
+    });
   } catch (error) {
+    if (error.message === "이미 승인된 지원입니다.") {
+      return res.status(409).json({
+        success: false,
+        error: "ALREADY_ACCEPTED",
+        message: error.message
+      });
+    }
+    if (error.message === "지원 정보를 찾을 수 없습니다.") {
+      return res.status(404).json({
+        success: false,
+        error: "APPLICATION_NOT_FOUND",
+        message: error.message
+      });
+    }
     handleError(res, error);
   }
 };
