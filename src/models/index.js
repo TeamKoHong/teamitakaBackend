@@ -23,6 +23,7 @@ db.Project = require("./Project")(sequelize, Sequelize.DataTypes);
 db.ProjectMembers = require("./ProjectMembers")(sequelize, Sequelize.DataTypes);
 db.ProjectPost = require("./ProjectPost")(sequelize, Sequelize.DataTypes);
 db.Recruitment = require("./Recruitment")(sequelize, Sequelize.DataTypes);
+db.RecruitmentView = require("./RecruitmentView")(sequelize, Sequelize.DataTypes);
 db.Review = require("./Review")(sequelize, Sequelize.DataTypes);
 db.Schedule = require("./Schedule")(sequelize, Sequelize.DataTypes);
 db.Scrap = require("./Scrap")(sequelize, Sequelize.DataTypes);
