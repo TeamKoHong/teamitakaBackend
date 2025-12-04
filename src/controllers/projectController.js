@@ -294,11 +294,11 @@ const createProjectFromRecruitment = async (req, res) => {
       });
     }
 
-    // 3. APPROVED된 지원자들 조회
+    // 3. ACCEPTED된 지원자들 조회
     const approvedApplications = await Application.findAll({
       where: {
         recruitment_id,
-        status: "APPROVED"
+        status: "ACCEPTED"
       },
       transaction
     });
@@ -333,7 +333,7 @@ const createProjectFromRecruitment = async (req, res) => {
     }, { transaction });
     members.push(leaderMember);
 
-    // 5-2. APPROVED 지원자들을 멤버로 추가
+    // 5-2. ACCEPTED 지원자들을 멤버로 추가
     for (const application of approvedApplications) {
       const member = await ProjectMembers.create({
         project_id: newProject.project_id,
