@@ -2,16 +2,12 @@ const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
   const Scrap = sequelize.define("Scrap", {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
     user_id: {
       type: DataTypes.UUID,
       allowNull: false,
+      primaryKey: true,
       references: {
-        model: "Users",
+        model: "users",
         key: "user_id",
       },
       onDelete: "CASCADE",
@@ -19,28 +15,19 @@ module.exports = (sequelize) => {
     recruitment_id: {
       type: DataTypes.UUID,
       allowNull: false,
+      primaryKey: true,
       references: {
-        model: "Recruitments",
+        model: "recruitments",
         key: "recruitment_id",
       },
       onDelete: "CASCADE",
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
     },
   }, {
     tableName: "scraps",
     freezeTableName: true,
     timestamps: true,
+    underscored: true,
   });
-
 
   return Scrap;
 };
