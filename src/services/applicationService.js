@@ -118,6 +118,17 @@ const updateApplicationStatus = async (application_id, status) => {
   const application = await Application.findByPk(application_id);
   if (!application) throw new Error("지원 정보를 찾을 수 없습니다.");
 
+  // 이미 같은 상태인 경우 중복 처리 방지
+  if (application.status === status) {
+    if (status === "ACCEPTED") {
+      throw new Error("이미 승인된 지원입니다.");
+    }
+    if (status === "REJECTED") {
+      throw new Error("이미 거절된 지원입니다.");
+    }
+    return application; // 멱등성 보장
+  }
+
   // 지원 상태 변경
   application.status = status;
   await application.save();
