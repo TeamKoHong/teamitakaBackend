@@ -1,5 +1,7 @@
 const recruitmentService = require("../services/recruitmentService");
 const { handleError } = require("../utils/errorHandler");
+// ★ [수정 1] 필요한 모델들(Scrap, Recruitment, RecruitmentView) 불러오기
+const { Scrap, Recruitment, RecruitmentView } = require("../models");
 
 const getAllRecruitments = async (req, res) => {
   try {
@@ -12,7 +14,7 @@ const getAllRecruitments = async (req, res) => {
 
 const getMyRecruitments = async (req, res) => {
   try {
-    const user_id = req.user.userId; // authMiddleware에서 설정
+    const user_id = req.user.userId;
     const { limit = 10, offset = 0 } = req.query;
 
     const recruitments = await recruitmentService.getMyRecruitments(user_id, {
@@ -26,17 +28,52 @@ const getMyRecruitments = async (req, res) => {
   }
 };
 
+// ★ [수정 2] 상세 조회 로직 대폭 수정 (조회수 중복 방지 + 북마크 여부 확인)
 const getRecruitmentById = async (req, res) => {
   try {
     const { recruitment_id } = req.params;
-    const cookies = req.cookies || {};
-    const recruitment = await recruitmentService.getRecruitmentById(
-      recruitment_id,
-      cookies,
-      (name, value, options) => res.cookie(name, value, options)
-    );
-    if (!recruitment) return res.status(404).json({ message: "모집공고를 찾을 수 없습니다." });
-    res.status(200).json(recruitment);
+    
+    // 1. 유저 ID 확보 (authMiddleware 덕분에 로그인했다면 무조건 있음)
+    const user_id = req.user.userId;
+
+    // =========================================================
+    // 🔥 [조회수 중복 방지 로직]
+    // =========================================================
+    // 이 유저가 이 글을 본 적이 있는지 확인
+    const alreadyViewed = await RecruitmentView.findOne({
+      where: { user_id, recruitment_id }
+    });
+
+    // 본 적이 없다면 -> 기록 남기고 조회수 +1
+    if (!alreadyViewed) {
+      await RecruitmentView.create({ user_id, recruitment_id });
+      await Recruitment.increment({ views: 1 }, { where: { recruitment_id } });
+    }
+    // =========================================================
+
+    // 2. 서비스에서 모집글 정보 가져오기 (쿠키 로직 제거됨)
+    let recruitment = await recruitmentService.getRecruitmentById(recruitment_id);
+
+    if (!recruitment) {
+        return res.status(404).json({ message: "모집공고를 찾을 수 없습니다." });
+    }
+
+    // Sequelize 객체를 일반 JSON 객체로 변환
+    let recruitmentData = recruitment.toJSON ? recruitment.toJSON() : recruitment;
+
+    // 3. 내가 스크랩했는지 여부(is_scrapped) 확인
+    let is_scrapped = false;
+    const scrap = await Scrap.findOne({
+      where: { user_id, recruitment_id }
+    });
+    is_scrapped = !!scrap;
+
+    // 4. 응답 (is_scrapped 포함)
+    res.status(200).json({
+      ...recruitmentData,
+      is_scrapped: is_scrapped
+    });
+
   } catch (error) {
     handleError(res, error);
   }
@@ -44,11 +81,9 @@ const getRecruitmentById = async (req, res) => {
 
 const createRecruitment = async (req, res) => {
   try {
-    // JWT에서 user_id 가져오기 (authMiddleware가 설정)
     const user_id = req.user.userId;
-
-    // photo와 photo_url 두 형식 모두 지원 (프론트엔드 호환성)
     const { title, description, max_applicants, recruitment_start, recruitment_end, project_type, photo, photo_url, hashtags } = req.body;
+    
     const newRecruitment = await recruitmentService.createRecruitment({
       title,
       description,
@@ -57,7 +92,7 @@ const createRecruitment = async (req, res) => {
       recruitment_start,
       recruitment_end,
       project_type,
-      photo_url: photo || photo_url, // photo 우선, photo_url 대체
+      photo_url: photo || photo_url,
       hashtags,
     });
     res.status(201).json(newRecruitment);
