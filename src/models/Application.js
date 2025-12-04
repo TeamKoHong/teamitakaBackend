@@ -41,6 +41,7 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "applications",
       freezeTableName: true,
       timestamps: true,
+      underscored: true,
     });
 
     return Application;
