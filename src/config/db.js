@@ -124,5 +124,33 @@ const connectDB = async () => {
   }
 };
 
-// 즉시 연결하지 않고 연결 함수만 export
-module.exports = { sequelize, connectDB };
+// 서버 시작 시 DB 연결 초기화 (Eager Connection)
+const initializeDatabase = async () => {
+  if (!hasRequiredEnvVars) {
+    console.warn("⚠️  Skipping database initialization: Required environment variables are missing");
+    return;
+  }
+
+  console.log("🔗 Initializing database connection...");
+
+  try {
+    // 1. DB 연결 테스트
+    await sequelize.authenticate();
+    console.log("✅ Database connection established successfully");
+
+    // 2. Connection pool 예열 (첫 쿼리 지연 방지)
+    await sequelize.query('SELECT 1');
+    console.log("✅ Connection pool warmed up");
+  } catch (error) {
+    console.error("❌ Database connection failed:", error.message);
+    console.log("🔄 Retrying in 5 seconds...");
+
+    // 연결 실패 시 5초 후 재시도
+    setTimeout(initializeDatabase, 5000);
+  }
+};
+
+// 서버 시작 시 즉시 DB 연결 시도
+initializeDatabase();
+
+module.exports = { sequelize, connectDB, initializeDatabase };
