@@ -149,6 +149,18 @@ db.Recruitment.associate = (models) => {
     foreignKey: "recruitment_id",
     otherKey: "hashtag_id",
   });
+
+  // ★ [추가] 모집글은 여러 개의 스크랩을 가짐
+  db.Recruitment.hasMany(models.Scrap, { 
+    foreignKey: "recruitment_id", 
+    onDelete: "CASCADE" 
+  });
+
+  // ★ [추가] 모집글은 여러 개의 조회 기록을 가짐
+  db.Recruitment.hasMany(models.RecruitmentView, { 
+    foreignKey: "recruitment_id", 
+    onDelete: "CASCADE" 
+  });
 };
 
 db.Review.associate = (models) => {
@@ -239,6 +251,29 @@ db.User.associate = (models) => {
   db.User.hasMany(models.ProjectMembers, {
     foreignKey: "user_id",
     onDelete: "CASCADE",
+  });
+
+  // ★ [추가] 유저는 여러 개의 스크랩을 함
+  db.User.hasMany(models.Scrap, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+
+  // ★ [추가] 유저는 여러 개의 조회 기록을 가짐
+  db.User.hasMany(models.RecruitmentView, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.RecruitmentView.associate = (models) => {
+  db.RecruitmentView.belongsTo(models.User, { 
+    foreignKey: "user_id", 
+    onDelete: "CASCADE" 
+  });
+  db.RecruitmentView.belongsTo(models.Recruitment, { 
+    foreignKey: "recruitment_id", 
+    onDelete: "CASCADE" 
   });
 };
 
