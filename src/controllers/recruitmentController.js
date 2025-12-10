@@ -2,6 +2,8 @@ const recruitmentService = require("../services/recruitmentService");
 const { handleError } = require("../utils/errorHandler");
 // ★ [수정 1] 필요한 모델들(Scrap, Recruitment, RecruitmentView) 불러오기
 const { Scrap, Recruitment, RecruitmentView } = require("../models");
+const scrapService = require("../services/scrapService");
+const { toPairs } = require("lodash");
 
 const getAllRecruitments = async (req, res) => {
   try {
@@ -79,6 +81,21 @@ const getRecruitmentById = async (req, res) => {
   }
 };
 
+const toggleScrap = async (req, res) => {
+  try {
+    const { recruitment_id } = req.params;
+    const user_id = req.user.userId; // authMiddleware에서 획득
+
+    // 서비스 로직 호출 (toggleScrap 함수가 문자열 메시지를 리턴한다고 가정)
+    const message = await scrapService.toggleScrap(user_id, recruitment_id);
+    
+    // 성공 응답
+    res.status(200).json({ message });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 const createRecruitment = async (req, res) => {
   try {
     const user_id = req.user.userId;
@@ -128,4 +145,5 @@ module.exports = {
   createRecruitment,
   updateRecruitment,
   deleteRecruitment,
+  toggleScrap,
 };
