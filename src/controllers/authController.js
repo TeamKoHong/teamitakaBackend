@@ -236,6 +236,10 @@ exports.getCurrentUser = async (req, res) => {
         'skills',
         'portfolio_url',
         'email_verified_at',
+        'department',
+        'enrollment_status',
+        'team_experience',
+        'keywords',
         'created_at',
         'updated_at'
       ]
@@ -258,11 +262,16 @@ exports.getCurrentUser = async (req, res) => {
         university: user.university,
         major: user.major,
         avatar: user.avatar,
+        profileImage: user.avatar, // 프론트엔드 요청 필드명
         bio: user.bio,
         awards: user.awards,
         skills: user.skills,
         portfolioUrl: user.portfolio_url,
         emailVerifiedAt: user.email_verified_at,
+        department: user.department,
+        enrollmentStatus: user.enrollment_status,
+        teamExperience: user.team_experience,
+        keywords: user.keywords || [],
         createdAt: user.created_at,
         updatedAt: user.updated_at
       }
