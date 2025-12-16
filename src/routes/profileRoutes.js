@@ -7,6 +7,12 @@ const { authenticateToken } = require("../middlewares/authMiddleware");
 router.get("/me", authenticateToken, ProfileController.getMyProfile);
 router.put("/", authenticateToken, ProfileController.updateProfile);
 
+// 프로필 상세 정보 조회 (인증 필요)
+router.get("/detail", authenticateToken, ProfileController.getProfileDetail);
+
+// 대학 인증 상태 조회 (인증 필요)
+router.get("/verification", authenticateToken, ProfileController.getVerificationStatus);
+
 // 다른 사용자 프로필 조회 (인증 필요)
 router.get("/:user_id", authenticateToken, ProfileController.getUserProfile);
 router.get("/:user_id/ratings", authenticateToken, ProfileController.getUserRatings);

@@ -97,6 +97,17 @@ module.exports = (sequelize) => {
         defaultValue: [],
         comment: '관심 키워드 배열',
       },
+      department: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        comment: '학과/학부명',
+      },
+      enrollment_status: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        defaultValue: '재학 중',
+        comment: '재학 상태 (재학 중, 휴학 중, 졸업)',
+      },
     },
     {
       tableName: "users",

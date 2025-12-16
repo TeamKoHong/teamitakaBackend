@@ -38,6 +38,12 @@ db.Vote = require("./Vote")(sequelize, Sequelize.DataTypes);
 db.VoteOption = require("./VoteOption")(sequelize, Sequelize.DataTypes);
 db.VoteResponse = require("./VoteResponse")(sequelize, Sequelize.DataTypes);
 
+// ✅ 프로필 상세 관련 모델 추가
+db.FeedbackItem = require("./FeedbackItem")(sequelize, Sequelize.DataTypes);
+db.UserFeedback = require("./UserFeedback")(sequelize, Sequelize.DataTypes);
+db.TeamiType = require("./TeamiType")(sequelize, Sequelize.DataTypes);
+db.UserTeamiType = require("./UserTeamiType")(sequelize, Sequelize.DataTypes);
+
 // 모델 간 관계 설정
 db.Application.associate = (models) => {
   db.Application.belongsTo(models.User, { foreignKey: "user_id", onDelete: "CASCADE" });
@@ -239,6 +245,53 @@ db.User.associate = (models) => {
   db.User.hasMany(models.ProjectMembers, {
     foreignKey: "user_id",
     onDelete: "CASCADE",
+  });
+  db.User.hasMany(models.UserFeedback, {
+    foreignKey: "user_id",
+    as: "Feedbacks",
+    onDelete: "CASCADE",
+  });
+  db.User.hasOne(models.UserTeamiType, {
+    foreignKey: "user_id",
+    as: "TeamiType",
+    onDelete: "CASCADE",
+  });
+};
+
+// ✅ 프로필 상세 모델 관계 설정
+db.FeedbackItem.associate = (models) => {
+  db.FeedbackItem.hasMany(models.UserFeedback, {
+    foreignKey: "feedback_item_id",
+    as: "UserFeedbacks",
+  });
+};
+
+db.UserFeedback.associate = (models) => {
+  db.UserFeedback.belongsTo(models.User, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+  db.UserFeedback.belongsTo(models.FeedbackItem, {
+    foreignKey: "feedback_item_id",
+    as: "FeedbackItem",
+  });
+};
+
+db.TeamiType.associate = (models) => {
+  db.TeamiType.hasMany(models.UserTeamiType, {
+    foreignKey: "teami_type_id",
+    as: "Users",
+  });
+};
+
+db.UserTeamiType.associate = (models) => {
+  db.UserTeamiType.belongsTo(models.User, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+  db.UserTeamiType.belongsTo(models.TeamiType, {
+    foreignKey: "teami_type_id",
+    as: "TeamiType",
   });
 };
 
