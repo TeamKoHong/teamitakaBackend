@@ -9,4 +9,10 @@ const authMiddleware = require("../middlewares/authMiddleware");
  */
 router.post("/recruitment-image", authMiddleware, uploadController.uploadRecruitmentImage);
 
+/**
+ * POST /api/upload/profile-image
+ * 프로필 이미지 업로드 (인증 필요)
+ */
+router.post("/profile-image", authMiddleware, uploadController.uploadProfileImage);
+
 module.exports = router;
