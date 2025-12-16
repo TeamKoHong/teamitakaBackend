@@ -85,6 +85,18 @@ module.exports = (sequelize) => {
         allowNull: true,
         comment: '전화번호 인증 완료 시각',
       },
+      team_experience: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+        comment: '팀플 경험 횟수 (0-99)',
+      },
+      keywords: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: [],
+        comment: '관심 키워드 배열',
+      },
     },
     {
       tableName: "users",
