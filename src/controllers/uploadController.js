@@ -99,6 +99,85 @@ const uploadRecruitmentImage = async (req, res) => {
   });
 };
 
+/**
+ * POST /api/upload/profile-image
+ * 프로필 이미지 업로드
+ */
+const uploadProfileImage = async (req, res) => {
+  upload(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({
+        success: false,
+        message: `파일 업로드 오류: ${err.message}`,
+      });
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: '업로드할 이미지 파일이 없습니다.',
+      });
+    }
+
+    try {
+      const file = req.file;
+      const fileExt = path.extname(file.originalname);
+      const fileName = `${uuidv4()}${fileExt}`;
+      const filePath = `profiles/${fileName}`;
+
+      // Supabase Storage에 업로드
+      const { data, error } = await supabase.storage
+        .from(process.env.SUPABASE_STORAGE_BUCKET)
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype,
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) {
+        console.error('❌ Supabase 프로필 이미지 업로드 실패:', error);
+        return res.status(500).json({
+          success: false,
+          message: '프로필 이미지 업로드에 실패했습니다.',
+          error: error.message,
+        });
+      }
+
+      // 공개 URL 생성
+      const { data: publicUrlData } = supabase.storage
+        .from(process.env.SUPABASE_STORAGE_BUCKET)
+        .getPublicUrl(filePath);
+
+      const photoUrl = publicUrlData.publicUrl;
+
+      console.log('✅ 프로필 이미지 업로드 성공:', photoUrl);
+
+      res.status(200).json({
+        success: true,
+        message: '프로필 이미지 업로드 성공',
+        data: {
+          photo_url: photoUrl,
+          file_path: filePath,
+          file_name: fileName,
+        },
+      });
+    } catch (error) {
+      console.error('❌ 프로필 이미지 업로드 중 오류:', error);
+      res.status(500).json({
+        success: false,
+        message: '서버 오류가 발생했습니다.',
+        error: error.message,
+      });
+    }
+  });
+};
+
 module.exports = {
   uploadRecruitmentImage,
+  uploadProfileImage,
 };
