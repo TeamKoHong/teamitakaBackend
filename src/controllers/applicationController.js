@@ -4,7 +4,7 @@ const { handleError } = require("../utils/errorHandler");
 const applyToRecruitment = async (req, res) => {
   try {
     const { recruitment_id } = req.params;
-    const user_id = res.locals.user.user_id;
+    const user_id = req.user.userId;
     const { introduction, portfolio_project_ids } = req.body;
 
     // 입력 검증
