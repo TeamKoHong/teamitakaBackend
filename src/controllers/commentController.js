@@ -15,7 +15,7 @@ const createComment = async (req, res) => {
   try {
     const { recruitment_id } = req.params;
     const { content } = req.body;
-    const user_id = res.locals.user.user_id;
+    const user_id = req.user.userId;
 
     const newComment = await commentService.createComment(user_id, recruitment_id, content);
     res.status(201).json(newComment);
