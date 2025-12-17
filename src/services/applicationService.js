@@ -26,6 +26,7 @@ const applyToRecruitment = async (user_id, recruitment_id, introduction, portfol
       },
       include: [{
         model: require("../models").ProjectMembers,
+        as: "ProjectMembers",
         where: { user_id },
         required: true,
       }],
