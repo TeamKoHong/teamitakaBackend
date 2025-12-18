@@ -236,12 +236,20 @@ DELETE /api/users/:id                  # 사용자 계정 삭제
 #### 📊 프로젝트 (Projects)
 ```
 GET    /api/projects                   # 전체 프로젝트 목록
-GET    /api/projects/mine              # 내 프로젝트 조회 (evaluation_status 지원)
+GET    /api/projects/mine              # 내 프로젝트 조회
 GET    /api/projects/:id               # 프로젝트 상세 조회
 POST   /api/projects                   # 새 프로젝트 생성
 PUT    /api/projects/:id               # 프로젝트 수정
 DELETE /api/projects/:id               # 프로젝트 삭제
 ```
+
+**`/api/projects/mine` 쿼리 파라미터:**
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| `status` | string | `ongoing`/`active` → 진행 중, `completed` → 완료 |
+| `evaluation_status` | string | `PENDING`, `COMPLETED`, `NOT_REQUIRED` |
+| `limit` | number | 조회 개수 제한 |
+| `offset` | number | 페이지네이션 오프셋 |
 
 #### 📢 모집공고 (Recruitments)
 ```
@@ -282,6 +290,7 @@ GET    /api/applications/:recruitment_id/count    # 지원자 수 조회
 #### 📤 파일 업로드 (Upload)
 ```
 POST   /api/upload/recruitment-image   # 모집공고 이미지 업로드 (JWT 필수)
+POST   /api/upload/profile-image       # 프로필 이미지 업로드 (JWT 필수)
 ```
 
 #### 💬 댓글 (Comments)
@@ -292,13 +301,31 @@ PUT    /api/comments/:id               # 댓글 수정
 DELETE /api/comments/:id               # 댓글 삭제
 ```
 
-#### 📅 일정 (Schedule)
+#### 👤 프로필 (Profile)
+```
+GET    /api/profile/me                 # 내 프로필 조회
+PUT    /api/profile                    # 프로필 수정
+GET    /api/profile/detail             # 프로필 상세 조회
+GET    /api/profile/verification       # 인증 상태 조회
+```
+
+#### 📅 일정 (Schedule) ⚠️ *라우트 등록 필요*
 ```
 POST   /api/schedule/create            # 일정 생성
 GET    /api/schedule/project/:project_id # 프로젝트별 일정 조회
 PUT    /api/schedule/:schedule_id      # 일정 수정
 DELETE /api/schedule/:schedule_id      # 일정 삭제
 ```
+
+#### 🗳️ 투표 (Vote) ⚠️ *라우트 등록 필요*
+```
+POST   /api/vote/create                # 투표 생성
+GET    /api/vote/project/:project_id   # 프로젝트별 투표 조회
+GET    /api/vote/:voteId               # 투표 상세 조회
+POST   /api/vote/:voteId/submit        # 투표 제출
+```
+
+> ⚠️ **참고**: Schedule, Vote API는 컨트롤러/서비스가 구현되어 있으나 `app.js`에 라우트 등록이 필요합니다.
 
 #### 📝 프로젝트 게시판 (Project Posts)
 ```
@@ -720,13 +747,29 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.5.1 |
-| **마지막 업데이트** | 2025-12-02 |
+| **버전** | 1.5.2 |
+| **마지막 업데이트** | 2025-12-18 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
+| **Swagger 문서** | [API Docs](https://teamitakabackend.onrender.com/api-docs) |
 
 ## 🔄 변경 이력
+
+### v1.5.2 (2025-12-18)
+- 🐛 **Application API Sequelize alias 버그 수정**
+  - `as: "ProjectMembers"` 누락으로 인한 500 에러 해결
+  - 포트폴리오 프로젝트 검증 로직 정상화
+- 📝 **Swagger API 문서 대규모 업데이트**
+  - Profile API 4개 엔드포인트 추가 (`/me`, `/detail`, `/verification`, `PUT /`)
+  - Vote API 4개 엔드포인트 문서화
+  - Schedule API 4개 엔드포인트 문서화
+  - Upload API `/profile-image` 엔드포인트 추가
+  - `/projects/mine` 쿼리 파라미터 상세 문서화 (status, evaluation_status, limit, offset)
+  - `/applications/{recruitment_id}` portfolio_project_ids 파라미터 문서화
+- 🔧 **API 문서 품질 개선**
+  - 응답 스키마 상세화
+  - 에러 코드 및 메시지 문서화
 
 ### v1.5.1 (2025-12-02)
 - 🔧 **Sequelize 모델 PostgreSQL 호환성 개선**
