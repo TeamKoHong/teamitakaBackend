@@ -1,4 +1,5 @@
 const { Scrap, Recruitment, sequelize } = require("../models");
+const { Op } = require("sequelize");
 
 const getUserScraps = async (user_id) => {
   return await Scrap.findAll({
@@ -39,7 +40,7 @@ const toggleScrap = async (user_id, recruitment_id) => {
     await Recruitment.decrement('scrap_count', {
       where: {
         recruitment_id,
-        scrap_count: { [sequelize.Op.gt]: 0 }
+        scrap_count: { [Op.gt]: 0 }
       }
     });
     return "스크랩 취소";
