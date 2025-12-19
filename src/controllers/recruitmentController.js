@@ -7,7 +7,8 @@ const { toPairs } = require("lodash");
 
 const getAllRecruitments = async (req, res) => {
   try {
-    const recruitments = await recruitmentService.getAllRecruitmentsWithApplicationCount();
+    const user_id = req.user?.userId || null;
+    const recruitments = await recruitmentService.getAllRecruitmentsWithApplicationCount(user_id);
     res.status(200).json(recruitments);
   } catch (error) {
     handleError(res, error);
