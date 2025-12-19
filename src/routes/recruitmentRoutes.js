@@ -3,9 +3,10 @@ const router = express.Router();
 const recruitmentController = require("../controllers/recruitmentController");
 const applicationController = require("../controllers/applicationController");
 const authMiddleware = require("../middlewares/authMiddleware");
+const optionalAuthMiddleware = require("../middlewares/optionalAuthMiddleware");
 
-// 모집공고 전체 조회
-router.get("/", recruitmentController.getAllRecruitments);
+// 모집공고 전체 조회 (로그인 시 is_scrapped 포함)
+router.get("/", optionalAuthMiddleware, recruitmentController.getAllRecruitments);
 
 // 내가 작성한 모집공고 목록 조회 (/:id보다 먼저 정의해야 함!)
 router.get("/mine", authMiddleware, recruitmentController.getMyRecruitments);

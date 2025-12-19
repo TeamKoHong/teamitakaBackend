@@ -1,9 +1,9 @@
-const { Recruitment, Project, Hashtag, Application, sequelize } = require("../models");
+const { Recruitment, Project, Hashtag, Application, Scrap, sequelize } = require("../models");
 const { Op } = require("sequelize");
 
-// 🔥 1. 전체 모집공고 가져오기
-const getAllRecruitmentsWithApplicationCount = async () => {
-  return await Recruitment.findAll({
+// 🔥 1. 전체 모집공고 가져오기 (로그인 시 is_scrapped 포함)
+const getAllRecruitmentsWithApplicationCount = async (user_id = null) => {
+  const recruitments = await Recruitment.findAll({
     attributes: [
       "recruitment_id",
       "title",
@@ -32,6 +32,22 @@ const getAllRecruitmentsWithApplicationCount = async () => {
       ["created_at", "DESC"]
     ],
   });
+
+  // user_id가 있으면 스크랩 여부 확인
+  let userScraps = [];
+  if (user_id) {
+    const scraps = await Scrap.findAll({
+      where: { user_id },
+      attributes: ['recruitment_id']
+    });
+    userScraps = scraps.map(s => s.recruitment_id);
+  }
+
+  // is_scrapped 추가하여 반환
+  return recruitments.map(r => ({
+    ...(r.toJSON ? r.toJSON() : r),
+    is_scrapped: user_id ? userScraps.includes(r.recruitment_id) : false
+  }));
 };
 
 // 📋 2. 내가 작성한 모집공고 목록 조회
