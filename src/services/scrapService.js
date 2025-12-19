@@ -32,9 +32,16 @@ const toggleScrap = async (user_id, recruitment_id) => {
 
   if (!existScrap) {
     await Scrap.create({ user_id, recruitment_id });
+    await Recruitment.increment('scrap_count', { where: { recruitment_id } });
     return "스크랩 추가";
   } else {
     await Scrap.destroy({ where: { user_id, recruitment_id } });
+    await Recruitment.decrement('scrap_count', {
+      where: {
+        recruitment_id,
+        scrap_count: { [sequelize.Op.gt]: 0 }
+      }
+    });
     return "스크랩 취소";
   }
 };
