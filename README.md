@@ -9,6 +9,7 @@
 
 ## 📋 목차
 
+- [프로젝트 현황 요약](#-프로젝트-현황-요약)
 - [주요 기능](#-주요-기능)
 - [기술 스택](#-기술-스택)
 - [시작하기](#-시작하기)
@@ -19,7 +20,33 @@
 - [테스트](#-테스트)
 - [배포](#-배포)
 - [환경 변수](#-환경-변수)
+- [개발 현황](#-개발-현황-development-status)
 - [기여하기](#-기여하기)
+
+## 📊 프로젝트 현황 요약
+
+> 마지막 분석: 2025-12-20 | **전체 완료율: 94%**
+
+| 항목 | 현황 | 상세 |
+|------|:----:|------|
+| **API 엔드포인트** | 76개 | 94% 구현 완료 |
+| **컨트롤러** | 22개 | 전체 구현 |
+| **서비스** | 19개 | 전체 구현 |
+| **DB 모델** | 32개 | 스펙 26개 중 19개 + 추가 13개 |
+| **마이그레이션** | 13개 | 최신 업데이트 완료 |
+| **미들웨어** | 8개 | 인증, 검증, 업로드 등 |
+
+### 핵심 기능 구현 현황
+
+| 기능 | 상태 | 비고 |
+|------|:----:|------|
+| 인증 (이메일/구글/휴대폰) | ✅ | JWT, Firebase, OAuth |
+| 프로젝트 CRUD + 킥오프 | ✅ | 모집→프로젝트 전환 |
+| 모집공고 시스템 | ✅ | 해시태그, 이미지 업로드 |
+| 지원/수락/거절 플로우 | ✅ | 포트폴리오 연결 |
+| 팀원 평가 시스템 | ✅ | 5개 평가 항목 |
+| 투표/일정 관리 | ⚠️ | 라우트 등록 필요 |
+| 알림 시스템 | ❌ | 미구현 |
 
 ## ✨ 주요 기능
 
@@ -192,19 +219,19 @@ docker-compose up -d
 ```
 teamitakaBackend/
 ├── src/
-│   ├── config/          # 설정 파일 (DB, env)
-│   ├── controllers/     # 라우트 컨트롤러
-│   ├── middlewares/     # Express 미들웨어 (인증, 검증)
-│   ├── models/          # Sequelize 모델
-│   ├── routes/          # API 라우트
-│   ├── services/        # 비즈니스 로직 레이어
-│   ├── utils/           # 유틸리티 함수
+│   ├── config/          # 설정 파일 (4개: database, env, ...)
+│   ├── controllers/     # 라우트 컨트롤러 (22개)
+│   ├── middlewares/     # Express 미들웨어 (8개: 인증, 검증, 업로드)
+│   ├── models/          # Sequelize 모델 (32개)
+│   ├── routes/          # API 라우트 (18개)
+│   ├── services/        # 비즈니스 로직 레이어 (19개)
+│   ├── utils/           # 유틸리티 함수 (7개)
 │   ├── validations/     # 요청 유효성 검증 스키마
 │   ├── templates/       # 이메일 템플릿
+│   ├── migrations/      # DB 마이그레이션 (13개)
 │   └── app.js           # Express 앱 설정
 ├── tests/               # 테스트 파일
 ├── scripts/             # 유틸리티 스크립트
-├── migrations/          # 데이터베이스 마이그레이션
 ├── docs/                # 문서
 ├── index.js             # 애플리케이션 진입점
 └── package.json         # 의존성 및 스크립트
@@ -314,6 +341,21 @@ GET    /api/profile/detail             # 프로필 상세 조회
 GET    /api/profile/verification       # 인증 상태 조회
 ```
 
+#### ⭐ 평가 (Reviews)
+```
+POST   /api/reviews                        # 팀원 평가 생성
+GET    /api/reviews/user/:user_id          # 사용자가 받은 평가 조회
+GET    /api/reviews/project/:project_id    # 프로젝트 평가 목록
+GET    /api/reviews/project/:project_id/summary  # 프로젝트 평가 요약
+DELETE /api/reviews/:review_id             # 평가 삭제
+```
+
+#### 📌 스크랩 (Scraps)
+```
+GET    /api/scraps/recruitments            # 스크랩한 모집공고 목록
+PUT    /api/scraps/recruitment/:id/scrap   # 스크랩 토글 (추가/제거)
+```
+
 #### 📅 일정 (Schedule) ⚠️ *라우트 등록 필요*
 ```
 POST   /api/schedule/create            # 일정 생성
@@ -375,24 +417,87 @@ GET    /api/health                     # 서버 상태 확인
 - **MySQL 8.0+** (로컬 개발)
 - **PostgreSQL 14+** (Supabase 프로덕션)
 
-### 데이터베이스 모델
+### 데이터베이스 모델 (32개)
 
-| 모델 | 설명 |
-|------|------|
-| **Users** | 사용자 계정 및 프로필 |
-| **Projects** | 프로젝트 정보 |
-| **ProjectMembers** | 프로젝트 팀 멤버 |
-| **Recruitments** | 프로젝트 모집 공고 (이미지 지원, 해시태그 지원) |
-| **Applications** | 프로젝트 지원서 (자기소개 + 포트폴리오) |
-| **ApplicationPortfolios** | 지원서-포트폴리오 연결 (M:N 관계) |
-| **Hashtags** | 해시태그 태그 관리 |
-| **recruitment_hashtags** | 모집공고-해시태그 연결 (M:N 관계) |
-| **Comments** | 프로젝트 댓글 |
-| **Reviews** | 프로젝트 리뷰 및 팀원 평가 |
-| **Notifications** | 사용자 알림 |
-| **Scraps** | 북마크한 프로젝트 |
-| **Votes** | 투표 시스템 |
-| **EmailVerifications** | 이메일 인증 코드 |
+> 스펙 26개 테이블 중 19개 구현 + 추가 13개 모델
+
+#### 핵심 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **User** | 사용자 계정 및 프로필 | users |
+| **Project** | 프로젝트 정보 | projects |
+| **ProjectMembers** | 프로젝트 팀 멤버 | project_members |
+| **Recruitment** | 모집 공고 (이미지, 해시태그 지원) | recruitment_posts |
+| **Application** | 지원서 (자기소개 + 포트폴리오) | applications |
+| **ApplicationPortfolio** | 지원서-포트폴리오 연결 (M:N) | application_projects |
+
+#### 부가 기능 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **Hashtag** | 해시태그 관리 | recruitment_hashtags |
+| **Comment** | 프로젝트 댓글 | - (추가) |
+| **Review** | 팀원 평가 시스템 | peer_evaluations |
+| **Notification** | 사용자 알림 | notifications |
+| **Scrap** | 북마크 | bookmarks |
+| **Todo** | 할 일 관리 | todos |
+
+#### 투표 시스템 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **Vote** | 투표 생성 | votes |
+| **VoteOption** | 투표 선택지 | vote_options |
+| **VoteResponse** | 투표 응답 | vote_responses |
+
+#### 일정 및 타임라인 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **Schedule** | 일정 관리 | calendar_events |
+| **Timeline** | 타임라인 이벤트 | - (추가) |
+| **ProjectPost** | 프로젝트 피드 | project_feeds |
+
+#### 사용자 관련 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **University** | 대학 정보 | universities |
+| **College** | 단과대 정보 | - (추가) |
+| **Department** | 학과 정보 | - (추가) |
+| **EmailVerification** | 이메일 인증 | verification_codes |
+| **VerifiedEmail** | 인증 완료 이메일 | - (추가) |
+| **Search** | 검색 기록 | search_history |
+
+#### 팀플 유형 및 피드백 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **TeamiType** | 팀플 캐릭터 유형 | - (추가) |
+| **UserTeamiType** | 사용자-캐릭터 매핑 | - (추가) |
+| **UserFeedback** | 사용자 피드백 | - (추가) |
+| **FeedbackItem** | 피드백 항목 | - (추가) |
+| **Keyword** | 키워드 관리 | - (추가) |
+
+#### 시스템 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **Admin** | 관리자 계정 | - (추가) |
+| **RecruitmentView** | 조회수 추적 | - (추가) |
+
+#### ❌ 미구현 테이블 (7개)
+
+| 스펙 테이블 | 용도 | 우선순위 |
+|-------------|------|----------|
+| user_stats | 사용자 통계 집계 | 중 |
+| user_settings | 사용자 설정 | 중 |
+| popular_keywords | 인기 검색어 | 하 |
+| project_invitations | QR 초대 | 중 |
+| draft_recruitment_posts | 모집글 임시저장 | 하 |
+| meeting_notes | 회의록 | 중 |
+| team_chat_messages | 팀 채팅 | 하 |
 
 ### 마이그레이션
 
@@ -761,74 +866,78 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 ## 📊 개발 현황 (Development Status)
 
-> 마지막 분석: 2025-12-20 | 전체 완료율: **약 80%**
+> 마지막 분석: 2025-12-20 | 전체 완료율: **94%**
 
 ### 🎯 전체 개발 진행률
 
 | 구분 | 완료 | 진행중 | 미구현 | 완료율 |
 |------|:----:|:------:|:------:|:------:|
-| API 엔드포인트 | 60개 | 8개 | 4개 | 83% |
-| 라우트 파일 | 15개 | 4개 | 0개 | 79% |
-| 컨트롤러 | 15개 | 6개 | 1개 | 68% |
-| 서비스 | 17개 | 2개 | 0개 | 89% |
-| 모델 | 32개 | - | - | 100% |
+| API 엔드포인트 | 76개 | 2개 | 4개 | 94% |
+| 라우트 파일 | 18개 | 2개 | 0개 | 90% |
+| 컨트롤러 | 22개 | 0개 | 0개 | 100% |
+| 서비스 | 19개 | 0개 | 0개 | 100% |
+| 모델 | 32개 | 0개 | 0개 | 100% |
 
 ### 🔧 기능별 구현 현황
 
 | 기능 | 상태 | 엔드포인트 | 비고 |
 |------|:----:|:----------:|------|
-| 🔐 인증 (Auth) | ✅ 완료 | 6개 | JWT, OAuth, Firebase Phone |
-| 📧 이메일 인증 | ✅ 완료 | 4개 | SendGrid, Rate Limiting |
-| 📢 모집공고 | ✅ 완료 | 7개 | CRUD, 스크랩, 조회수 |
-| 📝 지원 관리 | ✅ 완료 | 5개 | 지원, 승인/거절, 포트폴리오 |
-| 📊 프로젝트 | ✅ 완료 | 7개 | CRUD, 킥오프, 팀원 관리 |
+| 🔐 인증 (Auth) | ✅ 완료 | 8개 | JWT, OAuth, Firebase Phone |
+| 📧 이메일/SMS 인증 | ✅ 완료 | 4개 | SendGrid, Rate Limiting |
+| 📢 모집공고 | ✅ 완료 | 8개 | CRUD, 스크랩, 해시태그, 조회수 |
+| 📝 지원 관리 | ✅ 완료 | 4개 | 지원, 승인/거절, 포트폴리오 |
+| 📊 프로젝트 | ✅ 완료 | 10개 | CRUD, 킥오프, 팀원 관리 |
 | ✅ 할 일 (Todo) | ✅ 완료 | 4개 | 프로젝트별 할 일 관리 |
 | 📅 타임라인 | ✅ 완료 | 4개 | 프로젝트 타임라인 |
 | 👥 팀원 관리 | ✅ 완료 | 2개 | 역할 조회/수정 |
-| ⭐ 평가 (Review) | ✅ 완료 | 6개 | 팀원 상호평가 |
-| 👤 프로필 | ✅ 완료 | 7개 | 조회, 수정, 인증 상태 |
+| ⭐ 평가 (Review) | ✅ 완료 | 6개 | 팀원 상호평가 (5개 항목) |
+| 👤 프로필 | ✅ 완료 | 7개 | 조회, 수정, 인증 상태, 평점 |
 | 💬 댓글 | ✅ 완료 | 2개 | 모집공고 댓글 |
 | 🖼️ 업로드 | ✅ 완료 | 2개 | Supabase Storage |
 | 📌 스크랩 | ✅ 완료 | 2개 | 모집공고 스크랩 |
 | 🛡️ 관리자 | ✅ 완료 | 3개 | 인증 사용자 관리 |
-| 📈 대시보드 | 🟡 부분 | 1개 | 요약만 구현 |
+| 📈 대시보드 | ✅ 완료 | 1개 | 통계, 알림, 타임라인 |
 | 💾 임시저장 | 🟡 부분 | 1개 | 생성만 구현 |
-| 📋 프로젝트 게시물 | 🟡 부분 | 3개 | 라우트 중복 이슈 |
-| 🔍 검색 | 🟡 부분 | 1개 | 기본 라우트만 |
-| 🗳️ 투표 (Vote) | ❌ 미등록 | 0개 | 라우트 미등록 |
-| 📆 일정 (Schedule) | ❌ 미등록 | 0개 | 라우트 미등록 |
+| 📋 프로젝트 게시물 | ✅ 완료 | 3개 | 프로젝트 피드 |
+| 🔍 검색 | ✅ 완료 | 1개 | 통합 검색 |
+| 🗳️ 투표 (Vote) | ⚠️ 미등록 | 4개 | 코드 완성, app.js 등록 필요 |
+| 📆 일정 (Schedule) | ⚠️ 미등록 | 4개 | 코드 완성, app.js 등록 필요 |
 
 ### ⚠️ 해결 필요 사항
 
-| 우선순위 | 이슈 | 영향 범위 | 상태 |
-|:--------:|------|----------|:----:|
-| 🔴 긴급 | Vote 라우트 app.js 미등록 | 투표 기능 전체 | 미해결 |
-| 🔴 긴급 | Schedule 라우트 app.js 미등록 | 일정 관리 전체 | 미해결 |
-| 🟡 보통 | Draft API 조회/수정/삭제 미구현 | 임시저장 기능 | 미구현 |
-| 🟡 보통 | ProjectPost 라우트 중복 | 게시물 API | 검토 필요 |
-| 🟢 낮음 | Search API 필터/정렬 미구현 | 검색 기능 | 미구현 |
-| 🟢 낮음 | Dashboard 상세 통계 미구현 | 대시보드 | 미구현 |
+| 우선순위 | 이슈 | 영향 범위 | 예상 시간 |
+|:--------:|------|----------|:--------:|
+| 🔴 긴급 | Vote 라우트 app.js 미등록 | 투표 기능 전체 | 5분 |
+| 🔴 긴급 | Schedule 라우트 app.js 미등록 | 일정 관리 전체 | 5분 |
+| 🟡 보통 | /api/auth/logout 미구현 | 로그아웃 | 1시간 |
+| 🟡 보통 | /api/auth/refresh 미구현 | 토큰 갱신 | 2시간 |
+| 🟡 보통 | /api/auth/password/reset 미구현 | 비밀번호 재설정 | 4시간 |
+| 🟡 보통 | /api/applications/:id/cancel 미구현 | 지원 취소 | 1시간 |
+| 🟢 낮음 | 알림 시스템 API 미구현 | 알림 기능 | 1일 |
+| 🟢 낮음 | 회의록 API 미구현 | 회의 관리 | 1일 |
+| 🟢 낮음 | QR 초대 API 미구현 | 프로젝트 초대 | 4시간 |
 
 ### 🗂️ 레이어별 현황
 
 | 레이어 | 파일 수 | 구현 현황 |
 |--------|:-------:|----------|
-| Routes | 19개 | authRoutes, recruitmentRoutes, projectRoutes 등 15개 등록 |
-| Controllers | 22개 | authController, projectController 등 15개 완전 구현 |
-| Services | 19개 | authService, recruitmentService 등 17개 완전 구현 |
-| Models | 32개 | User, Project, Recruitment 등 전체 구현 |
-| Middlewares | 5개 | authMiddleware, errorMiddleware 등 완전 구현 |
+| Routes | 18개 | 16개 등록, 2개 미등록 (vote, schedule) |
+| Controllers | 22개 | 전체 구현 완료 |
+| Services | 19개 | 전체 구현 완료 |
+| Models | 32개 | 전체 구현 완료 |
+| Middlewares | 8개 | auth, admin, optional, error, validation, upload, rateLimit 등 |
 
 ### 📋 상태 범례
 
 | 상태 | 설명 |
 |:----:|------|
-| ✅ 완료 | 기능 완전 구현 및 테스트 완료 |
+| ✅ 완료 | 기능 완전 구현 및 동작 확인 |
 | 🟡 부분 | 기본 기능 구현, 일부 기능 미완성 |
-| ❌ 미등록 | 코드 존재하나 라우트 미등록 |
-| 🔴 긴급 | 즉시 해결 필요 |
-| 🟡 보통 | 다음 스프린트 해결 |
-| 🟢 낮음 | 여유 있을 때 해결 |
+| ⚠️ 미등록 | 코드 완성되었으나 라우트 미등록 |
+| ❌ 미구현 | 구현 필요 |
+| 🔴 긴급 | 즉시 해결 필요 (5분 이내) |
+| 🟡 보통 | 단기 해결 (1-2일) |
+| 🟢 낮음 | 중기 해결 (1주) |
 
 ## 🔄 변경 이력
 
