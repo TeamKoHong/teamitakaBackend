@@ -45,6 +45,14 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: true,
       },
+      resolution: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      project_type: {
+        type: DataTypes.ENUM("course", "side"),
+        allowNull: true,
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,
