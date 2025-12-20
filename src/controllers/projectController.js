@@ -141,7 +141,7 @@ const getMyProjects = async (req, res) => {
 
     const projectIds = myProjects.map(p => p.project_id);
 
-    // 2. 프로젝트 기본 정보 + 팀원 수 + 평가 정보 + 멤버 목록 조회
+    // 2. 프로젝트 기본 정보 + 팀원 수 + 평가 정보 + 멤버 목록 + 최근 피드 시간 조회
     const query = `
       WITH member_counts AS (
         SELECT
@@ -173,6 +173,13 @@ const getMyProjects = async (req, res) => {
         FROM project_members pm
         JOIN users u ON pm.user_id = u.user_id
         GROUP BY pm.project_id
+      ),
+      last_feed_times AS (
+        SELECT
+          project_id,
+          MAX("createdAt") as last_feed_at
+        FROM project_posts
+        GROUP BY project_id
       )
       SELECT
         p.project_id,
@@ -189,6 +196,7 @@ const getMyProjects = async (req, res) => {
         COALESCE(mc.member_count, 0) as member_count,
         COALESCE(urc.completed_reviews, 0) as completed_reviews,
         COALESCE(pmd.members, '[]'::json) as members,
+        lft.last_feed_at,
         CASE
           WHEN COALESCE(mc.member_count, 0) <= 1 THEN 'NOT_REQUIRED'
           WHEN COALESCE(urc.completed_reviews, 0) >= (COALESCE(mc.member_count, 0) - 1) THEN 'COMPLETED'
@@ -198,6 +206,7 @@ const getMyProjects = async (req, res) => {
       LEFT JOIN member_counts mc ON p.project_id = mc.project_id
       LEFT JOIN user_review_counts urc ON p.project_id = urc.project_id
       LEFT JOIN project_members_details pmd ON p.project_id = pmd.project_id
+      LEFT JOIN last_feed_times lft ON p.project_id = lft.project_id
       WHERE p.project_id IN (:projectIds) ${statusFilter}
       ORDER BY p.created_at DESC
     `;
