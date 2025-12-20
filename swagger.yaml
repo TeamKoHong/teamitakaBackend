@@ -2657,8 +2657,8 @@ paths:
   /projects/from-recruitment/{recruitment_id}:
     post:
       tags: [Project]
-      summary: 모집글에서 프로젝트 생성
-      description: 모집글을 프로젝트로 전환하고 승인된 지원자들을 팀원으로 등록합니다
+      summary: 모집글에서 프로젝트 생성 (킥오프)
+      description: 모집글을 프로젝트로 전환합니다. 프로젝트 제목, 다짐, 진행기간, 선택된 멤버를 입력받습니다.
       security:
         - bearerAuth: []
       parameters:
@@ -2668,6 +2668,41 @@ paths:
           schema:
             type: string
             format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - memberUserIds
+              properties:
+                title:
+                  type: string
+                  description: 프로젝트 제목 (모집글 제목과 별도)
+                  example: "팀이타카 MVP 개발"
+                resolution:
+                  type: string
+                  description: 다짐 내용
+                  example: "우리는 끝까지 완주한다!"
+                start_date:
+                  type: string
+                  format: date
+                  description: 프로젝트 시작일
+                  example: "2025-01-15"
+                end_date:
+                  type: string
+                  format: date
+                  description: 프로젝트 종료일
+                  example: "2025-03-15"
+                memberUserIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: 선택된 지원자들의 user_id 배열
+                  example: ["550e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440002"]
       responses:
         '201':
           description: 생성 성공
@@ -2684,19 +2719,29 @@ paths:
                     $ref: '#/components/schemas/Project'
               examples:
                 success:
-                  summary: 프로젝트 전환 성공
+                  summary: 프로젝트 킥오프 성공
                   value:
-                    success: true
-                    message: "모집글이 프로젝트로 전환되었습니다"
-                    data:
+                    project_id: "550e8400-e29b-41d4-a716-446655440000"
+                    title: "팀이타카 MVP 개발"
+                    resolution: "우리는 끝까지 완주한다!"
+                    project_type: "side"
+                    start_date: "2025-01-15"
+                    end_date: "2025-03-15"
+                    status: "ACTIVE"
+                    created_at: "2025-01-10T12:00:00Z"
+                    members:
+                      - user_id: "550e8400-e29b-41d4-a716-446655440001"
+                        role: "LEADER"
+                        status: "ACTIVE"
+                        joined_at: "2025-01-10T12:00:00Z"
+                      - user_id: "550e8400-e29b-41d4-a716-446655440002"
+                        role: "MEMBER"
+                        status: "ACTIVE"
+                        joined_at: "2025-01-10T12:00:00Z"
+                    recruitment:
+                      recruitment_id: "660e8400-e29b-41d4-a716-446655440000"
+                      status: "CLOSED"
                       project_id: "550e8400-e29b-41d4-a716-446655440000"
-                      title: "AI 프로젝트 팀원 모집"
-                      status: "ACTIVE"
-                      members:
-                        - user_id: "550e8400-e29b-41d4-a716-446655440001"
-                          role: "팀장"
-                        - user_id: "550e8400-e29b-41d4-a716-446655440002"
-                          role: "팀원"
         '401':
           description: 인증 필요
           content:
