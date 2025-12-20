@@ -53,7 +53,7 @@ const getAllRecruitmentsWithApplicationCount = async (user_id = null) => {
 // 📋 2. 내가 작성한 모집공고 목록 조회
 const getMyRecruitments = async (user_id, { limit, offset }) => {
   const { count, rows } = await Recruitment.findAndCountAll({
-    where: { user_id },
+    where: { user_id, status: 'ACTIVE' },
     attributes: [
       'recruitment_id',
       'title',
