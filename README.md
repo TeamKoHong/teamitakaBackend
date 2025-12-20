@@ -40,6 +40,10 @@
 - 프로젝트 생성, 조회, 수정, 삭제 (CRUD)
 - 내 프로젝트 조회 (평가 상태 추적)
 - 팀원 모집 시스템 (이미지 업로드 지원)
+- **프로젝트 킥오프 (모집글 → 프로젝트 전환)**
+  - 승인된 지원자 중 팀원 선택
+  - 프로젝트 제목, 다짐(resolution), 기간 설정
+  - Recruitment에서 project_type 자동 복사
 - **키워드(해시태그) 기반 모집글 태깅 및 검색**
   - 모집글당 최대 5개 키워드 지원
   - # 기호 자동 제거 및 중복 제거
@@ -239,6 +243,7 @@ GET    /api/projects                   # 전체 프로젝트 목록
 GET    /api/projects/mine              # 내 프로젝트 조회
 GET    /api/projects/:id               # 프로젝트 상세 조회
 POST   /api/projects                   # 새 프로젝트 생성
+POST   /api/projects/from-recruitment/:id  # 모집글에서 프로젝트 킥오프
 PUT    /api/projects/:id               # 프로젝트 수정
 DELETE /api/projects/:id               # 프로젝트 삭제
 ```
@@ -747,14 +752,26 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.5.2 |
-| **마지막 업데이트** | 2025-12-18 |
+| **버전** | 1.5.3 |
+| **마지막 업데이트** | 2025-12-20 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
 | **Swagger 문서** | [API Docs](https://teamitakabackend.onrender.com/api-docs) |
 
 ## 🔄 변경 이력
+
+### v1.5.3 (2025-12-20)
+- ✨ **프로젝트 킥오프 API 개선** (`POST /api/projects/from-recruitment/:id`)
+  - 프론트엔드에서 직접 프로젝트 제목 입력
+  - 다짐(resolution) 필드 추가
+  - 승인된 지원자 중 팀원 선택 기능 (`memberUserIds` 배열)
+  - Recruitment에서 `project_type` 자동 복사 (course/side)
+- 🗄️ **Project 모델 스키마 확장**
+  - `resolution`: 프로젝트 다짐 (TEXT)
+  - `project_type`: 프로젝트 유형 (ENUM: 'course', 'side')
+- 🐛 **버그 수정**
+  - Application status 검색 버그 수정 (ACCEPTED → memberUserIds 직접 전달)
 
 ### v1.5.2 (2025-12-18)
 - 🐛 **Application API Sequelize alias 버그 수정**
