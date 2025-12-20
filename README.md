@@ -752,7 +752,7 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.5.3 |
+| **버전** | 1.5.4 |
 | **마지막 업데이트** | 2025-12-20 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
@@ -760,6 +760,15 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 | **Swagger 문서** | [API Docs](https://teamitakabackend.onrender.com/api-docs) |
 
 ## 🔄 변경 이력
+
+### v1.5.4 (2025-12-20)
+- ✨ **내 프로젝트 API 최신 피드 시간 추가** (`GET /api/projects/mine`)
+  - 응답에 `last_feed_at` 필드 추가 (ISO 8601 timestamp 또는 null)
+  - 프로젝트 카드에 '2시간 전' 형태의 상대 시간 표시 지원
+  - `project_posts` 테이블의 최신 게시물 시간 기준
+- 🐛 **내 모집공고 목록 CLOSED 상태 필터링 버그 수정**
+  - 프로젝트 킥오프 후 '모집중' 탭에서 사라지도록 수정
+  - ACTIVE 상태의 모집공고만 조회되도록 쿼리 수정
 
 ### v1.5.3 (2025-12-20)
 - ✨ **프로젝트 킥오프 API 개선** (`POST /api/projects/from-recruitment/:id`)
