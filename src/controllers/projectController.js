@@ -270,22 +270,33 @@ const getMyProjects = async (req, res) => {
   }
 };
 
-// createProjectFromRecruitment - 모집공고를 프로젝트로 전환
+// createProjectFromRecruitment - 모집공고를 프로젝트로 전환 (킥오프)
 const createProjectFromRecruitment = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
     const { recruitment_id } = req.params;
-    const { start_date, end_date } = req.body;
+    const { title, resolution, start_date, end_date, memberUserIds } = req.body;
 
-    // 1. 모집공고 조회
+    // 1. 필수 파라미터 검증
+    if (!title) {
+      await transaction.rollback();
+      return res.status(400).json({ error: "프로젝트 제목은 필수입니다." });
+    }
+
+    if (!memberUserIds || !Array.isArray(memberUserIds) || memberUserIds.length === 0) {
+      await transaction.rollback();
+      return res.status(400).json({ error: "프로젝트 멤버를 선택해주세요." });
+    }
+
+    // 2. 모집공고 조회
     const recruitment = await Recruitment.findByPk(recruitment_id, { transaction });
     if (!recruitment) {
       await transaction.rollback();
       return res.status(404).json({ error: "모집공고를 찾을 수 없습니다." });
     }
 
-    // 2. 이미 프로젝트로 전환되었는지 확인
+    // 3. 이미 프로젝트로 전환되었는지 확인
     if (recruitment.project_id) {
       await transaction.rollback();
       return res.status(400).json({
@@ -294,27 +305,13 @@ const createProjectFromRecruitment = async (req, res) => {
       });
     }
 
-    // 3. ACCEPTED된 지원자들 조회
-    const approvedApplications = await Application.findAll({
-      where: {
-        recruitment_id,
-        status: "ACCEPTED"
-      },
-      transaction
-    });
-
-    if (approvedApplications.length === 0) {
-      await transaction.rollback();
-      return res.status(400).json({
-        error: "승인된 지원자가 없어 프로젝트를 생성할 수 없습니다."
-      });
-    }
-
-    // 4. 새 프로젝트 생성 (모집공고 정보 복사)
+    // 4. 새 프로젝트 생성
     const newProject = await Project.create({
-      title: recruitment.title,
+      title: title,
       description: recruitment.description,
-      user_id: recruitment.user_id,  // 모집공고 작성자
+      resolution: resolution || null,
+      project_type: recruitment.project_type || null,
+      user_id: recruitment.user_id,
       start_date: start_date || null,
       end_date: end_date || null,
       status: "ACTIVE"
@@ -333,11 +330,14 @@ const createProjectFromRecruitment = async (req, res) => {
     }, { transaction });
     members.push(leaderMember);
 
-    // 5-2. ACCEPTED 지원자들을 멤버로 추가
-    for (const application of approvedApplications) {
+    // 5-2. 선택된 멤버들을 프로젝트에 추가
+    for (const userId of memberUserIds) {
+      // 리더와 중복되는 경우 스킵
+      if (userId === recruitment.user_id) continue;
+
       const member = await ProjectMembers.create({
         project_id: newProject.project_id,
-        user_id: application.user_id,
+        user_id: userId,
         role: "MEMBER",
         status: "ACTIVE",
         joined_at: new Date()
@@ -358,7 +358,8 @@ const createProjectFromRecruitment = async (req, res) => {
     return res.status(201).json({
       project_id: newProject.project_id,
       title: newProject.title,
-      description: newProject.description,
+      resolution: newProject.resolution,
+      project_type: newProject.project_type,
       user_id: newProject.user_id,
       start_date: newProject.start_date,
       end_date: newProject.end_date,
