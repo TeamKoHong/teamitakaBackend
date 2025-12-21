@@ -141,10 +141,71 @@ const getApplicationCount = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/applications/:application_id/cancel
+ * 지원 취소
+ */
+const cancelApplication = async (req, res) => {
+  try {
+    const { application_id } = req.params;
+    const user_id = req.user.userId;
+
+    await applicationService.cancelApplication(application_id, user_id);
+
+    res.status(200).json({
+      success: true,
+      message: "지원이 취소되었습니다.",
+    });
+  } catch (error) {
+    if (error.message === "지원을 찾을 수 없습니다.") {
+      return res.status(404).json({
+        success: false,
+        error: "APPLICATION_NOT_FOUND",
+        message: error.message,
+      });
+    }
+    if (error.message === "본인의 지원만 취소할 수 있습니다.") {
+      return res.status(403).json({
+        success: false,
+        error: "FORBIDDEN",
+        message: error.message,
+      });
+    }
+    if (error.message === "대기 중인 지원만 취소할 수 있습니다.") {
+      return res.status(400).json({
+        success: false,
+        error: "INVALID_STATUS",
+        message: error.message,
+      });
+    }
+    handleError(res, error);
+  }
+};
+
+/**
+ * GET /api/applications/mine
+ * 내 지원 목록 조회
+ */
+const getMyApplications = async (req, res) => {
+  try {
+    const user_id = req.user.userId;
+    const applications = await applicationService.getMyApplications(user_id);
+
+    res.status(200).json({
+      success: true,
+      data: applications,
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 module.exports = {
   applyToRecruitment,
   getApplicants,
   approveApplication,
   rejectApplication,
   getApplicationCount,
+  cancelApplication,
+  getMyApplications,
 };
