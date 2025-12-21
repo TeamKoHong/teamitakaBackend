@@ -8,12 +8,12 @@ const getNotifications = async (user_id, { limit = 20, offset = 0, unreadOnly = 
   const where = { user_id };
 
   if (unreadOnly) {
-    where.isRead = false;
+    where.is_read = false;
   }
 
   const { count, rows } = await Notification.findAndCountAll({
     where,
-    order: [["createdAt", "DESC"]],
+    order: [["created_at", "DESC"]],
     limit,
     offset,
   });
@@ -21,7 +21,7 @@ const getNotifications = async (user_id, { limit = 20, offset = 0, unreadOnly = 
   return {
     notifications: rows,
     total: count,
-    unreadCount: await Notification.count({ where: { user_id, isRead: false } }),
+    unreadCount: await Notification.count({ where: { user_id, is_read: false } }),
   };
 };
 
@@ -37,7 +37,7 @@ const markAsRead = async (notification_id, user_id) => {
     throw new Error("알림을 찾을 수 없습니다.");
   }
 
-  await notification.update({ isRead: true });
+  await notification.update({ is_read: true });
   return notification;
 };
 
@@ -46,8 +46,8 @@ const markAsRead = async (notification_id, user_id) => {
  */
 const markAllAsRead = async (user_id) => {
   const [updatedCount] = await Notification.update(
-    { isRead: true },
-    { where: { user_id, isRead: false } }
+    { is_read: true },
+    { where: { user_id, is_read: false } }
   );
 
   return { updatedCount };
@@ -60,7 +60,7 @@ const createNotification = async (user_id, message) => {
   return await Notification.create({
     user_id,
     message,
-    isRead: false,
+    is_read: false,
   });
 };
 
@@ -84,7 +84,7 @@ const deleteNotification = async (notification_id, user_id) => {
  * 읽지 않은 알림 개수 조회
  */
 const getUnreadCount = async (user_id) => {
-  return await Notification.count({ where: { user_id, isRead: false } });
+  return await Notification.count({ where: { user_id, is_read: false } });
 };
 
 module.exports = {
