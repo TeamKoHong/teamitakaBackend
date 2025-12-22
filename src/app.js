@@ -3,30 +3,33 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
-const cookieParser = require("cookie-parser"); // 추가
-const { sequelize, connectDB } = require("./config/db"); // DB 연결 함수 import
+const cookieParser = require("cookie-parser");
+const { sequelize, connectDB } = require("./config/db");
 
+// --- 라우트 파일 Import ---
 const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
 const devRoutes = require("./routes/devRoutes");
-
 const userRoutes = require("./routes/userRoutes");
 const recruitmentRoutes = require("./routes/recruitmentRoutes");
 const commentRoutes = require("./routes/commentRoutes");
 const projectPostRoutes = require("./routes/projectPostRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const searchRoutes = require("./routes/searchRoutes");
-const profileRoutes = require("./routes/profileRoutes");//프로필
-const reviewRoutes = require("./routes/reviewRoutes"); // ✅ 리뷰 라우트 추가
-const evaluationRoutes = require("./routes/evaluationRoutes"); // ✅ 평가 라우트 추가 (프론트엔드 호환)
-const draftRoutes = require("./routes/draftRoutes");  // draftRoutes 추가
-const scrapRoutes = require("./routes/scrapRoutes");  // scrapRoutes 추가
+const profileRoutes = require("./routes/profileRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
+const evaluationRoutes = require("./routes/evaluationRoutes");
+const draftRoutes = require("./routes/draftRoutes");
+const scrapRoutes = require("./routes/scrapRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
-const dashboardRoutes = require("./routes/dashboardRoutes"); // ✅ 대시보드 라우트 추가
-const uploadRoutes = require("./routes/uploadRoutes"); // ✅ 업로드 라우트 추가
-const notificationRoutes = require("./routes/notificationRoutes"); // ✅ 알림 라우트 추가
-
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const verificationRoutes = require("./routes/verificationRoutes");
+
+// ✅ [추가됨] 투두 및 일정 라우트
+const todoRoutes = require("./routes/todoRoutes");
+const scheduleRoutes = require("./routes/scheduleRoutes");
 
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('yamljs');
@@ -35,11 +38,10 @@ const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 
 const app = express();
 
-// CORS 설정
+// --- CORS 설정 ---
 const corsOrigin = process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || '*';
 const allowAnyOrigin = process.env.ALLOW_ANY_ORIGIN === 'true';
 
-// 쉼표로 구분된 여러 origin 파싱
 const parseOrigins = (originString) => {
   if (originString === '*') return originString;
   const origins = originString.split(',').map(o => o.trim());
@@ -67,32 +69,37 @@ const corsOptions = allowAnyOrigin
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // URL-encoded 데이터 파싱
-app.use(cookieParser()); // 추가
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(morgan("dev"));
 
-// 라우트 등록
+// --- 라우트 등록 ---
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/dev", devRoutes);
 
 app.use("/api/user", userRoutes);
 app.use("/api/recruitments", recruitmentRoutes);
-app.use("/api/comments", commentRoutes); // 복수형으로 수정
+app.use("/api/comments", commentRoutes);
 app.use("/api/projects", projectPostRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/profile", profileRoutes);
-app.use("/api/reviews", reviewRoutes); // ✅ 리뷰 라우트 추가
-app.use("/api/evaluations", evaluationRoutes); // ✅ 평가 라우트 추가 (프론트엔드 호환)
-app.use("/api/drafts", draftRoutes);    // draftRoutes 라우트 추가
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/evaluations", evaluationRoutes);
+app.use("/api/drafts", draftRoutes);
 app.use("/api/scraps", scrapRoutes);
 app.use("/api/applications", applicationRoutes);
-app.use("/api/dashboard", dashboardRoutes); // ✅ 대시보드 라우트 추가
-app.use("/api/upload", uploadRoutes); // ✅ 업로드 라우트 추가
-app.use("/api/notifications", notificationRoutes); // ✅ 알림 라우트 추가
-
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/auth", verificationRoutes);
+
+// ✅ [추가됨] 투두 및 일정 API 연결
+// 프론트엔드 TodoBox.js -> /api/todos 사용
+// 프론트엔드 Calendar.jsx -> /api/schedule 사용
+app.use("/api/todos", todoRoutes);
+app.use("/api/schedule", scheduleRoutes);
 
 // 기본 라우트
 app.get("/", (req, res) => {
@@ -101,7 +108,7 @@ app.get("/", (req, res) => {
 
 // 헬스체크 엔드포인트
 app.get('/api/health', async (req, res) => {
-  console.log('Received /api/health request'); // Debug log
+  console.log('Received /api/health request');
   try {
     await sequelize.authenticate();
     res.status(200).json({ status: 'OK', database: 'connected' });
@@ -114,7 +121,7 @@ app.get('/api/health', async (req, res) => {
 // Swagger API 문서
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// 앱 시작 시 DB 연결 시도 (테스트 환경 제외)
+// 앱 시작 시 DB 연결
 if (process.env.NODE_ENV !== 'test') {
   const startApp = async () => {
     console.log("🚀 Starting application...");
