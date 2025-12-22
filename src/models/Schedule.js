@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: "Projects",
+          model: "projects", // ✅ 수정됨: 실제 DB 테이블명은 보통 소문자 복수형입니다.
           key: "project_id",
         },
         onDelete: "CASCADE",
@@ -32,9 +32,10 @@ module.exports = (sequelize) => {
       },
     },
     {
-      tableName: "schedules",  // PostgreSQL 실제 테이블명 (lowercase)
+      tableName: "schedules",
       freezeTableName: true,
       timestamps: true,
+      underscored: true, // ✅ 추가 추천: created_at, updated_at 등 컬럼명을 스네이크 케이스로 통일
     }
   );
 
