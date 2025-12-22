@@ -19,12 +19,16 @@ const getTodos = async (req, res) => {
 const addTodo = async (req, res) => {
   try {
     const { project_id } = req.params;
-    const { content, is_completed } = req.body;
+    const { title, description, priority, due_date, user_id } = req.body;
 
     const newTodo = await Todo.create({
       project_id,
-      content,
-      is_completed: is_completed || false,
+      user_id,
+      title,
+      description,
+      priority: priority || "MEDIUM",
+      due_date,
+      status: "PENDING",
     });
 
     res.status(201).json(newTodo);
@@ -37,14 +41,21 @@ const addTodo = async (req, res) => {
 const updateTodo = async (req, res) => {
   try {
     const { todo_id } = req.params;
-    const { is_completed } = req.body;
+    const { status, title, description, priority, due_date } = req.body;
 
     const todo = await Todo.findByPk(todo_id);
     if (!todo) {
       return res.status(404).json({ message: "할 일을 찾을 수 없습니다." });
     }
 
-    await todo.update({ is_completed });
+    const updateData = {};
+    if (status !== undefined) updateData.status = status;
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (priority !== undefined) updateData.priority = priority;
+    if (due_date !== undefined) updateData.due_date = due_date;
+
+    await todo.update(updateData);
     res.json(todo);
   } catch (error) {
     handleError(res, error);

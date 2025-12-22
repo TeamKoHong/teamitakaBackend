@@ -9,6 +9,7 @@
 
 ## 📋 목차
 
+- [프로젝트 현황 요약](#-프로젝트-현황-요약)
 - [주요 기능](#-주요-기능)
 - [기술 스택](#-기술-스택)
 - [시작하기](#-시작하기)
@@ -19,7 +20,34 @@
 - [테스트](#-테스트)
 - [배포](#-배포)
 - [환경 변수](#-환경-변수)
+- [개발 현황](#-개발-현황-development-status)
 - [기여하기](#-기여하기)
+
+## 📊 프로젝트 현황 요약
+
+> 마지막 분석: 2025-12-21 | **전체 완료율: 96%**
+
+| 항목 | 현황 | 상세 |
+|------|:----:|------|
+| **API 엔드포인트** | 84개 | 96% 구현 완료 |
+| **컨트롤러** | 22개 | 전체 구현 |
+| **서비스** | 19개 | 전체 구현 |
+| **DB 모델** | 32개 | 스펙 26개 중 19개 + 추가 13개 |
+| **마이그레이션** | 13개 | 최신 업데이트 완료 |
+| **미들웨어** | 8개 | 인증, 검증, 업로드 등 |
+
+### 핵심 기능 구현 현황
+
+| 기능 | 상태 | 비고 |
+|------|:----:|------|
+| 인증 (이메일/구글/휴대폰) | ✅ | JWT, Firebase, OAuth |
+| 프로젝트 CRUD + 킥오프 | ✅ | 모집→프로젝트 전환 |
+| 모집공고 시스템 | ✅ | 해시태그, 이미지 업로드 |
+| 지원/수락/거절 플로우 | ✅ | 포트폴리오 연결 |
+| 팀원 평가 시스템 | ✅ | 5개 평가 항목 |
+| 투표/일정 관리 | ⚠️ | 라우트 등록 필요 |
+| 알림 시스템 | ✅ | 5개 API 구현 완료 |
+| 지원 취소 | ✅ | POST/DELETE 방식 지원 |
 
 ## ✨ 주요 기능
 
@@ -40,6 +68,10 @@
 - 프로젝트 생성, 조회, 수정, 삭제 (CRUD)
 - 내 프로젝트 조회 (평가 상태 추적)
 - 팀원 모집 시스템 (이미지 업로드 지원)
+- **프로젝트 킥오프 (모집글 → 프로젝트 전환)**
+  - 승인된 지원자 중 팀원 선택
+  - 프로젝트 제목, 다짐(resolution), 기간 설정
+  - Recruitment에서 project_type 자동 복사
 - **키워드(해시태그) 기반 모집글 태깅 및 검색**
   - 모집글당 최대 5개 키워드 지원
   - # 기호 자동 제거 및 중복 제거
@@ -188,19 +220,19 @@ docker-compose up -d
 ```
 teamitakaBackend/
 ├── src/
-│   ├── config/          # 설정 파일 (DB, env)
-│   ├── controllers/     # 라우트 컨트롤러
-│   ├── middlewares/     # Express 미들웨어 (인증, 검증)
-│   ├── models/          # Sequelize 모델
-│   ├── routes/          # API 라우트
-│   ├── services/        # 비즈니스 로직 레이어
-│   ├── utils/           # 유틸리티 함수
+│   ├── config/          # 설정 파일 (4개: database, env, ...)
+│   ├── controllers/     # 라우트 컨트롤러 (22개)
+│   ├── middlewares/     # Express 미들웨어 (8개: 인증, 검증, 업로드)
+│   ├── models/          # Sequelize 모델 (32개)
+│   ├── routes/          # API 라우트 (18개)
+│   ├── services/        # 비즈니스 로직 레이어 (19개)
+│   ├── utils/           # 유틸리티 함수 (7개)
 │   ├── validations/     # 요청 유효성 검증 스키마
 │   ├── templates/       # 이메일 템플릿
+│   ├── migrations/      # DB 마이그레이션 (13개)
 │   └── app.js           # Express 앱 설정
 ├── tests/               # 테스트 파일
 ├── scripts/             # 유틸리티 스크립트
-├── migrations/          # 데이터베이스 마이그레이션
 ├── docs/                # 문서
 ├── index.js             # 애플리케이션 진입점
 └── package.json         # 의존성 및 스크립트
@@ -236,12 +268,21 @@ DELETE /api/users/:id                  # 사용자 계정 삭제
 #### 📊 프로젝트 (Projects)
 ```
 GET    /api/projects                   # 전체 프로젝트 목록
-GET    /api/projects/mine              # 내 프로젝트 조회 (evaluation_status 지원)
+GET    /api/projects/mine              # 내 프로젝트 조회
 GET    /api/projects/:id               # 프로젝트 상세 조회
 POST   /api/projects                   # 새 프로젝트 생성
+POST   /api/projects/from-recruitment/:id  # 모집글에서 프로젝트 킥오프
 PUT    /api/projects/:id               # 프로젝트 수정
 DELETE /api/projects/:id               # 프로젝트 삭제
 ```
+
+**`/api/projects/mine` 쿼리 파라미터:**
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| `status` | string | `ongoing`/`active` → 진행 중, `completed` → 완료 |
+| `evaluation_status` | string | `PENDING`, `COMPLETED`, `NOT_REQUIRED` |
+| `limit` | number | 조회 개수 제한 |
+| `offset` | number | 페이지네이션 오프셋 |
 
 #### 📢 모집공고 (Recruitments)
 ```
@@ -282,6 +323,7 @@ GET    /api/applications/:recruitment_id/count    # 지원자 수 조회
 #### 📤 파일 업로드 (Upload)
 ```
 POST   /api/upload/recruitment-image   # 모집공고 이미지 업로드 (JWT 필수)
+POST   /api/upload/profile-image       # 프로필 이미지 업로드 (JWT 필수)
 ```
 
 #### 💬 댓글 (Comments)
@@ -292,13 +334,46 @@ PUT    /api/comments/:id               # 댓글 수정
 DELETE /api/comments/:id               # 댓글 삭제
 ```
 
-#### 📅 일정 (Schedule)
+#### 👤 프로필 (Profile)
+```
+GET    /api/profile/me                 # 내 프로필 조회
+PUT    /api/profile                    # 프로필 수정
+GET    /api/profile/detail             # 프로필 상세 조회
+GET    /api/profile/verification       # 인증 상태 조회
+```
+
+#### ⭐ 평가 (Reviews)
+```
+POST   /api/reviews                        # 팀원 평가 생성
+GET    /api/reviews/user/:user_id          # 사용자가 받은 평가 조회
+GET    /api/reviews/project/:project_id    # 프로젝트 평가 목록
+GET    /api/reviews/project/:project_id/summary  # 프로젝트 평가 요약
+DELETE /api/reviews/:review_id             # 평가 삭제
+```
+
+#### 📌 스크랩 (Scraps)
+```
+GET    /api/scraps/recruitments            # 스크랩한 모집공고 목록
+PUT    /api/scraps/recruitment/:id/scrap   # 스크랩 토글 (추가/제거)
+```
+
+#### 📅 일정 (Schedule) ⚠️ *라우트 등록 필요*
 ```
 POST   /api/schedule/create            # 일정 생성
 GET    /api/schedule/project/:project_id # 프로젝트별 일정 조회
 PUT    /api/schedule/:schedule_id      # 일정 수정
 DELETE /api/schedule/:schedule_id      # 일정 삭제
 ```
+
+#### 🗳️ 투표 (Vote) ⚠️ *라우트 등록 필요*
+```
+POST   /api/vote/create                # 투표 생성
+GET    /api/vote/project/:project_id   # 프로젝트별 투표 조회
+GET    /api/vote/:voteId               # 투표 상세 조회
+POST   /api/vote/:voteId/submit        # 투표 제출
+```
+
+> ⚠️ **참고**: Schedule, Vote API는 컨트롤러/서비스가 구현되어 있으나 `app.js`에 라우트 등록이 필요합니다.
 
 #### 📝 프로젝트 게시판 (Project Posts)
 ```
@@ -343,24 +418,87 @@ GET    /api/health                     # 서버 상태 확인
 - **MySQL 8.0+** (로컬 개발)
 - **PostgreSQL 14+** (Supabase 프로덕션)
 
-### 데이터베이스 모델
+### 데이터베이스 모델 (32개)
 
-| 모델 | 설명 |
-|------|------|
-| **Users** | 사용자 계정 및 프로필 |
-| **Projects** | 프로젝트 정보 |
-| **ProjectMembers** | 프로젝트 팀 멤버 |
-| **Recruitments** | 프로젝트 모집 공고 (이미지 지원, 해시태그 지원) |
-| **Applications** | 프로젝트 지원서 (자기소개 + 포트폴리오) |
-| **ApplicationPortfolios** | 지원서-포트폴리오 연결 (M:N 관계) |
-| **Hashtags** | 해시태그 태그 관리 |
-| **recruitment_hashtags** | 모집공고-해시태그 연결 (M:N 관계) |
-| **Comments** | 프로젝트 댓글 |
-| **Reviews** | 프로젝트 리뷰 및 팀원 평가 |
-| **Notifications** | 사용자 알림 |
-| **Scraps** | 북마크한 프로젝트 |
-| **Votes** | 투표 시스템 |
-| **EmailVerifications** | 이메일 인증 코드 |
+> 스펙 26개 테이블 중 19개 구현 + 추가 13개 모델
+
+#### 핵심 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **User** | 사용자 계정 및 프로필 | users |
+| **Project** | 프로젝트 정보 | projects |
+| **ProjectMembers** | 프로젝트 팀 멤버 | project_members |
+| **Recruitment** | 모집 공고 (이미지, 해시태그 지원) | recruitment_posts |
+| **Application** | 지원서 (자기소개 + 포트폴리오) | applications |
+| **ApplicationPortfolio** | 지원서-포트폴리오 연결 (M:N) | application_projects |
+
+#### 부가 기능 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **Hashtag** | 해시태그 관리 | recruitment_hashtags |
+| **Comment** | 프로젝트 댓글 | - (추가) |
+| **Review** | 팀원 평가 시스템 | peer_evaluations |
+| **Notification** | 사용자 알림 | notifications |
+| **Scrap** | 북마크 | bookmarks |
+| **Todo** | 할 일 관리 | todos |
+
+#### 투표 시스템 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **Vote** | 투표 생성 | votes |
+| **VoteOption** | 투표 선택지 | vote_options |
+| **VoteResponse** | 투표 응답 | vote_responses |
+
+#### 일정 및 타임라인 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **Schedule** | 일정 관리 | calendar_events |
+| **Timeline** | 타임라인 이벤트 | - (추가) |
+| **ProjectPost** | 프로젝트 피드 | project_feeds |
+
+#### 사용자 관련 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **University** | 대학 정보 | universities |
+| **College** | 단과대 정보 | - (추가) |
+| **Department** | 학과 정보 | - (추가) |
+| **EmailVerification** | 이메일 인증 | verification_codes |
+| **VerifiedEmail** | 인증 완료 이메일 | - (추가) |
+| **Search** | 검색 기록 | search_history |
+
+#### 팀플 유형 및 피드백 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **TeamiType** | 팀플 캐릭터 유형 | - (추가) |
+| **UserTeamiType** | 사용자-캐릭터 매핑 | - (추가) |
+| **UserFeedback** | 사용자 피드백 | - (추가) |
+| **FeedbackItem** | 피드백 항목 | - (추가) |
+| **Keyword** | 키워드 관리 | - (추가) |
+
+#### 시스템 모델
+
+| 모델 | 설명 | 스펙 매핑 |
+|------|------|----------|
+| **Admin** | 관리자 계정 | - (추가) |
+| **RecruitmentView** | 조회수 추적 | - (추가) |
+
+#### ❌ 미구현 테이블 (7개)
+
+| 스펙 테이블 | 용도 | 우선순위 |
+|-------------|------|----------|
+| user_stats | 사용자 통계 집계 | 중 |
+| user_settings | 사용자 설정 | 중 |
+| popular_keywords | 인기 검색어 | 하 |
+| project_invitations | QR 초대 | 중 |
+| draft_recruitment_posts | 모집글 임시저장 | 하 |
+| meeting_notes | 회의록 | 중 |
+| team_chat_messages | 팀 채팅 | 하 |
 
 ### 마이그레이션
 
@@ -720,13 +858,156 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.5.0 |
-| **마지막 업데이트** | 2025-11-24 |
+| **버전** | 1.5.4 |
+| **마지막 업데이트** | 2025-12-20 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
+| **Swagger 문서** | [API Docs](https://teamitakabackend.onrender.com/api-docs) |
+
+## 📊 개발 현황 (Development Status)
+
+> 마지막 분석: 2025-12-20 | 전체 완료율: **94%**
+
+### 🎯 전체 개발 진행률
+
+| 구분 | 완료 | 진행중 | 미구현 | 완료율 |
+|------|:----:|:------:|:------:|:------:|
+| API 엔드포인트 | 76개 | 2개 | 4개 | 94% |
+| 라우트 파일 | 18개 | 2개 | 0개 | 90% |
+| 컨트롤러 | 22개 | 0개 | 0개 | 100% |
+| 서비스 | 19개 | 0개 | 0개 | 100% |
+| 모델 | 32개 | 0개 | 0개 | 100% |
+
+### 🔧 기능별 구현 현황
+
+| 기능 | 상태 | 엔드포인트 | 비고 |
+|------|:----:|:----------:|------|
+| 🔐 인증 (Auth) | ✅ 완료 | 8개 | JWT, OAuth, Firebase Phone |
+| 📧 이메일/SMS 인증 | ✅ 완료 | 4개 | SendGrid, Rate Limiting |
+| 📢 모집공고 | ✅ 완료 | 8개 | CRUD, 스크랩, 해시태그, 조회수 |
+| 📝 지원 관리 | ✅ 완료 | 4개 | 지원, 승인/거절, 포트폴리오 |
+| 📊 프로젝트 | ✅ 완료 | 10개 | CRUD, 킥오프, 팀원 관리 |
+| ✅ 할 일 (Todo) | ✅ 완료 | 4개 | 프로젝트별 할 일 관리 |
+| 📅 타임라인 | ✅ 완료 | 4개 | 프로젝트 타임라인 |
+| 👥 팀원 관리 | ✅ 완료 | 2개 | 역할 조회/수정 |
+| ⭐ 평가 (Review) | ✅ 완료 | 6개 | 팀원 상호평가 (5개 항목) |
+| 👤 프로필 | ✅ 완료 | 7개 | 조회, 수정, 인증 상태, 평점 |
+| 💬 댓글 | ✅ 완료 | 2개 | 모집공고 댓글 |
+| 🖼️ 업로드 | ✅ 완료 | 2개 | Supabase Storage |
+| 📌 스크랩 | ✅ 완료 | 2개 | 모집공고 스크랩 |
+| 🛡️ 관리자 | ✅ 완료 | 3개 | 인증 사용자 관리 |
+| 📈 대시보드 | ✅ 완료 | 1개 | 통계, 알림, 타임라인 |
+| 💾 임시저장 | 🟡 부분 | 1개 | 생성만 구현 |
+| 📋 프로젝트 게시물 | ✅ 완료 | 3개 | 프로젝트 피드 |
+| 🔍 검색 | ✅ 완료 | 1개 | 통합 검색 |
+| 🗳️ 투표 (Vote) | ⚠️ 미등록 | 4개 | 코드 완성, app.js 등록 필요 |
+| 📆 일정 (Schedule) | ⚠️ 미등록 | 4개 | 코드 완성, app.js 등록 필요 |
+
+### ⚠️ 해결 필요 사항
+
+| 우선순위 | 이슈 | 영향 범위 | 예상 시간 |
+|:--------:|------|----------|:--------:|
+| 🔴 긴급 | Vote 라우트 app.js 미등록 | 투표 기능 전체 | 5분 |
+| 🔴 긴급 | Schedule 라우트 app.js 미등록 | 일정 관리 전체 | 5분 |
+| 🟡 보통 | /api/auth/logout 미구현 | 로그아웃 | 1시간 |
+| 🟡 보통 | /api/auth/refresh 미구현 | 토큰 갱신 | 2시간 |
+| 🟡 보통 | /api/auth/password/reset 미구현 | 비밀번호 재설정 | 4시간 |
+| ✅ 완료 | /api/applications/:id/cancel | 지원 취소 | v1.5.5 |
+| ✅ 완료 | 알림 시스템 API | 알림 기능 | v1.5.5 |
+| 🟢 낮음 | 회의록 API 미구현 | 회의 관리 | 1일 |
+| 🟢 낮음 | QR 초대 API 미구현 | 프로젝트 초대 | 4시간 |
+
+### 🗂️ 레이어별 현황
+
+| 레이어 | 파일 수 | 구현 현황 |
+|--------|:-------:|----------|
+| Routes | 18개 | 16개 등록, 2개 미등록 (vote, schedule) |
+| Controllers | 22개 | 전체 구현 완료 |
+| Services | 19개 | 전체 구현 완료 |
+| Models | 32개 | 전체 구현 완료 |
+| Middlewares | 8개 | auth, admin, optional, error, validation, upload, rateLimit 등 |
+
+### 📋 상태 범례
+
+| 상태 | 설명 |
+|:----:|------|
+| ✅ 완료 | 기능 완전 구현 및 동작 확인 |
+| 🟡 부분 | 기본 기능 구현, 일부 기능 미완성 |
+| ⚠️ 미등록 | 코드 완성되었으나 라우트 미등록 |
+| ❌ 미구현 | 구현 필요 |
+| 🔴 긴급 | 즉시 해결 필요 (5분 이내) |
+| 🟡 보통 | 단기 해결 (1-2일) |
+| 🟢 낮음 | 중기 해결 (1주) |
 
 ## 🔄 변경 이력
+
+### v1.5.5 (2025-12-21)
+- ✨ **Notifications API 전체 구현** (5개 엔드포인트)
+  - `GET /api/notifications` - 알림 목록 조회 (페이지네이션, 미읽음 필터)
+  - `GET /api/notifications/unread-count` - 읽지 않은 알림 개수
+  - `PUT /api/notifications/:id/read` - 개별 알림 읽음 처리
+  - `PUT /api/notifications/read-all` - 모든 알림 읽음 처리
+  - `DELETE /api/notifications/:id` - 알림 삭제
+- ✨ **Application Cancel API 구현** (3개 엔드포인트)
+  - `POST /api/applications/:id/cancel` - 지원 취소
+  - `DELETE /api/applications/:id` - 지원 취소 (DELETE 방식)
+  - `GET /api/applications/mine` - 내 지원 목록 조회
+- 🐛 **Notification 모델 PostgreSQL snake_case 매핑 수정**
+  - `isRead` → `is_read` 컬럼 매핑 버그 수정
+  - `underscored: true` 옵션 추가
+  - 타임스탬프 필드 명시적 매핑 (`created_at`, `updated_at`)
+- 🗄️ **Application 서비스 개선**
+  - 지원 취소 시 포트폴리오 연결 자동 삭제
+  - 취소 후 모집공고 상태 자동 재활성화 (CLOSED → ACTIVE)
+  - 트랜잭션 처리로 데이터 일관성 보장
+
+### v1.5.4 (2025-12-20)
+- ✨ **내 프로젝트 API 최신 피드 시간 추가** (`GET /api/projects/mine`)
+  - 응답에 `last_feed_at` 필드 추가 (ISO 8601 timestamp 또는 null)
+  - 프로젝트 카드에 '2시간 전' 형태의 상대 시간 표시 지원
+  - `project_posts` 테이블의 최신 게시물 시간 기준
+- 🐛 **내 모집공고 목록 CLOSED 상태 필터링 버그 수정**
+  - 프로젝트 킥오프 후 '모집중' 탭에서 사라지도록 수정
+  - ACTIVE 상태의 모집공고만 조회되도록 쿼리 수정
+
+### v1.5.3 (2025-12-20)
+- ✨ **프로젝트 킥오프 API 개선** (`POST /api/projects/from-recruitment/:id`)
+  - 프론트엔드에서 직접 프로젝트 제목 입력
+  - 다짐(resolution) 필드 추가
+  - 승인된 지원자 중 팀원 선택 기능 (`memberUserIds` 배열)
+  - Recruitment에서 `project_type` 자동 복사 (course/side)
+- 🗄️ **Project 모델 스키마 확장**
+  - `resolution`: 프로젝트 다짐 (TEXT)
+  - `project_type`: 프로젝트 유형 (ENUM: 'course', 'side')
+- 🐛 **버그 수정**
+  - Application status 검색 버그 수정 (ACCEPTED → memberUserIds 직접 전달)
+
+### v1.5.2 (2025-12-18)
+- 🐛 **Application API Sequelize alias 버그 수정**
+  - `as: "ProjectMembers"` 누락으로 인한 500 에러 해결
+  - 포트폴리오 프로젝트 검증 로직 정상화
+- 📝 **Swagger API 문서 대규모 업데이트**
+  - Profile API 4개 엔드포인트 추가 (`/me`, `/detail`, `/verification`, `PUT /`)
+  - Vote API 4개 엔드포인트 문서화
+  - Schedule API 4개 엔드포인트 문서화
+  - Upload API `/profile-image` 엔드포인트 추가
+  - `/projects/mine` 쿼리 파라미터 상세 문서화 (status, evaluation_status, limit, offset)
+  - `/applications/{recruitment_id}` portfolio_project_ids 파라미터 문서화
+- 🔧 **API 문서 품질 개선**
+  - 응답 스키마 상세화
+  - 에러 코드 및 메시지 문서화
+
+### v1.5.1 (2025-12-02)
+- 🔧 **Sequelize 모델 PostgreSQL 호환성 개선**
+  - 12개 모델에 `tableName` 속성 추가 (PostgreSQL snake_case 테이블명 매핑)
+  - 영향받는 모델: User, Project, ProjectMembers, Recruitment, Application, Review, Comment, Todo, Timeline, Vote, Schedule, Notification 등
+- 🐛 **모델 스키마 버그 수정**
+  - ProjectMembers 모델: 데이터베이스 스키마와 일치하도록 수정
+  - Todo 모델: 컬럼 정의를 데이터베이스 스키마에 맞게 수정
+  - Project 모델: 존재하지 않는 `role` 컬럼 제거
+- ⚡ **쿼리 최적화**
+  - ProjectMembers include에서 불필요한 attributes 제약 제거
 
 ### v1.5.0 (2025-11-24)
 - 📱 **Firebase 전화번호 인증 구현**

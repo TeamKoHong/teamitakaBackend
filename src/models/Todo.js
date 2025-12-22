@@ -9,19 +9,54 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: "Projects", // 반드시 `Projects` 테이블을 명시
+        model: "projects",
         key: "project_id",
       },
       onDelete: "CASCADE",
     },
-    content: {
-      type: DataTypes.STRING,
+    user_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "user_id",
+      },
+      onDelete: "CASCADE",
+    },
+    title: {
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
-    is_completed: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
+    status: {
+      type: DataTypes.ENUM("PENDING", "IN_PROGRESS", "COMPLETED"),
+      defaultValue: "PENDING",
+    },
+    priority: {
+      type: DataTypes.ENUM("LOW", "MEDIUM", "HIGH"),
+      defaultValue: "MEDIUM",
+    },
+    due_date: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  }, {
+    tableName: "todos",
+    freezeTableName: true,
+    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: "updated_at",
   });
 
   return Todo;

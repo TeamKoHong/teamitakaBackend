@@ -7,24 +7,41 @@ module.exports = (sequelize) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    user_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: "Users",
+        key: "user_id",
+      },
+      onDelete: "CASCADE",
+    },
     message: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    isRead: {
+    is_read: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      field: "is_read",
     },
-    createdAt: {
+    created_at: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
+      field: "created_at",
     },
-    updatedAt: {
+    updated_at: {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
+      field: "updated_at",
     },
+  }, {
+    tableName: "notifications",
+    freezeTableName: true,
+    timestamps: true,
+    underscored: true,
   });
 
   return Notification;
