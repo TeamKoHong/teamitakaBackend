@@ -1,81 +1,65 @@
-const { Todo } = require("../models");
-const { handleError } = require("../utils/errorHandler");
+const { Todo, Project } = require("../models");
 
-// ✅ 할 일 조회
+// 프로젝트의 모든 투두 가져오기
 const getTodos = async (req, res) => {
   try {
     const { project_id } = req.params;
     const todos = await Todo.findAll({
       where: { project_id },
-      order: [["created_at", "ASC"]],
+      order: [["created_at", "ASC"]], // 생성순 정렬
     });
-    res.status(200).json(todos);
+    res.json(todos);
   } catch (error) {
-    handleError(res, error);
+    console.error(error);
+    res.status(500).json({ message: "투두 목록 조회 실패" });
   }
 };
 
-// ✅ 할 일 추가
+// 투두 생성
 const addTodo = async (req, res) => {
   try {
     const { project_id } = req.params;
-    const { title, description, priority, due_date, user_id } = req.body;
-
+    const { title } = req.body; // 프론트에서 text 대신 title로 보낸다면 매칭 필요
+    
     const newTodo = await Todo.create({
       project_id,
-      user_id,
-      title,
-      description,
-      priority: priority || "MEDIUM",
-      due_date,
+      title: title,
       status: "PENDING",
     });
-
     res.status(201).json(newTodo);
   } catch (error) {
-    handleError(res, error);
+    res.status(400).json({ message: "투두 생성 실패" });
   }
 };
 
-// ✅ 할 일 상태 변경
+// 투두 수정 (상태 토글 등)
+// 중요: URL 파라미터로 todo_id만 받습니다.
 const updateTodo = async (req, res) => {
   try {
     const { todo_id } = req.params;
-    const { status, title, description, priority, due_date } = req.body;
+    const { status, title } = req.body;
 
     const todo = await Todo.findByPk(todo_id);
     if (!todo) {
-      return res.status(404).json({ message: "할 일을 찾을 수 없습니다." });
+      return res.status(404).json({ message: "투두를 찾을 수 없습니다." });
     }
 
-    const updateData = {};
-    if (status !== undefined) updateData.status = status;
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (priority !== undefined) updateData.priority = priority;
-    if (due_date !== undefined) updateData.due_date = due_date;
-
-    await todo.update(updateData);
+    await todo.update({ status, title });
     res.json(todo);
   } catch (error) {
-    handleError(res, error);
+    console.error(error);
+    res.status(500).json({ message: "투두 수정 실패" });
   }
 };
 
-// ✅ 할 일 삭제
+// 투두 삭제
 const deleteTodo = async (req, res) => {
   try {
     const { todo_id } = req.params;
-
-    const todo = await Todo.findByPk(todo_id);
-    if (!todo) {
-      return res.status(404).json({ message: "할 일을 찾을 수 없습니다." });
-    }
-
-    await todo.destroy();
-    res.json({ message: "할 일이 삭제되었습니다." });
+    await Todo.destroy({ where: { todo_id } });
+    res.json({ message: "삭제되었습니다." });
   } catch (error) {
-    handleError(res, error);
+    res.status(500).json({ message: "투두 삭제 실패" });
   }
 };
 
