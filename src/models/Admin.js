@@ -16,8 +16,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         defaultValue: "ADMIN",
       },
+    }, {
+      tableName: "admins",
+      freezeTableName: true,
+      timestamps: true,
     });
-  
+
     return Admin;
   };
   
