@@ -250,7 +250,7 @@ const getMyProjects = async (req, res) => {
       recruitment_id: p.recruitment_id || null,
       recruitment_count: parseInt(p.recruitment_count) || 0,
       evaluation_status: p.evaluation_status,
-      meeting_schedule: p.meeting_time || null,
+      meeting_: p.meeting_time || null,
       members: typeof p.members === 'string' ? JSON.parse(p.members) : (p.members || []),
       // 추가 정보 (디버깅용, 프론트엔드에서 활용 가능)
       member_count: parseInt(p.member_count) || 0,
