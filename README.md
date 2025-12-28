@@ -858,8 +858,8 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.5.4 |
-| **마지막 업데이트** | 2025-12-20 |
+| **버전** | 1.6.0 |
+| **마지막 업데이트** | 2025-12-28 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
@@ -941,6 +941,20 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 | 🟢 낮음 | 중기 해결 (1주) |
 
 ## 🔄 변경 이력
+
+### v1.6.0 (2025-12-28)
+- ✨ **회의록 API 전체 구현** (5개 엔드포인트)
+  - `GET /api/projects/:id/meetings` - 회의록 목록 조회 (피드용)
+  - `GET /api/projects/:id/meetings/:meeting_id` - 회의록 상세 조회
+  - `POST /api/projects/:id/meetings` - 회의록 생성
+  - `PUT /api/projects/:id/meetings/:meeting_id` - 회의록 수정
+  - `DELETE /api/projects/:id/meetings/:meeting_id` - 회의록 삭제
+- 📦 **MeetingNotes 모델 추가**
+  - 필드: meeting_id, project_id, created_by, title, content, meeting_date
+  - 관계: Project, User (Creator) 연결
+- 📝 **Swagger 문서 업데이트**
+  - MeetingNotes 스키마 및 엔드포인트 문서화
+  - 피드 기능과의 연계 설명 추가
 
 ### v1.5.5 (2025-12-21)
 - ✨ **Notifications API 전체 구현** (5개 엔드포인트)
