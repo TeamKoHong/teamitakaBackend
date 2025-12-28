@@ -4,6 +4,7 @@ const projectController = require("../controllers/projectController");
 const memberController = require("../controllers/memberController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const projectPostController = require("../controllers/projectPostController");
+const meetingNotesController = require("../controllers/meetingNotesController");
 
 // --- 프로젝트 기본 CRUD ---
 router.post("/", authMiddleware, projectController.createProject);
@@ -14,7 +15,26 @@ router.post("/from-recruitment/:recruitment_id", authMiddleware, projectControll
 router.get("/:project_id", projectController.getProjectById);
 router.put("/:project_id", authMiddleware, projectController.updateProject);
 
-// --- 팀원 관련 ---
+// ✅ 할 일 CRUD
+router.get("/:project_id/todo", todoController.getTodos);
+router.post("/:project_id/todo", authMiddleware, todoController.addTodo);
+router.put("/:project_id/todo/:todo_id", authMiddleware, todoController.updateTodo);
+router.delete("/:project_id/todo/:todo_id", authMiddleware, todoController.deleteTodo);
+
+// ✅ 타임라인 CRUD
+router.get("/:project_id/timeline", timelineController.getTimeline);
+router.post("/:project_id/timeline", authMiddleware, timelineController.addTimelineEvent);
+router.put("/:project_id/timeline/:event_id", authMiddleware, timelineController.updateTimelineEvent);
+router.delete("/:project_id/timeline/:event_id", authMiddleware, timelineController.deleteTimelineEvent);
+
+// ✅ 회의록 CRUD
+router.get("/:project_id/meetings", meetingNotesController.getMeetingNotes);
+router.get("/:project_id/meetings/:meeting_id", meetingNotesController.getMeetingNoteById);
+router.post("/:project_id/meetings", authMiddleware, meetingNotesController.createMeetingNote);
+router.put("/:project_id/meetings/:meeting_id", authMiddleware, meetingNotesController.updateMeetingNote);
+router.delete("/:project_id/meetings/:meeting_id", authMiddleware, meetingNotesController.deleteMeetingNote);
+
+// ✅ 팀원 조회/추가
 router.get("/:project_id/members", memberController.getMembers);
 router.put("/:project_id/members", authMiddleware, memberController.updateMemberRole);
 
