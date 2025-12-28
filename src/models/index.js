@@ -29,6 +29,7 @@ db.Schedule = require("./Schedule")(sequelize, Sequelize.DataTypes);
 db.Scrap = require("./Scrap")(sequelize, Sequelize.DataTypes);
 db.Search = require("./Search")(sequelize, Sequelize.DataTypes);
 db.Timeline = require("./Timeline")(sequelize, Sequelize.DataTypes);
+db.MeetingNotes = require("./MeetingNotes")(sequelize, Sequelize.DataTypes);
 db.Todo = require("./Todo")(sequelize, Sequelize.DataTypes);
 db.University = require("./University")(sequelize, Sequelize.DataTypes);
 db.User = require("./User")(sequelize, Sequelize.DataTypes);
@@ -106,6 +107,10 @@ db.Project.associate = (models) => {
     foreignKey: "project_id",
     onDelete: "CASCADE",
   });
+  db.Project.hasMany(models.MeetingNotes, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
   db.Project.hasMany(db.ProjectPost, {
     foreignKey: "project_id",
     onDelete: "CASCADE",
@@ -124,6 +129,18 @@ db.ProjectMembers.associate = (models) => {
   });
   db.ProjectMembers.belongsTo(models.User, {
     foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.MeetingNotes.associate = (models) => {
+  db.MeetingNotes.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.MeetingNotes.belongsTo(models.User, {
+    as: "Creator",
+    foreignKey: "created_by",
     onDelete: "CASCADE",
   });
 };

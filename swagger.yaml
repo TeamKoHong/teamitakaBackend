@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: TEAMITAKA Backend API
-  version: 1.5.0
+  version: 1.6.0
   description: |
     TEAMITAKA 백엔드 API 문서
 
@@ -15,7 +15,7 @@ info:
     ## 주요 기능
     - 사용자 인증 및 관리 (이메일, Google OAuth, Firebase 전화번호 인증)
     - 모집글 관리 (CRUD, 스크랩, 지원)
-    - 프로젝트 관리 (팀원, Todo, Timeline)
+    - 프로젝트 관리 (팀원, Todo, Timeline, 회의록)
     - 지원서 및 리뷰 시스템
     - 대학교 인증 시스템
 
@@ -52,6 +52,8 @@ tags:
     description: 프로젝트 멤버 관리
   - name: ProjectPost
     description: 프로젝트 게시글
+  - name: MeetingNotes
+    description: 프로젝트 회의록 관리
   - name: Review
     description: 팀원 리뷰 시스템
   - name: Comment
@@ -255,6 +257,64 @@ components:
         date:
           type: string
           format: date
+
+    MeetingNotes:
+      type: object
+      properties:
+        meeting_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        created_by:
+          type: string
+          format: uuid
+        title:
+          type: string
+          description: 회의록 제목 (피드에 표시됨)
+        content:
+          type: string
+          description: 회의 상세 내용
+        meeting_date:
+          type: string
+          format: date
+          description: 회의 일시
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MeetingNotesListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/MeetingNotes'
+            total:
+              type: integer
+
+    MeetingNotesDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/MeetingNotes'
 
     Review:
       type: object
@@ -3406,6 +3466,302 @@ paths:
                 $ref: '#/components/schemas/UnauthorizedError'
         '404':
           description: 이벤트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+
+  # ==================== Meeting Notes ====================
+  /projects/{project_id}/meetings:
+    get:
+      tags: [MeetingNotes]
+      summary: 회의록 목록 조회
+      description: 프로젝트의 모든 회의록을 조회합니다. 피드에 회의록 제목을 표시할 때 사용합니다.
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 프로젝트 ID
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingNotesListResponse'
+              examples:
+                success:
+                  summary: 성공 응답
+                  value:
+                    success: true
+                    message: "회의록을 조회했습니다"
+                    data:
+                      items:
+                        - meeting_id: "990e8400-e29b-41d4-a716-446655440000"
+                          project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          created_by: "880e8400-e29b-41d4-a716-446655440000"
+                          title: "1차 팀 미팅"
+                          content: "역할 분담 및 일정 논의"
+                          meeting_date: "2024-01-15"
+                          Creator:
+                            user_id: "880e8400-e29b-41d4-a716-446655440000"
+                            username: "kim_leader"
+                            avatar: "https://example.com/images/kim.jpg"
+                          createdAt: "2024-01-15T10:00:00Z"
+                          updatedAt: "2024-01-15T10:00:00Z"
+                        - meeting_id: "990e8400-e29b-41d4-a716-446655440001"
+                          project_id: "660f9511-f30c-52e5-b827-557766551111"
+                          created_by: "880e8400-e29b-41d4-a716-446655440000"
+                          title: "중간 발표 준비"
+                          content: "발표 자료 검토 및 역할 분담"
+                          meeting_date: "2024-02-01"
+                          Creator:
+                            user_id: "880e8400-e29b-41d4-a716-446655440000"
+                            username: "kim_leader"
+                            avatar: "https://example.com/images/kim.jpg"
+                          createdAt: "2024-02-01T14:00:00Z"
+                          updatedAt: "2024-02-01T14:00:00Z"
+                      total: 2
+        '404':
+          description: 프로젝트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+
+    post:
+      tags: [MeetingNotes]
+      summary: 회의록 생성
+      description: 새로운 회의록을 작성합니다.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 프로젝트 ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, meeting_date]
+              properties:
+                title:
+                  type: string
+                  description: 회의록 제목
+                content:
+                  type: string
+                  description: 회의 상세 내용
+                meeting_date:
+                  type: string
+                  format: date
+                  description: 회의 일시
+            examples:
+              create_meeting:
+                summary: 회의록 생성
+                value:
+                  title: "주간 정기 미팅"
+                  content: "이번 주 진행 상황 공유 및 다음 주 계획 수립"
+                  meeting_date: "2024-01-22"
+      responses:
+        '201':
+          description: 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingNotesDetailResponse'
+              examples:
+                success:
+                  summary: 생성 성공
+                  value:
+                    success: true
+                    message: "회의록이 생성되었습니다"
+                    data:
+                      meeting_id: "990e8400-e29b-41d4-a716-446655440002"
+                      project_id: "660f9511-f30c-52e5-b827-557766551111"
+                      created_by: "880e8400-e29b-41d4-a716-446655440000"
+                      title: "주간 정기 미팅"
+                      content: "이번 주 진행 상황 공유 및 다음 주 계획 수립"
+                      meeting_date: "2024-01-22"
+                      createdAt: "2024-01-22T10:00:00Z"
+                      updatedAt: "2024-01-22T10:00:00Z"
+        '400':
+          description: 유효성 검사 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                missing_title:
+                  value:
+                    success: false
+                    message: "제목과 회의 날짜는 필수입니다"
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+
+  /projects/{project_id}/meetings/{meeting_id}:
+    get:
+      tags: [MeetingNotes]
+      summary: 회의록 상세 조회
+      description: 특정 회의록의 상세 정보를 조회합니다.
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 프로젝트 ID
+        - name: meeting_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 회의록 ID
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingNotesDetailResponse'
+        '404':
+          description: 회의록을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+
+    put:
+      tags: [MeetingNotes]
+      summary: 회의록 수정
+      description: 기존 회의록을 수정합니다.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 프로젝트 ID
+        - name: meeting_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 회의록 ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                meeting_date:
+                  type: string
+                  format: date
+            examples:
+              update_content:
+                summary: 내용 수정
+                value:
+                  content: "역할 분담 완료. 다음 미팅은 1/29 예정"
+              update_all:
+                summary: 전체 수정
+                value:
+                  title: "1차 팀 미팅 (수정)"
+                  content: "역할 분담 및 일정 재조정"
+                  meeting_date: "2024-01-16"
+      responses:
+        '200':
+          description: 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeetingNotesDetailResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "회의록이 수정되었습니다"
+                    data:
+                      meeting_id: "990e8400-e29b-41d4-a716-446655440000"
+                      title: "1차 팀 미팅 (수정)"
+                      content: "역할 분담 및 일정 재조정"
+                      meeting_date: "2024-01-16"
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '404':
+          description: 회의록을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+
+    delete:
+      tags: [MeetingNotes]
+      summary: 회의록 삭제
+      description: 회의록을 삭제합니다.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 프로젝트 ID
+        - name: meeting_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 회의록 ID
+      responses:
+        '200':
+          description: 삭제 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "회의록이 삭제되었습니다"
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+        '404':
+          description: 회의록을 찾을 수 없음
           content:
             application/json:
               schema:
