@@ -3800,16 +3800,19 @@ paths:
                           username: "kim_leader"
                           profile_image: "https://example.com/images/kim.jpg"
                           role: "팀장"
+                          task: "발표"
                           joined_at: "2024-01-15T09:00:00Z"
                         - user_id: "880e8400-e29b-41d4-a716-446655440001"
                           username: "lee_dev"
                           profile_image: "https://example.com/images/lee.jpg"
                           role: "팀원"
+                          task: "프론트엔드 개발"
                           joined_at: "2024-01-15T09:00:00Z"
                         - user_id: "880e8400-e29b-41d4-a716-446655440002"
                           username: "park_designer"
                           profile_image: null
                           role: "팀원"
+                          task: null
                           joined_at: "2024-01-15T09:00:00Z"
                       total: 3
         '404':
@@ -3821,8 +3824,16 @@ paths:
 
     put:
       tags: [ProjectMember]
-      summary: 멤버 역할 수정
-      description: 프로젝트 멤버의 역할(팀장/팀원)을 수정합니다. 팀장만 수정 가능합니다.
+      summary: 멤버 역할/업무 수정
+      description: |
+        프로젝트 멤버의 역할(role)과 담당업무(task)를 수정합니다. 팀장만 수정 가능합니다.
+
+        **단일 멤버 수정**: user_id, role, task를 직접 전달
+        **다중 멤버 수정**: members 배열로 여러 멤버 정보를 한 번에 전달
+
+        - role과 task 중 하나 이상은 필수
+        - role은 '팀장' 또는 '팀원'만 허용
+        - task는 빈 문자열 허용 (초기화 목적)
       security:
         - bearerAuth: []
       parameters:
@@ -3838,44 +3849,122 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [user_id, role]
-              properties:
-                user_id:
-                  type: string
-                  format: uuid
-                  description: 역할을 변경할 멤버의 ID
-                role:
-                  type: string
-                  enum: [팀장, 팀원]
-                  description: 새로운 역할
+              oneOf:
+                - type: object
+                  description: 단일 멤버 수정
+                  required: [user_id]
+                  properties:
+                    user_id:
+                      type: string
+                      format: uuid
+                      description: 수정할 멤버의 ID
+                    role:
+                      type: string
+                      enum: [팀장, 팀원]
+                      description: 담당역할 (선택)
+                    task:
+                      type: string
+                      maxLength: 100
+                      description: 담당업무 (선택, 예: 발표, PPT, 프론트엔드)
+                - type: object
+                  description: 다중 멤버 수정
+                  required: [members]
+                  properties:
+                    members:
+                      type: array
+                      description: 수정할 멤버 목록
+                      items:
+                        type: object
+                        required: [user_id]
+                        properties:
+                          user_id:
+                            type: string
+                            format: uuid
+                            description: 멤버 ID
+                          role:
+                            type: string
+                            enum: [팀장, 팀원]
+                            description: 담당역할 (선택)
+                          task:
+                            type: string
+                            maxLength: 100
+                            description: 담당업무 (선택)
             examples:
-              promote_to_leader:
-                summary: 팀장으로 승격
+              single_role_only:
+                summary: 단일 멤버 - 역할만 수정
                 value:
                   user_id: "880e8400-e29b-41d4-a716-446655440001"
                   role: "팀장"
-              demote_to_member:
-                summary: 팀원으로 변경
+              single_task_only:
+                summary: 단일 멤버 - 담당업무만 수정
+                value:
+                  user_id: "880e8400-e29b-41d4-a716-446655440001"
+                  task: "발표"
+              single_both:
+                summary: 단일 멤버 - 역할과 업무 동시 수정
                 value:
                   user_id: "880e8400-e29b-41d4-a716-446655440001"
                   role: "팀원"
+                  task: "프론트엔드 개발"
+              multiple_members:
+                summary: 다중 멤버 - 킥오프 팀원정보 일괄 저장
+                value:
+                  members:
+                    - user_id: "880e8400-e29b-41d4-a716-446655440001"
+                      task: "발표"
+                    - user_id: "880e8400-e29b-41d4-a716-446655440002"
+                      task: "PPT 제작"
+                    - user_id: "880e8400-e29b-41d4-a716-446655440003"
+                      task: "자료 조사"
       responses:
         '200':
           description: 수정 성공
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  updated_members:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user_id:
+                          type: string
+                          format: uuid
+                        role:
+                          type: string
+                        task:
+                          type: string
               examples:
-                success:
+                single_success:
+                  summary: 단일 멤버 수정 성공
                   value:
                     success: true
-                    message: "멤버 역할이 수정되었습니다"
-                    data:
-                      user_id: "880e8400-e29b-41d4-a716-446655440001"
-                      username: "lee_dev"
-                      role: "팀장"
+                    message: "팀원 정보가 수정되었습니다."
+                    updated_members:
+                      - user_id: "880e8400-e29b-41d4-a716-446655440001"
+                        role: "팀원"
+                        task: "프론트엔드 개발"
+                multiple_success:
+                  summary: 다중 멤버 수정 성공
+                  value:
+                    success: true
+                    message: "3명의 팀원 정보가 수정되었습니다."
+                    updated_members:
+                      - user_id: "880e8400-e29b-41d4-a716-446655440001"
+                        role: "팀장"
+                        task: "발표"
+                      - user_id: "880e8400-e29b-41d4-a716-446655440002"
+                        role: "팀원"
+                        task: "PPT 제작"
+                      - user_id: "880e8400-e29b-41d4-a716-446655440003"
+                        role: "팀원"
+                        task: "자료 조사"
         '400':
           description: 유효성 검사 실패
           content:
