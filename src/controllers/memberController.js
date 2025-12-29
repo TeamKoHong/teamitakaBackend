@@ -15,6 +15,7 @@ const getMembers = async (req, res) => {
         pm.project_id,
         pm.user_id,
         pm.role,
+        pm.task,
         pm.joined_at,
         u.username,
         u.email,
@@ -32,11 +33,12 @@ const getMembers = async (req, res) => {
 
     console.log("✅ getMembers - Found members:", members.length);
 
-    // 프론트엔드 기대 형식: { data: [{user_id, role, User: {username, email, avatar, bio}}] }
+    // 프론트엔드 기대 형식: { data: [{user_id, role, task, User: {username, email, avatar, bio}}] }
     res.status(200).json({
       data: members.map(m => ({
         user_id: m.user_id,
         role: m.role,
+        task: m.task,
         User: {
           username: m.username,
           email: m.email,
@@ -82,38 +84,160 @@ const addMember = async (req, res) => {
   }
 };
 
-// ✅ 팀원 역할 수정
+// ✅ 팀원 역할/업무 수정 (단일 또는 다중 멤버 지원)
 const updateMemberRole = async (req, res) => {
-  try {
-    const { member_id } = req.params;
-    const { role } = req.body;
+  const transaction = await sequelize.transaction();
 
-    // Raw SQL UPDATE
+  try {
+    const { project_id } = req.params;
+    const { user_id, role, task, members } = req.body;
+
+    // 다중 멤버 수정 모드
+    if (members && Array.isArray(members)) {
+      const updatedMembers = [];
+
+      for (const member of members) {
+        if (!member.user_id) {
+          await transaction.rollback();
+          return res.status(400).json({
+            success: false,
+            message: "각 멤버에 user_id가 필요합니다.",
+          });
+        }
+
+        // role과 task 중 하나라도 있어야 함
+        if (member.role === undefined && member.task === undefined) {
+          continue; // 수정할 내용이 없으면 건너뜀
+        }
+
+        // role 유효성 검사
+        if (member.role !== undefined && !["팀장", "팀원"].includes(member.role)) {
+          await transaction.rollback();
+          return res.status(400).json({
+            success: false,
+            message: `유효하지 않은 role 값: ${member.role}. '팀장' 또는 '팀원'만 허용됩니다.`,
+          });
+        }
+
+        // 동적 SET 절 생성
+        const setClauses = [];
+        const replacements = { project_id, user_id: member.user_id };
+
+        if (member.role !== undefined) {
+          setClauses.push("role = :role");
+          replacements.role = member.role;
+        }
+        if (member.task !== undefined) {
+          setClauses.push("task = :task");
+          replacements.task = member.task;
+        }
+        setClauses.push("updated_at = NOW()");
+
+        const result = await sequelize.query(
+          `UPDATE project_members
+           SET ${setClauses.join(", ")}
+           WHERE project_id = :project_id AND user_id = :user_id
+           RETURNING *`,
+          {
+            replacements,
+            type: QueryTypes.UPDATE,
+            transaction,
+          }
+        );
+
+        if (result[1] && result[1].length > 0) {
+          updatedMembers.push(result[1][0]);
+        }
+      }
+
+      await transaction.commit();
+
+      return res.status(200).json({
+        success: true,
+        message: `${updatedMembers.length}명의 팀원 정보가 수정되었습니다.`,
+        updated_members: updatedMembers.map(m => ({
+          user_id: m.user_id,
+          role: m.role,
+          task: m.task,
+        })),
+      });
+    }
+
+    // 단일 멤버 수정 모드
+    if (!user_id) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "user_id가 필요합니다.",
+      });
+    }
+
+    // role과 task 중 하나라도 있어야 함
+    if (role === undefined && task === undefined) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "role 또는 task 중 하나 이상은 제공되어야 합니다.",
+      });
+    }
+
+    // role 유효성 검사
+    if (role !== undefined && !["팀장", "팀원"].includes(role)) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: `유효하지 않은 role 값: ${role}. '팀장' 또는 '팀원'만 허용됩니다.`,
+      });
+    }
+
+    // 동적 SET 절 생성
+    const setClauses = [];
+    const replacements = { project_id, user_id };
+
+    if (role !== undefined) {
+      setClauses.push("role = :role");
+      replacements.role = role;
+    }
+    if (task !== undefined) {
+      setClauses.push("task = :task");
+      replacements.task = task;
+    }
+    setClauses.push("updated_at = NOW()");
+
     const result = await sequelize.query(
       `UPDATE project_members
-       SET role = :role, updated_at = NOW()
-       WHERE id = :member_id
+       SET ${setClauses.join(", ")}
+       WHERE project_id = :project_id AND user_id = :user_id
        RETURNING *`,
       {
-        replacements: { member_id, role },
+        replacements,
         type: QueryTypes.UPDATE,
+        transaction,
       }
     );
 
-    if (result[1].length === 0) {
+    if (!result[1] || result[1].length === 0) {
+      await transaction.rollback();
       return res.status(404).json({
         success: false,
         message: "팀원을 찾을 수 없습니다.",
       });
     }
 
+    await transaction.commit();
+
     res.status(200).json({
       success: true,
-      message: "팀원 역할이 수정되었습니다.",
-      data: result[1][0],
+      message: "팀원 정보가 수정되었습니다.",
+      updated_members: [{
+        user_id: result[1][0].user_id,
+        role: result[1][0].role,
+        task: result[1][0].task,
+      }],
     });
   } catch (error) {
-    console.error("🚨 팀원 역할 수정 오류:", error.message);
+    await transaction.rollback();
+    console.error("🚨 팀원 정보 수정 오류:", error.message);
     handleError(res, error);
   }
 };
