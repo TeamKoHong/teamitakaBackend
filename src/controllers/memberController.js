@@ -133,20 +133,19 @@ const updateMemberRole = async (req, res) => {
         }
         setClauses.push("updated_at = NOW()");
 
-        const result = await sequelize.query(
+        const [result] = await sequelize.query(
           `UPDATE project_members
            SET ${setClauses.join(", ")}
            WHERE project_id = :project_id AND user_id = :user_id
            RETURNING *`,
           {
             replacements,
-            type: QueryTypes.UPDATE,
             transaction,
           }
         );
 
-        if (result[1] && result[1].length > 0) {
-          updatedMembers.push(result[1][0]);
+        if (result && result.length > 0) {
+          updatedMembers.push(result[0]);
         }
       }
 
@@ -204,19 +203,18 @@ const updateMemberRole = async (req, res) => {
     }
     setClauses.push("updated_at = NOW()");
 
-    const result = await sequelize.query(
+    const [result] = await sequelize.query(
       `UPDATE project_members
        SET ${setClauses.join(", ")}
        WHERE project_id = :project_id AND user_id = :user_id
        RETURNING *`,
       {
         replacements,
-        type: QueryTypes.UPDATE,
         transaction,
       }
     );
 
-    if (!result[1] || result[1].length === 0) {
+    if (!result || result.length === 0) {
       await transaction.rollback();
       return res.status(404).json({
         success: false,
@@ -230,9 +228,9 @@ const updateMemberRole = async (req, res) => {
       success: true,
       message: "팀원 정보가 수정되었습니다.",
       updated_members: [{
-        user_id: result[1][0].user_id,
-        role: result[1][0].role,
-        task: result[1][0].task,
+        user_id: result[0].user_id,
+        role: result[0].role,
+        task: result[0].task,
       }],
     });
   } catch (error) {
