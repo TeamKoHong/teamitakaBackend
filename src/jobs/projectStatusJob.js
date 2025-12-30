@@ -1,5 +1,5 @@
 const { Project } = require('../models');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 const { Op } = require('sequelize');
 
 /**
