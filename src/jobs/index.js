@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const { transitionExpiredProjects } = require('./projectStatusJob');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 // Store scheduled job instances for graceful shutdown
 let scheduledJobs = [];
