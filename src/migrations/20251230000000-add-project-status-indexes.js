@@ -21,9 +21,9 @@ module.exports = {
     console.log('⚡ Adding indexes for project status optimization...');
 
     try {
-      // PostgreSQL uses "Projects" (capital P), MySQL might use "projects"
-      // The model name is "Projects" so we use that
-      const tableName = 'Projects';
+      // PostgreSQL uses lowercase table names in this project
+      // Based on Project model: tableName: "projects"
+      const tableName = 'projects';
 
       // Index 1: Single index on status for general status-based queries
       await queryInterface.addIndex(tableName, ['status'], {
@@ -58,7 +58,7 @@ module.exports = {
     console.log('🔄 Removing project status indexes...');
 
     try {
-      const tableName = 'Projects';
+      const tableName = 'projects';
 
       // Remove indexes in reverse order
       await queryInterface.removeIndex(tableName, 'idx_projects_status_end_date');
