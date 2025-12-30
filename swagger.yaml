@@ -1256,6 +1256,67 @@ paths:
         '200':
           description: 초기화 성공
 
+  /admin/projects/transition-expired:
+    post:
+      tags: [Admin]
+      summary: 만료된 프로젝트 상태 자동 전환 (수동 트리거)
+      description: |
+        매일 자정(한국시간 00:00)에 자동 실행되는 cron 작업과 동일한 로직을 수동으로 실행합니다.
+        - status='ACTIVE'이고 end_date < 현재날짜인 프로젝트를 'COMPLETED'로 자동 전환
+        - 테스트 목적이나 긴급 상황에서 사용
+        - 관리자 권한 필요
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 상태 전환 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Project status transition completed successfully"
+                  transitioned_count:
+                    type: integer
+                    example: 3
+                  project_ids:
+                    type: array
+                    items:
+                      type: string
+                    example: ["550e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440002"]
+                  duration_ms:
+                    type: integer
+                    example: 45
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-12-30T12:00:00.000Z"
+        '500':
+          description: 상태 전환 실패
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Failed to transition project statuses"
+                  error:
+                    type: string
+                    example: "Database connection error"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-12-30T12:00:00.000Z"
+
   # ==================== Auth ====================
   /auth/register:
     post:
