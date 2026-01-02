@@ -18,10 +18,13 @@ router.get("/:project_id", projectController.getProjectById);
 router.put("/:project_id", authMiddleware, projectController.updateProject);
 
 // ✅ 할 일 CRUD
-router.get("/:project_id/todo", todoController.getTodos);
+router.get("/:project_id/todo", authMiddleware, todoController.getTodos);
 router.post("/:project_id/todo", authMiddleware, todoController.addTodo);
 router.put("/:project_id/todo/:todo_id", authMiddleware, todoController.updateTodo);
 router.delete("/:project_id/todo/:todo_id", authMiddleware, todoController.deleteTodo);
+
+// ✅ 팀원 활동 로그
+router.get("/:project_id/activity-log", authMiddleware, todoController.getActivityLog);
 
 // ✅ 타임라인 CRUD
 router.get("/:project_id/timeline", timelineController.getTimeline);
