@@ -213,6 +213,14 @@ db.Todo.associate = (models) => {
     foreignKey: "project_id",
     onDelete: "CASCADE",
   });
+  db.Todo.belongsTo(models.User, {
+    as: "assignedUser",
+    foreignKey: "user_id",
+  });
+  db.Todo.belongsTo(models.User, {
+    as: "completedByUser",
+    foreignKey: "completed_by",
+  });
 };
 
 db.University.associate = (models) => {
@@ -267,6 +275,10 @@ db.Schedule.associate = (models) => {
   db.Schedule.belongsTo(models.Project, {
     foreignKey: "project_id",
     onDelete: "CASCADE",
+  });
+  db.Schedule.belongsTo(models.User, {
+    as: "creator",
+    foreignKey: "created_by",
   });
 };
 
