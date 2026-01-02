@@ -25,6 +25,7 @@ router.delete("/:project_id/todo/:todo_id", authMiddleware, todoController.delet
 
 // ✅ 팀원 활동 로그
 router.get("/:project_id/activity-log", authMiddleware, todoController.getActivityLog);
+router.delete("/:project_id/activity-log/:todo_id", authMiddleware, todoController.deleteActivityLog);
 
 // ✅ 타임라인 CRUD
 router.get("/:project_id/timeline", timelineController.getTimeline);
