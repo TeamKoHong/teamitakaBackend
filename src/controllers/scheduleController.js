@@ -7,8 +7,12 @@ const getProjectSchedules = async (req, res) => {
     const { project_id } = req.params;
     const schedules = await Schedule.findAll({
       where: { project_id },
-      // 작성자 정보를 같이 가져오고 싶다면 include 사용
-      // include: [{ model: User, attributes: ['username'] }]
+      include: [{
+        model: User,
+        as: 'creator',
+        attributes: ['user_id', 'username', 'profile_image']
+      }],
+      order: [['date', 'ASC']]
     });
     res.json(schedules);
   } catch (error) {
@@ -21,15 +25,14 @@ const getProjectSchedules = async (req, res) => {
 const createSchedule = async (req, res) => {
   try {
     const { project_id, title, description, date } = req.body;
-    // user_id는 토큰에서 가져오거나 body에서 받음
-    // const user_id = req.user ? req.user.userId : null; 
+    const created_by = req.user?.userId || null;
 
     const newSchedule = await Schedule.create({
       project_id,
       title,
       description,
-      date, // "YYYY-MM-DD HH:mm:ss" 형식
-      // user_id, // 필요시 주석 해제
+      date,
+      created_by,
     });
 
     res.status(201).json(newSchedule);
