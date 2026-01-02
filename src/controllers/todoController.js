@@ -116,10 +116,49 @@ const getActivityLog = async (req, res) => {
   }
 };
 
+// 활동 로그 삭제 (팀장 또는 작성자만 가능)
+const deleteActivityLog = async (req, res) => {
+  try {
+    const { project_id, todo_id } = req.params;
+    const userId = req.user?.userId;
+
+    // 프로젝트 조회 (팀장 확인용)
+    const project = await Project.findByPk(project_id);
+    if (!project) {
+      return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
+    }
+
+    // 투두 조회
+    const todo = await Todo.findOne({
+      where: { todo_id, project_id, status: 'COMPLETED' }
+    });
+    if (!todo) {
+      return res.status(404).json({ message: "활동 로그를 찾을 수 없습니다." });
+    }
+
+    // 권한 체크: 팀장(프로젝트 owner) 또는 작성자(completed_by)
+    const isOwner = userId === project.user_id;
+    const isAuthor = userId === todo.completed_by;
+
+    if (!isOwner && !isAuthor) {
+      return res.status(403).json({ message: "삭제 권한이 없습니다." });
+    }
+
+    // 실제 삭제
+    await todo.destroy();
+
+    res.json({ message: "활동 로그가 삭제되었습니다." });
+  } catch (error) {
+    console.error("활동 로그 삭제 에러:", error);
+    res.status(500).json({ message: "활동 로그 삭제 실패" });
+  }
+};
+
 module.exports = {
   getTodos,
   addTodo,
   updateTodo,
   deleteTodo,
   getActivityLog,
+  deleteActivityLog,
 };
