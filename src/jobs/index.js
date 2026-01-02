@@ -14,29 +14,30 @@ function initializeScheduledJobs() {
   const cronEnabled = process.env.CRON_ENABLED !== 'false';
 
   if (!cronEnabled) {
-    logger.info('Scheduled jobs disabled via CRON_ENABLED environment variable');
+    logger.info('⏸️ 스케줄 작업 비활성화됨 (CRON_ENABLED=false)');
     return;
   }
 
-  const schedule = process.env.CRON_SCHEDULE || '0 0 * * *';
+  // 테스트 모드: 1분마다 실행 (* * * * *)
+  // 프로덕션 모드: 매일 자정 (0 0 * * *)
+  const schedule = process.env.CRON_SCHEDULE || '* * * * *';
   const timezone = process.env.TIMEZONE || 'Asia/Seoul';
 
   // Validate cron expression
   if (!cron.validate(schedule)) {
-    logger.error('Invalid cron schedule expression', {
+    logger.error('❌ 유효하지 않은 크론 스케줄', {
       schedule,
-      defaulting_to: '0 0 * * *'
+      기본값: '* * * * *'
     });
   }
 
-  // Schedule: Daily project status transition job
-  // Default: Every day at midnight (00:00) Asia/Seoul time
-  // Cron expression format: 'minute hour day-of-month month day-of-week'
-  // '0 0 * * *' means: At 00:00 (midnight) every day
+  // 스케줄 작업: 프로젝트 상태 자동 전환
+  // 테스트 모드: 1분마다 (* * * * *)
+  // 프로덕션 모드: 매일 자정 (0 0 * * *)
   const dailyStatusJob = cron.schedule(
     schedule,
     async () => {
-      logger.info('Running scheduled project status transition job', {
+      logger.info('⏰ 스케줄 작업 실행 중', {
         schedule,
         timezone,
         timestamp: new Date().toISOString()
@@ -45,16 +46,16 @@ function initializeScheduledJobs() {
       try {
         const result = await transitionExpiredProjects();
 
-        logger.info('Scheduled job completed', {
-          job: 'projectStatusTransition',
-          success: true,
-          transitioned_count: result.count,
-          duration_ms: result.duration_ms
+        logger.info('✅ 스케줄 작업 완료', {
+          작업: 'projectStatusTransition',
+          성공: true,
+          전환된_프로젝트_수: result.count,
+          소요시간_ms: result.duration_ms
         });
       } catch (error) {
-        logger.error('Scheduled job execution failed', {
-          job: 'projectStatusTransition',
-          error: error.message,
+        logger.error('❌ 스케줄 작업 실행 실패', {
+          작업: 'projectStatusTransition',
+          에러: error.message,
           stack: error.stack,
           timestamp: new Date().toISOString()
         });
@@ -73,9 +74,9 @@ function initializeScheduledJobs() {
     timezone
   });
 
-  logger.info('Scheduled jobs initialized successfully', {
-    count: scheduledJobs.length,
-    jobs: scheduledJobs.map(j => ({
+  logger.info('🚀 스케줄 작업 초기화 완료', {
+    작업_수: scheduledJobs.length,
+    작업목록: scheduledJobs.map(j => ({
       name: j.name,
       schedule: j.schedule,
       timezone: j.timezone
@@ -90,22 +91,22 @@ function initializeScheduledJobs() {
  */
 function stopScheduledJobs() {
   if (scheduledJobs.length === 0) {
-    logger.info('No scheduled jobs to stop');
+    logger.info('ℹ️ 중지할 스케줄 작업 없음');
     return;
   }
 
-  logger.info('Stopping scheduled jobs', {
-    count: scheduledJobs.length
+  logger.info('⏹️ 스케줄 작업 중지 중', {
+    작업_수: scheduledJobs.length
   });
 
   scheduledJobs.forEach(({ name, job }) => {
     job.stop();
-    logger.info(`Stopped scheduled job: ${name}`);
+    logger.info(`⏹️ 스케줄 작업 중지됨: ${name}`);
   });
 
   scheduledJobs = [];
 
-  logger.info('All scheduled jobs stopped successfully');
+  logger.info('✅ 모든 스케줄 작업 중지 완료');
 }
 
 /**
