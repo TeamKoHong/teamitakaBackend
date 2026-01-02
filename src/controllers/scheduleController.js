@@ -10,7 +10,7 @@ const getProjectSchedules = async (req, res) => {
       include: [{
         model: User,
         as: 'creator',
-        attributes: ['user_id', 'username', 'profile_image']
+        attributes: ['user_id', 'username', 'avatar']
       }],
       order: [['date', 'ASC']]
     });
