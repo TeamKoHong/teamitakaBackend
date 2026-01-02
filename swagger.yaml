@@ -3338,6 +3338,59 @@ paths:
         '500':
           description: 서버 에러
 
+  /projects/{project_id}/activity-log/{todo_id}:
+    delete:
+      tags: [ProjectTodo]
+      summary: 활동 로그 삭제
+      description: |
+        활동 로그(완료된 Todo)를 삭제합니다.
+        - 팀장(프로젝트 owner): 모든 활동 로그 삭제 가능
+        - 작성자(completed_by): 본인이 완료한 활동 로그만 삭제 가능
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 프로젝트 ID
+        - name: todo_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 삭제할 활동 로그(Todo) ID
+      responses:
+        '200':
+          description: 삭제 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "활동 로그가 삭제되었습니다."
+        '401':
+          description: 인증 필요
+        '403':
+          description: 삭제 권한 없음
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "삭제 권한이 없습니다."
+        '404':
+          description: 활동 로그를 찾을 수 없음
+        '500':
+          description: 서버 에러
+
   # ==================== Project Timeline ====================
   /projects/{project_id}/timeline:
     get:
