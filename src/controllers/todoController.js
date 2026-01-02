@@ -13,6 +13,11 @@ const getTodos = async (req, res) => {
         user_id,
         status: { [Op.ne]: 'COMPLETED' }
       },
+      include: [{
+        model: User,
+        as: 'assignedUser',
+        attributes: ['user_id', 'username', 'avatar']
+      }],
       order: [["created_at", "ASC"]],
     });
     res.json(todos);

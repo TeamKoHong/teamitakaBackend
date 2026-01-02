@@ -236,10 +236,37 @@ components:
         project_id:
           type: string
           format: uuid
-        content:
+        user_id:
           type: string
-        is_completed:
-          type: boolean
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED]
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_by:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        assignedUser:
+          type: object
+          description: 투두 소유자 정보
+          properties:
+            user_id:
+              type: string
+              format: uuid
+            username:
+              type: string
+            avatar:
+              type: string
+              nullable: true
 
     Timeline:
       type: object
