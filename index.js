@@ -87,8 +87,8 @@ runMigrations().then(() => {
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 
     // Initialize scheduled jobs after server starts
+    // 로그는 src/jobs/index.js의 logger.info()에서 한글로 출력됨
     initializeScheduledJobs();
-    console.log('⏰ Scheduled jobs initialized');
 
     setInterval(() => console.log('✅ Server still running...'), 5000);
   });
@@ -103,8 +103,8 @@ process.on('SIGTERM', async () => {
 
   try {
     // Stop scheduled jobs first
+    // 로그는 src/jobs/index.js의 logger.info()에서 한글로 출력됨
     stopScheduledJobs();
-    console.log('⏰ Scheduled jobs stopped');
 
     // Close database connection
     await sequelize.close();
@@ -123,8 +123,8 @@ process.on('SIGINT', async () => {
 
   try {
     // Stop scheduled jobs first
+    // 로그는 src/jobs/index.js의 logger.info()에서 한글로 출력됨
     stopScheduledJobs();
-    console.log('⏰ Scheduled jobs stopped');
 
     // Close database connection
     await sequelize.close();
