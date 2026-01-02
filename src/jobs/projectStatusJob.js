@@ -17,7 +17,7 @@ async function transitionExpiredProjects() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    logger.info('Starting project status transition job', {
+    logger.info('🔄 프로젝트 상태 전환 작업 시작', {
       current_date: today.toISOString().split('T')[0],
       timestamp: new Date().toISOString()
     });
@@ -50,18 +50,18 @@ async function transitionExpiredProjects() {
     const duration = Date.now() - startTime;
 
     if (updatedCount > 0) {
-      logger.info('Project status transition completed successfully', {
-        transitioned_count: updatedCount,
+      logger.info('✅ 프로젝트 상태 전환 완료', {
+        전환된_프로젝트_수: updatedCount,
         project_ids: Array.isArray(updatedProjects)
           ? updatedProjects.map(p => p.project_id)
           : [],
-        duration_ms: duration,
+        소요시간_ms: duration,
         timestamp: new Date().toISOString()
       });
     } else {
-      logger.info('No projects to transition', {
-        transitioned_count: 0,
-        duration_ms: duration,
+      logger.info('ℹ️ 전환할 프로젝트 없음', {
+        전환된_프로젝트_수: 0,
+        소요시간_ms: duration,
         timestamp: new Date().toISOString()
       });
     }
@@ -76,10 +76,10 @@ async function transitionExpiredProjects() {
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    logger.error('Project status transition failed', {
-      error: error.message,
+    logger.error('❌ 프로젝트 상태 전환 실패', {
+      에러: error.message,
       stack: error.stack,
-      duration_ms: duration,
+      소요시간_ms: duration,
       timestamp: new Date().toISOString()
     });
 
