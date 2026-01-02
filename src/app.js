@@ -27,8 +27,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const verificationRoutes = require("./routes/verificationRoutes");
 
-// ✅ [추가됨] 투두 및 일정 라우트
-const todoRoutes = require("./routes/todoRoutes");
+// ✅ [추가됨] 일정 라우트
 const scheduleRoutes = require("./routes/scheduleRoutes");
 
 const swaggerUi = require('swagger-ui-express');
@@ -95,10 +94,9 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/auth", verificationRoutes);
 
-// ✅ [추가됨] 투두 및 일정 API 연결
-// 프론트엔드 TodoBox.js -> /api/todos 사용
+// ✅ [추가됨] 일정 API 연결
 // 프론트엔드 Calendar.jsx -> /api/schedule 사용
-app.use("/api/todos", todoRoutes);
+// Todo API는 /api/projects/:project_id/todo 경로로 projectRoutes에서 처리
 app.use("/api/schedule", scheduleRoutes);
 
 // 기본 라우트
