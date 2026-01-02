@@ -97,7 +97,7 @@ const getActivityLog = async (req, res) => {
       include: [{
         model: User,
         as: 'completedByUser',
-        attributes: ['user_id', 'username', 'profile_image']
+        attributes: ['user_id', 'username', 'avatar']
       }],
       order: [['completed_at', 'DESC']],
       limit: parseInt(limit),
