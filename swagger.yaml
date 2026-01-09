@@ -3089,16 +3089,16 @@ paths:
           application/json:
             schema:
               type: object
-              required: [content]
+              required: [title]
               properties:
-                content:
+                title:
                   type: string
                   example: "API 연동 테스트"
             examples:
               new_todo:
                 summary: 새 Todo 생성
                 value:
-                  content: "API 연동 테스트"
+                  title: "API 연동 테스트"
       responses:
         '201':
           description: 생성 성공
