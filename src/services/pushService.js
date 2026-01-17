@@ -13,6 +13,9 @@ const PUSH_TYPES = {
   TEAM_MATCH_ACCEPTED: "team_match_accepted",
   NEW_MESSAGE: "new_message",
   PROJECT_UPDATE: "project_update",
+  PROJECT_INVITE: "project_invite",
+  REVIEW_REQUEST: "review_request",
+  PROJECT_STATUS_CHANGE: "project_status_change",
 };
 
 /**
@@ -103,6 +106,31 @@ const buildNotificationPayload = (type, data) => {
         type,
         projectId: data.projectId,
         updateType: data.updateType,
+      },
+    },
+    [PUSH_TYPES.PROJECT_INVITE]: {
+      title: "프로젝트 초대",
+      body: `${data.inviterName || "팀장"}님이 '${data.projectName || "프로젝트"}' 프로젝트에 초대했습니다.`,
+      data: {
+        type,
+        projectId: data.projectId,
+      },
+    },
+    [PUSH_TYPES.REVIEW_REQUEST]: {
+      title: "팀원 평가 요청",
+      body: `'${data.projectName || "프로젝트"}' 프로젝트의 팀원 평가를 해주세요.`,
+      data: {
+        type,
+        projectId: data.projectId,
+      },
+    },
+    [PUSH_TYPES.PROJECT_STATUS_CHANGE]: {
+      title: data.projectName || "프로젝트",
+      body: `프로젝트 상태가 '${data.newStatus || "변경됨"}'(으)로 변경되었습니다.`,
+      data: {
+        type,
+        projectId: data.projectId,
+        status: data.newStatus,
       },
     },
   };
