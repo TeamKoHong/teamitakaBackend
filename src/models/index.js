@@ -45,6 +45,9 @@ db.UserFeedback = require("./UserFeedback")(sequelize, Sequelize.DataTypes);
 db.TeamiType = require("./TeamiType")(sequelize, Sequelize.DataTypes);
 db.UserTeamiType = require("./UserTeamiType")(sequelize, Sequelize.DataTypes);
 
+// ✅ 푸시 알림 관련 모델
+db.DeviceToken = require("./DeviceToken")(sequelize, Sequelize.DataTypes);
+
 // 모델 간 관계 설정
 db.Application.associate = (models) => {
   db.Application.belongsTo(models.User, { foreignKey: "user_id", onDelete: "CASCADE" });
@@ -297,6 +300,12 @@ db.User.associate = (models) => {
     as: "TeamiType",
     onDelete: "CASCADE",
   });
+  // ✅ 푸시 알림용 디바이스 토큰
+  db.User.hasMany(models.DeviceToken, {
+    foreignKey: "user_id",
+    as: "DeviceTokens",
+    onDelete: "CASCADE",
+  });
 };
 
 // ✅ 프로필 상세 모델 관계 설정
@@ -333,6 +342,14 @@ db.UserTeamiType.associate = (models) => {
   db.UserTeamiType.belongsTo(models.TeamiType, {
     foreignKey: "teami_type_id",
     as: "TeamiType",
+  });
+};
+
+// ✅ DeviceToken 연관 관계 설정
+db.DeviceToken.associate = (models) => {
+  db.DeviceToken.belongsTo(models.User, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
   });
 };
 

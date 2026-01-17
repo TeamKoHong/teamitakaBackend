@@ -13,6 +13,8 @@ env.supabase
 *.crt
 *.p12
 *.pfx
+*.p8
+AuthKey*.p8
 
 # 로컬 바이너리/CLI
 supabase-cli
