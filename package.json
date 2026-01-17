@@ -54,6 +54,7 @@
     "@sendgrid/mail": "^8.1.5",
     "@supabase/supabase-js": "^2.78.0",
     "ajv": "^8.17.1",
+    "apns2": "^12.2.0",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
