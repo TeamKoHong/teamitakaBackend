@@ -1,4 +1,5 @@
 const { Application, ApplicationPortfolio, Recruitment, User, Project, sequelize } = require("../models");
+const pushService = require("./pushService");
 
 const applyToRecruitment = async (user_id, recruitment_id, introduction, portfolio_project_ids = []) => {
   const recruitment = await Recruitment.findByPk(recruitment_id);
@@ -77,6 +78,23 @@ const applyToRecruitment = async (user_id, recruitment_id, introduction, portfol
       }],
     });
 
+    // 푸시 알림 전송 (모집글 작성자에게)
+    try {
+      const applicant = await User.findByPk(user_id, { attributes: ["username"] });
+      await pushService.sendToUser(
+        recruitment.user_id,
+        pushService.PUSH_TYPES.TEAM_MATCH_REQUEST,
+        {
+          senderName: applicant?.username || "지원자",
+          recruitmentId: recruitment_id,
+          applicationId: application.application_id,
+        }
+      );
+    } catch (pushError) {
+      console.error("❌ Push notification failed:", pushError.message);
+      // 푸시 실패는 지원 실패로 이어지지 않음
+    }
+
     return applicationWithPortfolio;
   } catch (error) {
     await transaction.rollback();
@@ -135,7 +153,26 @@ const updateApplicationStatus = async (application_id, status) => {
   await application.save();
 
   // 모집공고 지원자 수 다시 확인
-  const recruitment = await Recruitment.findByPk(application.recruitment_id);
+  const recruitment = await Recruitment.findByPk(application.recruitment_id, {
+    include: [{ model: Project, as: "Project", attributes: ["project_id", "title"] }],
+  });
+
+  // 승인 시 지원자에게 푸시 알림 전송
+  if (status === "ACCEPTED") {
+    try {
+      await pushService.sendToUser(
+        application.user_id,
+        pushService.PUSH_TYPES.TEAM_MATCH_ACCEPTED,
+        {
+          projectName: recruitment.Project?.title || recruitment.title,
+          projectId: recruitment.project_id,
+        }
+      );
+    } catch (pushError) {
+      console.error("❌ Push notification failed:", pushError.message);
+      // 푸시 실패는 승인 실패로 이어지지 않음
+    }
+  }
   const applicationCount = await Application.count({ where: { recruitment_id: application.recruitment_id } });
 
   // 승인된 인원이 max_applicants보다 작다면 모집 상태를 다시 ACTIVE로 변경
