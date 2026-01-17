@@ -1,6 +1,7 @@
 const { sequelize } = require("../models"); // Sequelize 인스턴스 가져오기
 const { QueryTypes } = require("sequelize");
 const { handleError } = require("../utils/errorHandler");
+const pushService = require("../services/pushService");
 
 const getMembers = async (req, res) => {
   try {
@@ -73,6 +74,34 @@ const addMember = async (req, res) => {
         type: QueryTypes.INSERT,
       }
     );
+
+    // 푸시 알림 전송 (초대받은 사람에게)
+    try {
+      // 프로젝트 정보 조회
+      const [projectInfo] = await sequelize.query(
+        `SELECT title FROM projects WHERE project_id = :project_id`,
+        { replacements: { project_id }, type: QueryTypes.SELECT }
+      );
+
+      // 초대한 사람 정보 조회
+      const [inviterInfo] = await sequelize.query(
+        `SELECT username FROM users WHERE user_id = :user_id`,
+        { replacements: { user_id: req.user.userId }, type: QueryTypes.SELECT }
+      );
+
+      await pushService.sendToUser(
+        user_id,
+        pushService.PUSH_TYPES.PROJECT_INVITE,
+        {
+          inviterName: inviterInfo?.username || "팀장",
+          projectName: projectInfo?.title || "프로젝트",
+          projectId: project_id,
+        }
+      );
+    } catch (pushError) {
+      console.error("❌ Push notification failed:", pushError.message);
+      // 푸시 실패는 팀원 추가 실패로 이어지지 않음
+    }
 
     res.status(201).json({
       success: true,
