@@ -4,6 +4,8 @@ const recruitmentController = require("../controllers/recruitmentController");
 const applicationController = require("../controllers/applicationController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const optionalAuthMiddleware = require("../middlewares/optionalAuthMiddleware");
+const { validateInput } = require("../middlewares/validationMiddleware");
+const { createRecruitmentSchema, updateRecruitmentSchema } = require("../validations/recruitmentValidation");
 
 // 모집공고 전체 조회 (로그인 시 is_scrapped 포함)
 router.get("/", optionalAuthMiddleware, recruitmentController.getAllRecruitments);
@@ -17,10 +19,10 @@ router.get("/:recruitment_id/applications", authMiddleware, applicationControlle
 // 모집공고 상세 조회
 router.get("/:recruitment_id", authMiddleware, recruitmentController.getRecruitmentById);
 // 모집공고 생성
-router.post("/", authMiddleware, recruitmentController.createRecruitment);
+router.post("/", authMiddleware, validateInput(createRecruitmentSchema), recruitmentController.createRecruitment);
 router.post("/:recruitment_id/scrap", authMiddleware, recruitmentController.toggleScrap);
 // 모집공고 수정
-router.put("/:recruitment_id", authMiddleware, recruitmentController.updateRecruitment);
+router.put("/:recruitment_id", authMiddleware, validateInput(updateRecruitmentSchema), recruitmentController.updateRecruitment);
 
 // 모집공고 삭제
 router.delete("/:recruitment_id", authMiddleware, recruitmentController.deleteRecruitment);
