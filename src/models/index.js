@@ -123,6 +123,10 @@ db.Project.associate = (models) => {
     as: "Recruitments",
     onDelete: "CASCADE",
   });
+  db.Project.hasMany(models.Scrap, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
 };
 
 db.ProjectMembers.associate = (models) => {
@@ -209,6 +213,7 @@ db.Review.associate = (models) => {
 db.Scrap.associate = (models) => {
   db.Scrap.belongsTo(models.User, { foreignKey: "user_id" });
   db.Scrap.belongsTo(models.Recruitment, { foreignKey: "recruitment_id" });
+  db.Scrap.belongsTo(models.Project, { foreignKey: "project_id" });
 };
 
 db.Todo.associate = (models) => {
