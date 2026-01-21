@@ -30,6 +30,14 @@ module.exports = (sequelize) => {
         type: DataTypes.DATE,
         allowNull: false,
       },
+      created_by: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "user_id",
+        },
+      },
     },
     {
       tableName: "schedules",
