@@ -44,6 +44,9 @@ router.delete("/:project_id/meetings/:meeting_id", authMiddleware, meetingNotesC
 router.get("/:project_id/members", memberController.getMembers);
 router.put("/:project_id/members", authMiddleware, memberController.updateMemberRole);
 
+// --- 즐겨찾기 ---
+router.put("/:project_id/favorite", authMiddleware, projectController.toggleProjectFavorite);
+
 // --- 평가 및 게시글 ---
 router.get("/:project_id/eval-targets", authMiddleware, projectController.getEvalTargets);
 router.post("/:project_id/posts", projectPostController.createPost);
