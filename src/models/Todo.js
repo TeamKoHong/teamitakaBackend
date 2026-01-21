@@ -43,6 +43,18 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    completed_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    completed_by: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: "users",
+        key: "user_id",
+      },
+    },
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

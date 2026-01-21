@@ -1,6 +1,7 @@
 // index.js
 const { loadEnvFile, validateRequiredEnvVars, printEnvStatus } = require('./src/config/envLoader');
 const { sequelize } = require('./src/config/db');
+const { initializeScheduledJobs, stopScheduledJobs } = require('./src/jobs');
 const path = require('path');
 const fs = require('fs');
 
@@ -84,9 +85,55 @@ runMigrations().then(() => {
   app.listen(PORT, HOST, () => {
     console.log(`🚀 Server listening on ${HOST}:${PORT}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+
+    // Initialize scheduled jobs after server starts
+    // 로그는 src/jobs/index.js의 logger.info()에서 한글로 출력됨
+    initializeScheduledJobs();
+
     setInterval(() => console.log('✅ Server still running...'), 5000);
   });
 }).catch(error => {
   console.error('💥 Critical error during startup:', error);
   process.exit(1);
+});
+
+// Graceful shutdown handlers
+process.on('SIGTERM', async () => {
+  console.log('⚠️  SIGTERM received, shutting down gracefully...');
+
+  try {
+    // Stop scheduled jobs first
+    // 로그는 src/jobs/index.js의 logger.info()에서 한글로 출력됨
+    stopScheduledJobs();
+
+    // Close database connection
+    await sequelize.close();
+    console.log('🗄️  Database connection closed');
+
+    console.log('✅ Graceful shutdown completed');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+});
+
+process.on('SIGINT', async () => {
+  console.log('⚠️  SIGINT received, shutting down gracefully...');
+
+  try {
+    // Stop scheduled jobs first
+    // 로그는 src/jobs/index.js의 logger.info()에서 한글로 출력됨
+    stopScheduledJobs();
+
+    // Close database connection
+    await sequelize.close();
+    console.log('🗄️  Database connection closed');
+
+    console.log('✅ Graceful shutdown completed');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during graceful shutdown:', error);
+    process.exit(1);
+  }
 });

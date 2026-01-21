@@ -15,9 +15,15 @@ module.exports = (sequelize) => {
         defaultValue: "Untitled Recruitment",
       },
       description: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING(20),
         allowNull: false,
-        defaultValue: "No description provided",
+        defaultValue: "No description",
+        validate: {
+          len: {
+            args: [0, 20],
+            msg: '프로젝트 정보는 20자를 초과할 수 없습니다.'
+          }
+        }
       },
       status: {
         type: DataTypes.ENUM("ACTIVE", "CLOSED", "FILLED"),

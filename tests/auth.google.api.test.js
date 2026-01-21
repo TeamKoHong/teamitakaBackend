@@ -1,5 +1,16 @@
 const request = require('supertest');
 
+// Mock database config to prevent DB connection
+jest.mock('src/config/db', () => ({
+  sequelize: {
+    authenticate: jest.fn().mockResolvedValue(),
+    sync: jest.fn().mockResolvedValue(),
+    define: jest.fn(),
+    query: jest.fn(),
+  },
+  connectDB: jest.fn().mockResolvedValue(true),
+}));
+
 jest.mock('src/utils/googleTokenVerifier', () => ({
   verifyGoogleIdToken: jest.fn(async (token, aud) => ({
     email: 'guser@example.com',

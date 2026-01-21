@@ -54,15 +54,14 @@ const logger = winston.createLogger({
   ]
 });
 
-// 개발 환경에서는 콘솔에도 출력
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple()
-    )
-  }));
-}
+// 모든 환경에서 콘솔(stdout)에 출력
+// production에서도 Console transport 활성화하여 Render Logs에 표시되도록 함
+logger.add(new winston.transports.Console({
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.simple()
+  )
+}));
 
 // 로그 레벨별 헬퍼 함수들
 const logVerification = (level, message, meta = {}) => {

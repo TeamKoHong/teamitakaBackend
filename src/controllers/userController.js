@@ -35,6 +35,12 @@ exports.createUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     const user_id = req.params.id;
+
+    // 인가 체크: 본인만 삭제 가능
+    if (req.user.userId !== user_id) {
+      return res.status(403).json({ error: "본인 계정만 삭제할 수 있습니다." });
+    }
+
     const user = await User.findByPk(user_id);
     if (!user) {
       return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });

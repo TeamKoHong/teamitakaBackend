@@ -32,6 +32,11 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(50),
         allowNull: false,
       },
+      task: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        defaultValue: null,
+      },
       joined_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
