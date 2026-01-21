@@ -53,6 +53,11 @@ module.exports = (sequelize) => {
         type: DataTypes.ENUM("course", "side"),
         allowNull: true,
       },
+      favorite_count: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        allowNull: false,
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,

@@ -1,4 +1,5 @@
-const { Project, Recruitment, User, Todo, Timeline, ProjectMembers } = require("../models");
+const { Project, Recruitment, User, Todo, Timeline, ProjectMembers, Scrap } = require("../models");
+const { Op } = require("sequelize");
 const pushService = require("./pushService");
 
 const createProject = async (data) => {
@@ -110,10 +111,59 @@ const updateProject = async (project_id, updateData) => {
 };
 
 
+// 프로젝트 즐겨찾기 토글
+const toggleProjectFavorite = async (user_id, project_id) => {
+  const project = await Project.findByPk(project_id);
+  if (!project) {
+    throw new Error("프로젝트를 찾을 수 없습니다.");
+  }
+
+  const existingScrap = await Scrap.findOne({
+    where: { user_id, project_id },
+  });
+
+  if (!existingScrap) {
+    // 즐겨찾기 추가
+    await Scrap.create({ user_id, project_id });
+    await Project.increment('favorite_count', { where: { project_id } });
+
+    const updatedProject = await Project.findByPk(project_id);
+    return {
+      isFavorite: true,
+      favorite_count: updatedProject.favorite_count,
+    };
+  } else {
+    // 즐겨찾기 삭제
+    await Scrap.destroy({ where: { user_id, project_id } });
+    await Project.decrement('favorite_count', {
+      where: {
+        project_id,
+        favorite_count: { [Op.gt]: 0 }
+      }
+    });
+
+    const updatedProject = await Project.findByPk(project_id);
+    return {
+      isFavorite: false,
+      favorite_count: updatedProject.favorite_count,
+    };
+  }
+};
+
+// 프로젝트 즐겨찾기 여부 확인
+const isProjectFavorite = async (user_id, project_id) => {
+  const scrap = await Scrap.findOne({
+    where: { user_id, project_id },
+  });
+  return !!scrap;
+};
+
 module.exports = {
   createProject,
   getAllProjects,
   getProjectById,
   getCompletedProjects,
   updateProject,
+  toggleProjectFavorite,
+  isProjectFavorite,
 };
