@@ -206,6 +206,11 @@ const getMyProjects = async (req, res) => {
         lft.last_feed_at,
         CASE WHEN uf.project_id IS NOT NULL THEN true ELSE false END as is_favorite,
         CASE
+          WHEN p.end_date IS NOT NULL AND p.status = 'COMPLETED' THEN
+            EXTRACT(DAY FROM NOW() - p.end_date)::INTEGER
+          ELSE NULL
+        END as d_day,
+        CASE
           WHEN COALESCE(mc.member_count, 0) <= 1 THEN 'NOT_REQUIRED'
           WHEN COALESCE(urc.completed_reviews, 0) >= (COALESCE(mc.member_count, 0) - 1) THEN 'COMPLETED'
           ELSE 'PENDING'
@@ -262,6 +267,7 @@ const getMyProjects = async (req, res) => {
       status: p.status,
       start_date: p.start_date,
       end_date: p.end_date,
+      d_day: p.d_day !== null ? parseInt(p.d_day) : null,
       created_at: p.created_at,
       updated_at: p.updated_at,
       recruitment_id: p.recruitment_id || null,
