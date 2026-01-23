@@ -1955,7 +1955,7 @@ paths:
                       items:
                         - recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
                           title: "AI 프로젝트 팀원 모집"
-                          description: "머신러닝 경험이 있는 분을 찾습니다"
+                          description: "ML 팀원을 모집합니다"
                           status: "ACTIVE"
                           user_id: "550e8400-e29b-41d4-a716-446655440001"
                           views: 145
@@ -1966,7 +1966,7 @@ paths:
                           created_at: "2024-01-01T10:00:00Z"
                         - recruitment_id: "550e8400-e29b-41d4-a716-446655440002"
                           title: "웹 개발 스터디원 모집"
-                          description: "React와 Node.js 스터디입니다"
+                          description: "웹개발 스터디원 모집"
                           status: "ACTIVE"
                           user_id: "550e8400-e29b-41d4-a716-446655440003"
                           views: 89
@@ -1998,30 +1998,48 @@ paths:
               properties:
                 title:
                   type: string
+                  description: 모집글 제목
                 description:
                   type: string
+                  maxLength: 20
+                  description: 프로젝트 정보 (최대 20자)
                 max_applicants:
                   type: integer
+                  minimum: 1
+                  description: 최대 지원자 수 (양수)
                 recruitment_start:
                   type: string
                   format: date
+                  description: 모집 시작일
                 recruitment_end:
                   type: string
                   format: date
+                  description: 모집 종료일
                 project_type:
                   type: string
                   enum: [course, side]
+                  description: 프로젝트 타입 (course: 수업, side: 사이드)
+                photo:
+                  type: string
+                  description: 이미지 파일명 (photo_url 대신 사용 가능)
                 photo_url:
                   type: string
+                  description: 이미지 URL
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: 해시태그 목록
             examples:
               create:
                 summary: 모집글 생성 요청
                 value:
                   title: "AI 프로젝트 팀원 모집"
-                  description: "머신러닝 프로젝트를 함께 진행할 팀원을 찾습니다"
+                  description: "머신러닝 팀원 모집합니다"
                   max_applicants: 5
                   recruitment_start: "2024-01-01"
                   recruitment_end: "2024-01-31"
+                  hashtags: ["AI", "머신러닝", "Python"]
                   project_type: "side"
       responses:
         '201':
@@ -2046,7 +2064,7 @@ paths:
                     data:
                       recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
                       title: "AI 프로젝트 팀원 모집"
-                      description: "머신러닝 프로젝트를 함께 진행할 팀원을 찾습니다"
+                      description: "ML 프로젝트 팀원 모집"
                       status: "ACTIVE"
                       user_id: "550e8400-e29b-41d4-a716-446655440001"
                       views: 0
@@ -2137,7 +2155,7 @@ paths:
                     data:
                       recruitment_id: "550e8400-e29b-41d4-a716-446655440000"
                       title: "AI 프로젝트 팀원 모집"
-                      description: "머신러닝 경험이 있는 분을 찾습니다. TensorFlow, PyTorch 사용 경험자 우대합니다."
+                      description: "AI 프로젝트 팀원 모집"
                       status: "ACTIVE"
                       user_id: "550e8400-e29b-41d4-a716-446655440001"
                       views: 145
@@ -2197,18 +2215,61 @@ paths:
               properties:
                 title:
                   type: string
+                  minLength: 1
+                  description: 제목 (빈 문자열 불가)
                 description:
                   type: string
+                  maxLength: 20
+                  description: 프로젝트 정보 (최대 20자)
                 status:
                   type: string
                   enum: [ACTIVE, CLOSED, FILLED]
+                  description: 모집 상태
+                max_applicants:
+                  type: integer
+                  minimum: 1
+                  description: 최대 지원자 수 (양수)
+                recruitment_start:
+                  type: string
+                  format: date
+                  description: 모집 시작일
+                recruitment_end:
+                  type: string
+                  format: date
+                  description: 모집 종료일
+                project_type:
+                  type: string
+                  enum: [course, side]
+                  description: 프로젝트 타입 (course: 수업, side: 사이드)
+                photo:
+                  type: string
+                  description: 이미지 파일명
+                photo_url:
+                  type: string
+                  description: 이미지 URL
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: 해시태그 목록
             examples:
               update:
                 summary: 모집글 수정 요청
                 value:
                   title: "AI 프로젝트 팀원 모집 (수정)"
-                  description: "수정된 설명입니다"
+                  description: "수정된 모집글입니다"
                   status: "CLOSED"
+              update_full:
+                summary: 전체 필드 수정
+                value:
+                  title: "웹 개발 프로젝트"
+                  description: "React 프로젝트 모집"
+                  status: "ACTIVE"
+                  max_applicants: 3
+                  recruitment_start: "2024-02-01"
+                  recruitment_end: "2024-02-28"
+                  project_type: "side"
+                  hashtags: ["React", "TypeScript"]
       responses:
         '200':
           description: 수정 성공
