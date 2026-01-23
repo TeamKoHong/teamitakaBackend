@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const projectPostController = require("../controllers/projectPostController");
 const adminAuth = require("../middlewares/authMiddleware");
+const { validateUUID } = require("../middlewares/uuidValidationMiddleware");
 const { jwtSecret } = require("../config/authConfig");
 const jwt = require("jsonwebtoken");
 
@@ -13,6 +14,7 @@ router.post(
     console.log("Received project_id:", req.params.project_id);
     next();
   },
+  validateUUID('project_id'),
   adminAuth, // 관리자 인증 미들웨어 적용
   projectPostController.createPost
 );
@@ -25,6 +27,7 @@ router.get(
     console.log("Received project_id:", req.params.project_id); // project_id 값 확인
     next();
   },
+  validateUUID('project_id'),
   projectPostController.getPostsByProject
 );
 
@@ -36,6 +39,7 @@ router.get(
     console.log("Received post_id:", req.params.post_id); // post_id 값 확인
     next();
   },
+  validateUUID('post_id'),
   projectPostController.getPostById
 );
 
