@@ -1,6 +1,10 @@
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
+// Force IPv4 DNS resolution (Render doesn't support IPv6)
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
 
