@@ -24,7 +24,13 @@ const generateVerificationEmail = (code, email) => {
           margin: 0 auto;
         }
         .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
           margin-bottom: 20px;
+        }
+        .header-content {
+          flex: 1;
         }
         .brand-name {
           font-size: 28px;
@@ -33,10 +39,15 @@ const generateVerificationEmail = (code, email) => {
           margin: 0;
           letter-spacing: -0.5px;
         }
+        .mascot {
+          width: 120px;
+          height: auto;
+          margin-left: 20px;
+        }
         .welcome-text {
           font-size: 16px;
           color: #5D4037;
-          margin: 20px 0;
+          margin: 15px 0 0 0;
           line-height: 1.7;
         }
         .verification-box {
@@ -94,13 +105,15 @@ const generateVerificationEmail = (code, email) => {
       <div class="email-wrapper">
         <div class="email-container">
           <div class="header">
-            <h1 class="brand-name">티미타카</h1>
+            <div class="header-content">
+              <h1 class="brand-name">티미타카</h1>
+              <p class="welcome-text">
+                안녕하세요, 티미타카 가입을 진행해주셔서 감사합니다.<br>
+                아래 인증번호를 입력하면 바로 서비스 이용을 시작할 수 있어요.
+              </p>
+            </div>
+            <img src="https://huwajjafqbfrcxkdfker.supabase.co/storage/v1/object/public/email-assets/character.png" alt="티미타카 마스코트" class="mascot">
           </div>
-
-          <p class="welcome-text">
-            안녕하세요, 티미타카 가입을 진행해주셔서 감사합니다.<br>
-            아래 인증번호를 입력하면 바로 서비스 이용을 시작할 수 있어요.
-          </p>
 
           <div class="verification-box">
             <div class="verification-label">인증번호</div>
