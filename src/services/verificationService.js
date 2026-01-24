@@ -115,7 +115,7 @@ class VerificationService {
       const mailOptions = {
         from: fromEmail,
         to: email,
-        subject: 'TEAMITAKA 이메일 인증번호',
+        subject: '[티미타카] 인증번호를 입력해주세요',
         html: generateVerificationEmail(code, email),
         text: generateVerificationEmailText(code)
       };
