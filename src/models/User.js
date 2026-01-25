@@ -108,6 +108,11 @@ module.exports = (sequelize) => {
         defaultValue: '재학 중',
         comment: '재학 상태 (재학 중, 휴학 중, 졸업)',
       },
+      mbti_type: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        comment: 'MBTI 유형 결과 (예: LION, 활동티미)',
+      },
     },
     {
       tableName: "users",
