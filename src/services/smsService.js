@@ -1,5 +1,6 @@
 const { SolapiMessageService } = require('solapi');
 const NodeCache = require('node-cache');
+const { randomUUID } = require('crypto');
 
 class SmsService {
   constructor() {
@@ -39,6 +40,14 @@ class SmsService {
   }
 
   /**
+   * 세션 ID 생성
+   * @returns {string} UUID v4
+   */
+  generateSessionId() {
+    return randomUUID();
+  }
+
+  /**
    * 한국 휴대폰 번호 형식 검증
    * @param {string} phone - 전화번호
    * @returns {boolean}
@@ -58,14 +67,16 @@ class SmsService {
   }
 
   /**
-   * 인증번호 저장
+   * 인증번호 저장 (sessionId 기반)
+   * @param {string} sessionId - 세션 ID
    * @param {string} phone - 전화번호
    * @param {string} code - 인증번호
    * @returns {boolean}
    */
-  saveVerification(phone, code) {
-    const cacheKey = `sms:${phone}`;
+  saveVerification(sessionId, phone, code) {
+    const cacheKey = `sms:${sessionId}`;
     const data = {
+      phone: phone,
       code: code,
       attemptCount: 0,
       createdAt: Date.now()
@@ -106,28 +117,30 @@ class SmsService {
   }
 
   /**
-   * 인증번호 검증
-   * @param {string} phone - 전화번호
+   * 인증번호 검증 (sessionId 기반)
+   * @param {string} sessionId - 세션 ID
    * @param {string} code - 입력된 인증번호
-   * @returns {{valid: boolean, message: string}}
+   * @returns {{valid: boolean, phone: string|null, message: string}}
    */
-  verifyCode(phone, code) {
-    const cacheKey = `sms:${phone}`;
+  verifyCode(sessionId, code) {
+    const cacheKey = `sms:${sessionId}`;
     const cached = this.smsCache.get(cacheKey);
 
     // 캐시에 데이터가 없는 경우 (만료 또는 미발송)
     if (!cached) {
       return {
         valid: false,
+        phone: null,
         message: '인증번호가 만료되었거나 존재하지 않습니다. 다시 요청해주세요.'
       };
     }
 
     // 최대 시도 횟수 초과
     if (cached.attemptCount >= this.MAX_ATTEMPTS) {
-      this.smsCache.del(cacheKey); // 코드 삭제
+      this.smsCache.del(cacheKey);
       return {
         valid: false,
+        phone: cached.phone,
         message: '최대 시도 횟수(5회)를 초과했습니다. 인증번호를 다시 요청해주세요.'
       };
     }
@@ -141,6 +154,7 @@ class SmsService {
       const remainingAttempts = this.MAX_ATTEMPTS - cached.attemptCount;
       return {
         valid: false,
+        phone: cached.phone,
         message: `인증번호가 일치하지 않습니다. (남은 시도: ${remainingAttempts}회)`
       };
     }
@@ -149,6 +163,7 @@ class SmsService {
     this.smsCache.del(cacheKey);
     return {
       valid: true,
+      phone: cached.phone,
       message: '인증이 완료되었습니다.'
     };
   }
