@@ -31,25 +31,26 @@ exports.sendSmsVerification = async (req, res) => {
       });
     }
 
-    // 3. 인증번호 생성
+    // 3. sessionId 및 인증번호 생성
+    const sessionId = smsService.generateSessionId();
     const verificationCode = smsService.generateVerificationCode();
-    console.log(`[SMS] 인증번호 생성: ${normalizedPhone}`);
+    console.log(`[SMS] 인증번호 생성: ${normalizedPhone}, sessionId: ${sessionId}`);
 
-    // 4. 이전 인증번호 무효화
-    smsService.invalidatePreviousCode(normalizedPhone);
+    // 4. 캐시에 저장 (sessionId 기반)
+    smsService.saveVerification(sessionId, normalizedPhone, verificationCode);
 
-    // 5. SMS 발송 (성공 후에만 캐시에 저장)
-    await smsService.sendSms(normalizedPhone, verificationCode);
+    // 5. 비동기 SMS 발송 (백그라운드에서 처리)
+    smsService.sendSms(normalizedPhone, verificationCode)
+      .then(() => console.log(`[SMS] 발송 완료: ${normalizedPhone}`))
+      .catch(err => console.error(`[SMS] 발송 실패: ${normalizedPhone}`, err.message));
 
-    // 6. SMS 발송 성공 시에만 인증번호 저장 (롤백 불필요)
-    smsService.saveVerification(normalizedPhone, verificationCode);
-
-    // 7. 성공 응답
+    // 6. 즉시 응답 반환
     console.log(`[SMS] 인증 요청 성공: ${normalizedPhone}`);
     res.status(200).json({
       success: true,
       message: '인증번호가 전송되었습니다.',
       data: {
+        sessionId: sessionId,
         phone: normalizedPhone,
         expiresIn: 180 // 3분 (초 단위)
       }
@@ -71,29 +72,25 @@ exports.sendSmsVerification = async (req, res) => {
  */
 exports.verifySmsCode = async (req, res) => {
   const clientIP = req.ip || req.connection.remoteAddress;
-  let phone = '';
 
   try {
-    const { phone: requestPhone, code } = req.body;
-    phone = requestPhone;
+    const { sessionId, code } = req.body;
 
-    console.log(`[SMS] 인증 확인 요청: ${phone}, IP: ${clientIP}`);
+    console.log(`[SMS] 인증 확인 요청, sessionId: ${sessionId}, IP: ${clientIP}`);
 
-    // 1. 입력값 검증 (validation middleware에서 이미 처리됨)
-    if (!phone || !code) {
+    // 1. sessionId 필수
+    if (!sessionId) {
       return res.status(400).json({
-        error: 'MISSING_PARAMETERS',
-        message: '전화번호와 인증번호를 모두 입력해주세요.'
+        error: 'MISSING_SESSION_ID',
+        message: 'sessionId를 입력해주세요.'
       });
     }
 
-    // 2. 전화번호 정규화
-    const normalizedPhone = smsService.normalizePhone(phone);
-
-    if (!smsService.validatePhoneFormat(normalizedPhone)) {
+    // 2. code 필수
+    if (!code) {
       return res.status(400).json({
-        error: 'INVALID_PHONE_FORMAT',
-        message: '올바른 전화번호 형식이 아닙니다.'
+        error: 'MISSING_CODE',
+        message: '인증번호를 입력해주세요.'
       });
     }
 
@@ -105,11 +102,11 @@ exports.verifySmsCode = async (req, res) => {
       });
     }
 
-    // 4. 인증번호 검증
-    const verificationResult = smsService.verifyCode(normalizedPhone, code);
+    // 4. 인증번호 검증 (sessionId 기반)
+    const verificationResult = smsService.verifyCode(sessionId, code);
 
     if (!verificationResult.valid) {
-      console.log(`[SMS] 인증 실패: ${normalizedPhone} - ${verificationResult.message}`);
+      console.log(`[SMS] 인증 실패: sessionId=${sessionId} - ${verificationResult.message}`);
 
       return res.status(400).json({
         error: 'VERIFICATION_FAILED',
@@ -118,18 +115,18 @@ exports.verifySmsCode = async (req, res) => {
     }
 
     // 5. 성공 응답
-    console.log(`[SMS] 인증 성공: ${normalizedPhone}`);
+    console.log(`[SMS] 인증 성공: ${verificationResult.phone}`);
     res.status(200).json({
       success: true,
       message: '인증이 완료되었습니다.',
       data: {
-        phone: normalizedPhone,
+        phone: verificationResult.phone,
         verifiedAt: new Date().toISOString()
       }
     });
 
   } catch (error) {
-    console.error(`[SMS] 인증 확인 오류: ${phone}`, error.message);
+    console.error(`[SMS] 인증 확인 오류:`, error.message);
 
     res.status(500).json({
       error: 'SERVER_ERROR',
