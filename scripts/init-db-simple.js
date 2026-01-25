@@ -1,0 +1,145 @@
+#!/usr/bin/env node
+
+require('dotenv').config();
+
+console.log('🚀 Simple Database Initialization Script');
+console.log('Environment:', process.env.NODE_ENV || 'development');
+
+const initDatabase = async () => {
+  try {
+    // 1. Sequelize 설정 로드
+    console.log('🔧 Loading database configuration...');
+    const { sequelize } = require('../src/config/db');
+    
+    // 2. DB 연결 확인
+    console.log('🔗 Connecting to database...');
+    await sequelize.authenticate();
+    console.log('✅ Database connection established');
+
+    // 3. 환경별 처리
+    const env = process.env.NODE_ENV || 'development';
+    
+    if (env === 'production') {
+      console.log('🏭 Production environment detected');
+      console.log('⚠️  Running in production mode - only table creation');
+      
+      // 프로덕션: 테이블 생성만
+      await sequelize.sync({ force: false, alter: true });
+      console.log('✅ Production tables synchronized safely');
+      
+    } else {
+      console.log('🛠️  Development/Test environment detected');
+      console.log('🔄 Running simple initialization');
+      
+      // 개발/테스트: 간단한 동기화
+      await sequelize.sync({ force: false, alter: true });
+      console.log('✅ Development tables synchronized');
+      
+      // 4. 간단한 시드 데이터 생성
+      await createSimpleSeedData(sequelize);
+      console.log('✅ Simple seed data created');
+    }
+
+    console.log('🎉 Database initialization completed successfully!');
+    process.exit(0);
+    
+  } catch (error) {
+    console.error('❌ Database initialization failed:', error);
+    console.error('Error details:', error.message);
+    process.exit(1);
+  }
+};
+
+const createSimpleSeedData = async (sequelize) => {
+  console.log('🌱 Creating simple seed data...');
+  
+  try {
+    // 간단한 테스트 사용자 생성 (직접 SQL 사용)
+    const testUserResult = await sequelize.query(`
+      INSERT INTO Users (user_id, username, email, password, userType, role, university, major, bio, skills, createdAt, updatedAt)
+      VALUES (
+        UUID(),
+        'testuser',
+        'test@example.com',
+        '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+        'MEMBER',
+        'MEMBER',
+        '테스트 대학교',
+        '컴퓨터공학과',
+        '테스트용 사용자입니다.',
+        'JavaScript, Python, React',
+        NOW(),
+        NOW()
+      )
+      ON DUPLICATE KEY UPDATE updatedAt = NOW()
+    `);
+    console.log('✅ Test user created/updated');
+
+    // 사용자 ID 가져오기
+    const [users] = await sequelize.query(`
+      SELECT user_id FROM Users WHERE email = 'test@example.com' LIMIT 1
+    `);
+    
+    if (users.length > 0) {
+      const userId = users[0].user_id;
+      
+      // 간단한 테스트 모집공고 생성
+      await sequelize.query(`
+        INSERT INTO Recruitments (recruitment_id, title, description, user_id, status, views, createdAt, updatedAt)
+        VALUES (
+          UUID(),
+          '테스트 모집공고',
+          '이것은 테스트용 모집공고입니다.',
+          '${userId}',
+          'OPEN',
+          0,
+          NOW(),
+          NOW()
+        )
+        ON DUPLICATE KEY UPDATE updatedAt = NOW()
+      `);
+      console.log('✅ Test recruitment created/updated');
+
+      // 모집공고 ID 가져오기
+      const [recruitments] = await sequelize.query(`
+        SELECT recruitment_id FROM Recruitments WHERE title = '테스트 모집공고' LIMIT 1
+      `);
+      
+      if (recruitments.length > 0) {
+        const recruitmentId = recruitments[0].recruitment_id;
+        
+        // 간단한 테스트 프로젝트 생성
+        await sequelize.query(`
+          INSERT INTO Projects (project_id, title, description, user_id, recruitment_id, status, start_date, end_date, createdAt, updatedAt)
+          VALUES (
+            UUID(),
+            '테스트 프로젝트',
+            '이것은 테스트용 프로젝트입니다.',
+            '${userId}',
+            '${recruitmentId}',
+            '예정',
+            NOW(),
+            DATE_ADD(NOW(), INTERVAL 60 DAY),
+            NOW(),
+            NOW()
+          )
+          ON DUPLICATE KEY UPDATE updatedAt = NOW()
+        `);
+        console.log('✅ Test project created/updated');
+      }
+    }
+
+    console.log('🎉 Simple seed data created successfully!');
+    
+  } catch (error) {
+    console.error('❌ Simple seed data creation failed:', error);
+    console.log('⚠️  Continuing without seed data...');
+  }
+};
+
+// 스크립트 실행
+if (require.main === module) {
+  initDatabase();
+}
+
+module.exports = { initDatabase }; 

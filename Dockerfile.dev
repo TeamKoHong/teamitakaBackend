@@ -1,0 +1,18 @@
+# Dockerfile.dev
+
+FROM node:18
+
+WORKDIR /app
+
+# 개발 편의용 netcat, nodemon, etc. 설치
+RUN apt-get update && apt-get install -y netcat-openbsd
+
+COPY package.json ./
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+# 개발 모드( nodemon )로 실행 예시
+CMD ["npx", "nodemon", "src/index.js"]

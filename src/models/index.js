@@ -1,0 +1,370 @@
+require("dotenv").config();
+
+"use strict";
+
+const { sequelize } = require("../config/db");
+const Sequelize = require("sequelize");
+
+const db = {};
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
+
+// ✅ 모델 불러오기
+db.Admin = require("./Admin")(sequelize, Sequelize.DataTypes);
+db.Application = require("./Application")(sequelize, Sequelize.DataTypes);
+db.ApplicationPortfolio = require("./ApplicationPortfolio")(sequelize, Sequelize.DataTypes);
+db.College = require("./College")(sequelize, Sequelize.DataTypes);
+db.Comment = require("./Comment")(sequelize, Sequelize.DataTypes);
+db.Department = require("./Department")(sequelize, Sequelize.DataTypes);
+db.Hashtag = require("./Hashtag")(sequelize, Sequelize.DataTypes);
+db.Keyword = require("./Keyword")(sequelize, Sequelize.DataTypes);
+db.Notification = require("./Notification")(sequelize, Sequelize.DataTypes);
+db.Project = require("./Project")(sequelize, Sequelize.DataTypes);
+db.ProjectMembers = require("./ProjectMembers")(sequelize, Sequelize.DataTypes);
+db.ProjectPost = require("./ProjectPost")(sequelize, Sequelize.DataTypes);
+db.Recruitment = require("./Recruitment")(sequelize, Sequelize.DataTypes);
+db.RecruitmentView = require("./RecruitmentView")(sequelize, Sequelize.DataTypes);
+db.Review = require("./Review")(sequelize, Sequelize.DataTypes);
+db.Schedule = require("./Schedule")(sequelize, Sequelize.DataTypes);
+db.Scrap = require("./Scrap")(sequelize, Sequelize.DataTypes);
+db.Search = require("./Search")(sequelize, Sequelize.DataTypes);
+db.Timeline = require("./Timeline")(sequelize, Sequelize.DataTypes);
+db.MeetingNotes = require("./MeetingNotes")(sequelize, Sequelize.DataTypes);
+db.Todo = require("./Todo")(sequelize, Sequelize.DataTypes);
+db.University = require("./University")(sequelize, Sequelize.DataTypes);
+db.User = require("./User")(sequelize, Sequelize.DataTypes);
+db.VerifiedEmail = require("./VerifiedEmail")(sequelize, Sequelize.DataTypes);
+db.EmailVerification = require("./EmailVerification")(sequelize, Sequelize.DataTypes);
+db.Vote = require("./Vote")(sequelize, Sequelize.DataTypes);
+db.VoteOption = require("./VoteOption")(sequelize, Sequelize.DataTypes);
+db.VoteResponse = require("./VoteResponse")(sequelize, Sequelize.DataTypes);
+
+// ✅ 프로필 상세 관련 모델 추가
+db.FeedbackItem = require("./FeedbackItem")(sequelize, Sequelize.DataTypes);
+db.UserFeedback = require("./UserFeedback")(sequelize, Sequelize.DataTypes);
+db.TeamiType = require("./TeamiType")(sequelize, Sequelize.DataTypes);
+db.UserTeamiType = require("./UserTeamiType")(sequelize, Sequelize.DataTypes);
+
+// ✅ 푸시 알림 관련 모델
+db.DeviceToken = require("./DeviceToken")(sequelize, Sequelize.DataTypes);
+
+// 모델 간 관계 설정
+db.Application.associate = (models) => {
+  db.Application.belongsTo(models.User, { foreignKey: "user_id", onDelete: "CASCADE" });
+  db.Application.belongsTo(models.Recruitment, { foreignKey: "recruitment_id", onDelete: "CASCADE" });
+  db.Application.hasMany(models.ApplicationPortfolio, { foreignKey: "application_id", onDelete: "CASCADE" });
+};
+
+db.ApplicationPortfolio.associate = (models) => {
+  db.ApplicationPortfolio.belongsTo(models.Application, { foreignKey: "application_id", onDelete: "CASCADE" });
+  db.ApplicationPortfolio.belongsTo(models.Project, { foreignKey: "project_id", onDelete: "CASCADE" });
+};
+
+db.College.associate = (models) => {
+  db.College.belongsTo(models.University, {
+    foreignKey: "UniversityID",
+    onDelete: "CASCADE",
+  });
+  db.College.hasMany(models.Department, {
+    foreignKey: "CollegeID",
+    onDelete: "CASCADE",
+  });
+};
+
+db.Comment.associate = (models) => {
+  db.Comment.belongsTo(models.User, { foreignKey: "user_id" });
+  db.Comment.belongsTo(models.Recruitment, { foreignKey: "recruitment_id" });
+};
+
+db.Department.associate = (models) => {
+  db.Department.belongsTo(models.College, {
+    foreignKey: "CollegeID",
+    onDelete: "CASCADE",
+  });
+};
+
+db.Hashtag.associate = (models) => {
+  db.Hashtag.belongsToMany(models.Recruitment, {
+    through: "recruitment_hashtags",
+    foreignKey: "hashtag_id",
+    otherKey: "recruitment_id",
+  });
+};
+
+db.Project.associate = (models) => {
+  db.Project.belongsTo(db.User, {
+    as: "User",
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+  db.Project.hasMany(models.ProjectMembers, {
+    as: "ProjectMembers",  // 명시적 별칭 추가
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Project.hasMany(models.Todo, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Project.hasMany(models.Timeline, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Project.hasMany(models.MeetingNotes, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Project.hasMany(db.ProjectPost, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Project.hasMany(models.Recruitment, {
+    foreignKey: "project_id",
+    as: "Recruitments",
+    onDelete: "CASCADE",
+  });
+  db.Project.hasMany(models.Scrap, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.ProjectMembers.associate = (models) => {
+  db.ProjectMembers.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.ProjectMembers.belongsTo(models.User, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.MeetingNotes.associate = (models) => {
+  db.MeetingNotes.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.MeetingNotes.belongsTo(models.User, {
+    as: "Creator",
+    foreignKey: "created_by",
+    onDelete: "CASCADE",
+  });
+};
+
+db.ProjectPost.belongsTo(db.Project, { 
+  foreignKey: "project_id" 
+});
+
+db.ProjectPost.belongsTo(db.User, { 
+  foreignKey: "user_id" 
+});
+
+db.Recruitment.associate = (models) => {
+  db.Recruitment.belongsTo(models.User, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+  db.Recruitment.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    as: "Project",
+    onDelete: "CASCADE",
+  });
+  db.Recruitment.hasMany(db.Application, { 
+    foreignKey: "recruitment_id", 
+    onDelete: "CASCADE" 
+  });
+  db.Recruitment.belongsToMany(models.Hashtag, {
+    through: "recruitment_hashtags",
+    foreignKey: "recruitment_id",
+    otherKey: "hashtag_id",
+  });
+
+  // ★ [추가] 모집글은 여러 개의 스크랩을 가짐
+  db.Recruitment.hasMany(models.Scrap, { 
+    foreignKey: "recruitment_id", 
+    onDelete: "CASCADE" 
+  });
+
+  // ★ [추가] 모집글은 여러 개의 조회 기록을 가짐
+  db.Recruitment.hasMany(models.RecruitmentView, { 
+    foreignKey: "recruitment_id", 
+    onDelete: "CASCADE" 
+  });
+};
+
+db.Review.associate = (models) => {
+  db.Review.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Review.belongsTo(models.User, {
+    as: "Reviewer",
+    foreignKey: "reviewer_id",
+    onDelete: "CASCADE",
+  });
+  db.Review.belongsTo(models.User, {
+    as: "Reviewee",
+    foreignKey: "reviewee_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.Scrap.associate = (models) => {
+  db.Scrap.belongsTo(models.User, { foreignKey: "user_id" });
+  db.Scrap.belongsTo(models.Recruitment, { foreignKey: "recruitment_id" });
+  db.Scrap.belongsTo(models.Project, { foreignKey: "project_id" });
+};
+
+db.Todo.associate = (models) => {
+  db.Todo.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Todo.belongsTo(models.User, {
+    as: "assignedUser",
+    foreignKey: "user_id",
+  });
+  db.Todo.belongsTo(models.User, {
+    as: "completedByUser",
+    foreignKey: "completed_by",
+  });
+};
+
+db.University.associate = (models) => {
+  db.University.hasMany(models.College, {
+    foreignKey: "UniversityID",
+    onDelete: "CASCADE",
+  });
+};
+
+db.Vote.associate = (models) => {
+  db.Vote.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Vote.hasMany(models.VoteOption, {
+    foreignKey: "vote_id",
+    onDelete: "CASCADE",
+  });
+  db.Vote.hasMany(models.VoteResponse, {
+    foreignKey: "vote_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.VoteOption.associate = (models) => {
+  db.VoteOption.belongsTo(models.Vote, {
+    foreignKey: "vote_id",
+    onDelete: "CASCADE",
+  });
+  db.VoteOption.hasMany(models.VoteResponse, {
+    foreignKey: "option_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.VoteResponse.associate = (models) => {
+  db.VoteResponse.belongsTo(models.Vote, {
+    foreignKey: "vote_id",
+    onDelete: "CASCADE",
+  });
+  db.VoteResponse.belongsTo(models.VoteOption, {
+    foreignKey: "option_id",
+    onDelete: "CASCADE",
+  });
+  db.VoteResponse.belongsTo(models.User, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+};
+
+db.Schedule.associate = (models) => {
+  db.Schedule.belongsTo(models.Project, {
+    foreignKey: "project_id",
+    onDelete: "CASCADE",
+  });
+  db.Schedule.belongsTo(models.User, {
+    as: "creator",
+    foreignKey: "created_by",
+  });
+};
+
+db.User.associate = (models) => {
+  db.User.hasMany(models.ProjectMembers, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+  db.User.hasMany(models.UserFeedback, {
+    foreignKey: "user_id",
+    as: "Feedbacks",
+    onDelete: "CASCADE",
+  });
+  db.User.hasOne(models.UserTeamiType, {
+    foreignKey: "user_id",
+    as: "TeamiType",
+    onDelete: "CASCADE",
+  });
+  // ✅ 푸시 알림용 디바이스 토큰
+  db.User.hasMany(models.DeviceToken, {
+    foreignKey: "user_id",
+    as: "DeviceTokens",
+    onDelete: "CASCADE",
+  });
+};
+
+// ✅ 프로필 상세 모델 관계 설정
+db.FeedbackItem.associate = (models) => {
+  db.FeedbackItem.hasMany(models.UserFeedback, {
+    foreignKey: "feedback_item_id",
+    as: "UserFeedbacks",
+  });
+};
+
+db.UserFeedback.associate = (models) => {
+  db.UserFeedback.belongsTo(models.User, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+  db.UserFeedback.belongsTo(models.FeedbackItem, {
+    foreignKey: "feedback_item_id",
+    as: "FeedbackItem",
+  });
+};
+
+db.TeamiType.associate = (models) => {
+  db.TeamiType.hasMany(models.UserTeamiType, {
+    foreignKey: "teami_type_id",
+    as: "Users",
+  });
+};
+
+db.UserTeamiType.associate = (models) => {
+  db.UserTeamiType.belongsTo(models.User, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+  db.UserTeamiType.belongsTo(models.TeamiType, {
+    foreignKey: "teami_type_id",
+    as: "TeamiType",
+  });
+};
+
+// ✅ DeviceToken 연관 관계 설정
+db.DeviceToken.associate = (models) => {
+  db.DeviceToken.belongsTo(models.User, {
+    foreignKey: "user_id",
+    onDelete: "CASCADE",
+  });
+};
+
+// 모델 간 관계 설정 실행
+Object.values(db).forEach((model) => {
+  if (model && model.associate) {
+    console.log(`Associating model: ${model.name}`);
+    model.associate(db);
+  }
+});
+
+console.log("로드된 모델:", Object.keys(db)); // 디버깅
+module.exports = db;

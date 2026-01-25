@@ -1,0 +1,105 @@
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
+  const Recruitment = sequelize.define(
+    "Recruitment",
+    {
+      recruitment_id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
+      title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "Untitled Recruitment",
+      },
+      description: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: "No description",
+        validate: {
+          len: {
+            args: [0, 20],
+            msg: '프로젝트 정보는 20자를 초과할 수 없습니다.'
+          }
+        }
+      },
+      status: {
+        type: DataTypes.ENUM("ACTIVE", "CLOSED", "FILLED"),
+        defaultValue: "ACTIVE",
+      },
+      user_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+          model: "Users",
+          key: "user_id",
+        },
+        onDelete: "CASCADE",
+      },
+      project_id: {
+        type: DataTypes.UUID,
+        allowNull: true,  // 모집공고가 프로젝트 없이도 존재 가능
+        references: {
+          model: "Projects",
+          key: "project_id",
+        },
+        onDelete: "CASCADE",
+      },
+      views: { // 추가
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
+      max_applicants: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 10,
+        comment: "최대 지원자 수",
+      },
+      recruitment_start: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "모집 시작일",
+      },
+      recruitment_end: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: "모집 마감일",
+      },
+      project_type: {
+        type: DataTypes.ENUM("course", "side"),
+        allowNull: true,
+        comment: "프로젝트 타입 (수업/사이드)",
+      },
+      photo_url: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: "모집공고 대표 이미지 URL",
+      },
+      scrap_count: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: "스크랩(북마크) 수",
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+    },
+    {
+      tableName: "recruitments",
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+    }
+  );
+
+  return Recruitment;
+};

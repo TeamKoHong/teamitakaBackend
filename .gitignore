@@ -1,0 +1,93 @@
+# 💥 보안 파일 및 민감한 정보
+.env
+.env.*
+!.env.example
+!env.example
+!env.supabase.example
+!supabase_config.example.js
+sa-key.json
+supabase_config.js
+env.supabase
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*.p8
+AuthKey*.p8
+
+# 로컬 바이너리/CLI
+supabase-cli
+
+# 🔐 API 키 및 토큰
+*_api_key*
+*_token*
+*_secret*
+*_password*
+sendgrid*
+nodemailer*
+
+# 🔐 시크릿 스크립트
+/src/scripts/hashPassword.js
+
+# 🔁 DB 시딩 및 결과물
+prisma/migrations/
+prisma/migration_lock.toml
+backup.sql
+*.sql
+!supabase_migration.sql
+
+# 🧪 로그 및 캐시
+node_modules/
+npm-debug.log
+yarn-error.log
+.DS_Store
+coverage/
+logs/
+*.log
+
+# 🛠️ 개발 도구 설정
+.claude/
+.vscode/
+.idea/
+
+# 🚀 배포 관련 파일
+# vercel.json
+.vercel/
+.railway/
+render.yaml
+
+# 📊 환경별 설정
+config/
+!src/config/
+config.local.js
+config.prod.js
+config.dev.js
+
+# 🔒 인증 관련
+auth.json
+credentials.json
+service-account.json
+.vercel
+
+# 📚 배포 관련 문서 (임시 파일들)
+docs/deployment/
+
+# 🔐 Supabase 관련 민감한 정보
+supabase_migration*.sql
+supabase_clean_start.sql
+supabase_migration_ordered.sql
+supabase_migration_final.sql
+supabase_migration_safe.sql
+
+# 🚀 Supabase Edge Functions (Supabase 대시보드에서 관리)
+supabase/functions/
+supabase_backup/functions/
+
+# 🔐 하드코딩된 API 키 및 토큰
+*_api_key*
+*_token*
+*_secret*
+*_password*
+sendgrid*
+nodemailer*

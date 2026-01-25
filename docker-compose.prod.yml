@@ -1,0 +1,19 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod   # 위에서 만든 Dockerfile.prod 사용
+    container_name: teamitaka-app
+
+    # 배포 환경에서 사용할 ENV (프로덕션 환경 설정)
+    env_file:
+      - .env.docker
+
+    ports:
+      - "3000:3000"
+
+    # 컨테이너 실행 시 마이그레이션 후 서버 실행하는 예시
+    command: >
+      bash -c "npx sequelize-cli db:migrate --url=$${GCP_DATABASE_URL} &&
+               npm run start"

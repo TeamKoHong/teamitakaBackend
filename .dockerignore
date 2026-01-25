@@ -1,0 +1,14 @@
+# node_modules는 컨테이너에서 새로 설치하므로, Docker build 시 복사 방지
+node_modules
+npm-debug.log
+yarn.lock
+.git
+.gitignore
+.dockerignore
+.env
+*.log
+dist/
+build/
+logs/
+.vscode
+.idea
