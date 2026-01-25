@@ -16,6 +16,9 @@ router.post("/", userController.createUser);
 // router.put("/:id", userController.updateUser);
 router.delete("/:id", authenticateToken, userController.deleteUser);
 
+// POST /user/type-result - MBTI 성향 테스트 결과 저장
+router.post("/type-result", authenticateToken, userController.updateMbtiType);
+
 // ========================
 // Device Token Routes (Push Notifications)
 // ========================
