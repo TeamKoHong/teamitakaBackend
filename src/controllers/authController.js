@@ -240,6 +240,7 @@ exports.getCurrentUser = async (req, res) => {
         'enrollment_status',
         'team_experience',
         'keywords',
+        'mbti_type',
         'created_at',
         'updated_at'
       ]
@@ -272,6 +273,7 @@ exports.getCurrentUser = async (req, res) => {
         enrollmentStatus: user.enrollment_status,
         teamExperience: user.team_experience,
         keywords: user.keywords || [],
+        mbtiType: user.mbti_type,
         createdAt: user.created_at,
         updatedAt: user.updated_at
       }
