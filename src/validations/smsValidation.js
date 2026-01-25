@@ -15,15 +15,15 @@ const sendSmsVerificationSchema = Joi.object({
     })
 });
 
-// SMS 인증번호 확인 검증 스키마
+// SMS 인증번호 확인 검증 스키마 (sessionId 기반)
 const verifySmsCodeSchema = Joi.object({
-  phone: Joi.string()
+  sessionId: Joi.string()
+    .uuid()
     .required()
-    .pattern(KOREAN_PHONE_REGEX)
     .messages({
-      'any.required': '전화번호를 입력해주세요.',
-      'string.empty': '전화번호를 입력해주세요.',
-      'string.pattern.base': '올바른 전화번호 형식이 아닙니다.'
+      'any.required': 'sessionId를 입력해주세요.',
+      'string.empty': 'sessionId를 입력해주세요.',
+      'string.guid': '유효한 sessionId 형식이 아닙니다.'
     }),
   code: Joi.string()
     .length(4)
