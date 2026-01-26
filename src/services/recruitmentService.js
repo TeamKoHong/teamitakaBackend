@@ -1,8 +1,19 @@
 const { Recruitment, Project, Hashtag, Application, Scrap, User, sequelize } = require("../models");
 const { Op } = require("sequelize");
 
-// 🔥 1. 전체 모집공고 가져오기 (로그인 시 is_scrapped 포함)
-const getAllRecruitmentsWithApplicationCount = async (user_id = null) => {
+// 🔥 1. 전체 모집공고 가져오기 (로그인 시 is_scrapped 포함, 학교 필터링)
+// ★ [수정] userUniversity 파라미터 추가 - 전체 모드 제거, 자기 학교만 표시
+const getAllRecruitmentsWithApplicationCount = async (user_id = null, userUniversity = null) => {
+  // 학교 필터 조건 설정 (로그인 사용자의 학교로 필터링)
+  const userInclude = {
+    model: User,
+    attributes: ["university"],
+    // userUniversity가 있으면 해당 학교 모집공고만 조회
+    ...(userUniversity && {
+      where: { university: userUniversity }
+    })
+  };
+
   const recruitments = await Recruitment.findAll({
     attributes: [
       "recruitment_id",
@@ -28,10 +39,7 @@ const getAllRecruitmentsWithApplicationCount = async (user_id = null) => {
         attributes: ["name"],
         through: { attributes: [] }
       },
-      {
-        model: User,
-        attributes: ["university"]
-      }
+      userInclude
     ],
     order: [
       [sequelize.literal('"applicationCount"'), "DESC"],
@@ -50,14 +58,17 @@ const getAllRecruitmentsWithApplicationCount = async (user_id = null) => {
   }
 
   // is_scrapped, university 추가하여 반환
-  return recruitments.map(r => {
-    const json = r.toJSON ? r.toJSON() : r;
-    return {
-      ...json,
-      university: json.User?.university || null,
-      is_scrapped: user_id ? userScraps.includes(r.recruitment_id) : false
-    };
-  });
+  // ★ [수정] User가 null인 경우 (학교 필터에서 제외된 경우) 필터링
+  return recruitments
+    .filter(r => r.User !== null) // 학교 필터링으로 User가 null인 경우 제외
+    .map(r => {
+      const json = r.toJSON ? r.toJSON() : r;
+      return {
+        ...json,
+        university: json.User?.university || null,
+        is_scrapped: user_id ? userScraps.includes(r.recruitment_id) : false
+      };
+    });
 };
 
 // 📋 2. 내가 작성한 모집공고 목록 조회

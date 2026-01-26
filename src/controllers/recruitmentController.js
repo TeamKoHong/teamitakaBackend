@@ -1,14 +1,26 @@
 const recruitmentService = require("../services/recruitmentService");
 const { handleError } = require("../utils/errorHandler");
-// ★ [수정 1] 필요한 모델들(Scrap, Recruitment, RecruitmentView) 불러오기
-const { Scrap, Recruitment, RecruitmentView } = require("../models");
+// ★ [수정 1] 필요한 모델들(Scrap, Recruitment, RecruitmentView, User) 불러오기
+const { Scrap, Recruitment, RecruitmentView, User } = require("../models");
 const scrapService = require("../services/scrapService");
 const { toPairs } = require("lodash");
 
 const getAllRecruitments = async (req, res) => {
   try {
     const user_id = req.user?.userId || null;
-    const recruitments = await recruitmentService.getAllRecruitmentsWithApplicationCount(user_id);
+
+    // 로그인한 사용자의 학교 정보 조회 (학교별 필터링용)
+    let userUniversity = null;
+    if (user_id) {
+      const user = await User.findByPk(user_id, { attributes: ['university'] });
+      userUniversity = user?.university || null;
+    }
+
+    // 서비스에 학교 정보 전달 (전체 모드 없음 - 자기 학교만 표시)
+    const recruitments = await recruitmentService.getAllRecruitmentsWithApplicationCount(
+      user_id,
+      userUniversity
+    );
     res.status(200).json(recruitments);
   } catch (error) {
     handleError(res, error);

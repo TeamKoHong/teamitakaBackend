@@ -1,0 +1,160 @@
+{
+  "name": "학교별 필터링 API 검증",
+  "description": "GET /api/recruitments 응답에서 university 필드가 올바르게 반환되는지 확인",
+  "created": "2026-01-26",
+
+  "test_data_summary": {
+    "users": 12,
+    "recruitments": 15,
+    "universities": {
+      "고려대학교": 3,
+      "연세대학교": 3,
+      "서울대학교": 3,
+      "KAIST": 1,
+      "홍익대학교": 2,
+      "중부대학교": 2,
+      "null": 1
+    }
+  },
+
+  "test_cases": [
+    {
+      "id": "TC001",
+      "name": "university 필드 존재 확인",
+      "request": "GET /api/recruitments",
+      "expected": {
+        "each_item_has": ["university"],
+        "university_type": "string | null"
+      },
+      "verification": "jq '.[0] | has(\"university\")'"
+    },
+    {
+      "id": "TC002",
+      "name": "고려대학교 필터링",
+      "request": "GET /api/recruitments",
+      "client_filter": { "university": "고려대학교" },
+      "expected": {
+        "count": 3,
+        "all_university_equals": "고려대학교"
+      },
+      "verification": "jq '[.[] | select(.university == \"고려대학교\")] | length'"
+    },
+    {
+      "id": "TC003",
+      "name": "연세대학교 필터링",
+      "request": "GET /api/recruitments",
+      "client_filter": { "university": "연세대학교" },
+      "expected": {
+        "count": 3,
+        "all_university_equals": "연세대학교"
+      },
+      "verification": "jq '[.[] | select(.university == \"연세대학교\")] | length'"
+    },
+    {
+      "id": "TC004",
+      "name": "서울대학교 필터링",
+      "request": "GET /api/recruitments",
+      "client_filter": { "university": "서울대학교" },
+      "expected": {
+        "count": 3,
+        "all_university_equals": "서울대학교"
+      },
+      "verification": "jq '[.[] | select(.university == \"서울대학교\")] | length'"
+    },
+    {
+      "id": "TC005",
+      "name": "NULL university 처리",
+      "request": "GET /api/recruitments",
+      "client_filter": { "university": null },
+      "expected": {
+        "count_gte": 1,
+        "description": "학교 미설정 모집글은 전체 보기에만 표시"
+      },
+      "verification": "jq '[.[] | select(.university == null)] | length'"
+    },
+    {
+      "id": "TC006",
+      "name": "KAIST (영문) 필터링",
+      "request": "GET /api/recruitments",
+      "client_filter": { "university": "KAIST" },
+      "expected": {
+        "count": 1,
+        "all_university_equals": "KAIST"
+      },
+      "verification": "jq '[.[] | select(.university == \"KAIST\")] | length'"
+    },
+    {
+      "id": "TC007",
+      "name": "홍익대학교 필터링",
+      "request": "GET /api/recruitments",
+      "client_filter": { "university": "홍익대학교" },
+      "expected": {
+        "count": 2,
+        "all_university_equals": "홍익대학교"
+      },
+      "verification": "jq '[.[] | select(.university == \"홍익대학교\")] | length'"
+    },
+    {
+      "id": "TC008",
+      "name": "중부대학교 필터링",
+      "request": "GET /api/recruitments",
+      "client_filter": { "university": "중부대학교" },
+      "expected": {
+        "count": 2,
+        "all_university_equals": "중부대학교"
+      },
+      "verification": "jq '[.[] | select(.university == \"중부대학교\")] | length'"
+    },
+    {
+      "id": "TC009",
+      "name": "전체 조회 시 모든 학교 포함",
+      "request": "GET /api/recruitments",
+      "expected": {
+        "universities_include": ["고려대학교", "연세대학교", "서울대학교", "KAIST", "홍익대학교", "중부대학교", null]
+      },
+      "verification": "jq '[.[].university] | unique'"
+    }
+  ],
+
+  "verification_commands": {
+    "run_seeder": "npx sequelize-cli db:seed --seed 20260126-school-filter-test-data.js",
+    "undo_seeder": "npx sequelize-cli db:seed:undo --seed 20260126-school-filter-test-data.js",
+    "api_test": "curl -s http://localhost:3000/api/recruitments | jq '[.[] | {title, university}]'",
+    "filter_korea": "curl -s http://localhost:3000/api/recruitments | jq '[.[] | select(.university == \"고려대학교\")]'",
+    "filter_yonsei": "curl -s http://localhost:3000/api/recruitments | jq '[.[] | select(.university == \"연세대학교\")]'",
+    "filter_snu": "curl -s http://localhost:3000/api/recruitments | jq '[.[] | select(.university == \"서울대학교\")]'",
+    "filter_null": "curl -s http://localhost:3000/api/recruitments | jq '[.[] | select(.university == null)]'",
+    "filter_hongik": "curl -s http://localhost:3000/api/recruitments | jq '[.[] | select(.university == \"홍익대학교\")]'",
+    "filter_jungbu": "curl -s http://localhost:3000/api/recruitments | jq '[.[] | select(.university == \"중부대학교\")]'",
+    "count_by_school": "curl -s http://localhost:3000/api/recruitments | jq 'group_by(.university) | map({university: .[0].university, count: length})'"
+  },
+
+  "frontend_integration": {
+    "filter_code": "posts.filter(post => post.university === userUniversity)",
+    "toggle_modes": {
+      "교내": "posts.filter(post => post.university === currentUser.university)",
+      "전체": "posts (필터 없음)"
+    },
+    "null_handling": {
+      "description": "university가 null인 모집글은 '전체' 모드에서만 표시",
+      "code": "showAll ? posts : posts.filter(post => post.university === myUniversity)"
+    }
+  },
+
+  "expected_response_sample": {
+    "recruitment_id": "uuid",
+    "title": "[고려대] AI 스터디 팀원 모집",
+    "description": "...",
+    "status": "ACTIVE",
+    "photo_url": null,
+    "views": 42,
+    "project_type": "STUDY",
+    "scrap_count": 0,
+    "applicationCount": "0",
+    "created_at": "2026-01-26T...",
+    "Hashtags": [],
+    "User": { "university": "고려대학교" },
+    "university": "고려대학교",
+    "is_scrapped": false
+  }
+}
