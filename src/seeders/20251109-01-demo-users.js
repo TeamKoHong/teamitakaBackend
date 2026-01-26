@@ -140,6 +140,17 @@ module.exports = {
         email_verified_at: now,
         created_at: now,
         updated_at: now
+      },
+      // 프로필 미입력 테스트 계정 (온보딩 테스트용)
+      {
+        user_id: uuidv4(),
+        username: 'newuser1',
+        email: 'newuser1@test.com',
+        password: passwordHash,
+        // 프로필 필드 없음: university, major, bio, skills
+        // email_verified_at 없음: 이메일 미인증 상태
+        created_at: now,
+        updated_at: now
       }
     ];
 
