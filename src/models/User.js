@@ -64,11 +64,6 @@ module.exports = (sequelize) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      firebase_phone_uid: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-        comment: 'Firebase Phone Auth UID',
-      },
       phone_number: {
         type: DataTypes.STRING(20),
         allowNull: true,
