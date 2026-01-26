@@ -91,3 +91,6 @@ supabase_backup/functions/
 *_password*
 sendgrid*
 nodemailer*
+
+# Test data JSON files
+scripts/*.json
