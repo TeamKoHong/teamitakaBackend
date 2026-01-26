@@ -25,29 +25,33 @@
 
 ## 📊 프로젝트 현황 요약
 
-> 마지막 분석: 2025-12-21 | **전체 완료율: 96%**
+> 마지막 분석: 2026-01-26 | **전체 완료율: 97%**
 
 | 항목 | 현황 | 상세 |
 |------|:----:|------|
-| **API 엔드포인트** | 84개 | 96% 구현 완료 |
-| **컨트롤러** | 22개 | 전체 구현 |
-| **서비스** | 19개 | 전체 구현 |
-| **DB 모델** | 32개 | 스펙 26개 중 19개 + 추가 13개 |
-| **마이그레이션** | 13개 | 최신 업데이트 완료 |
-| **미들웨어** | 8개 | 인증, 검증, 업로드 등 |
+| **API 엔드포인트** | 90개 | 97% 구현 완료 |
+| **컨트롤러** | 24개 | 전체 구현 |
+| **서비스** | 21개 | 전체 구현 |
+| **DB 모델** | 33개 | 스펙 26개 중 19개 + 추가 14개 |
+| **마이그레이션** | 14개 | 최신 업데이트 완료 |
+| **미들웨어** | 9개 | 인증, 검증, 업로드, UUID 등 |
 
 ### 핵심 기능 구현 현황
 
 | 기능 | 상태 | 비고 |
 |------|:----:|------|
 | 인증 (이메일/구글/휴대폰) | ✅ | JWT, Firebase, OAuth |
+| SMS 인증 | ✅ | Solapi, sessionId 기반 비동기 플로우 |
 | 프로젝트 CRUD + 킥오프 | ✅ | 모집→프로젝트 전환 |
 | 모집공고 시스템 | ✅ | 해시태그, 이미지 업로드 |
 | 지원/수락/거절 플로우 | ✅ | 포트폴리오 연결 |
 | 팀원 평가 시스템 | ✅ | 5개 평가 항목 |
 | 투표/일정 관리 | ⚠️ | 라우트 등록 필요 |
 | 알림 시스템 | ✅ | 5개 API 구현 완료 |
+| iOS 푸시 알림 | ✅ | APNs 지원, 초대/상태/리뷰 트리거 |
+| MBTI 시스템 | ✅ | 유형 저장 및 조회 |
 | 지원 취소 | ✅ | POST/DELETE 방식 지원 |
+| 프로젝트 즐겨찾기 | ✅ | 토글 API |
 
 ## ✨ 주요 기능
 
@@ -62,7 +66,25 @@
   - 자동 사용자 생성 및 JWT 토큰 발급
   - 전화번호 인증 상태 추적
 - bcrypt 기반 안전한 비밀번호 암호화
+- 비밀번호 정책: 영문 + 숫자 포함, 8자 이상
 - Rate Limiting 적용 (중복 요청 방지)
+
+### 📱 SMS 인증
+- **Solapi 기반 SMS 발송**
+- sessionId 기반 비동기 인증 플로우
+- node-cache를 활용한 인증 코드 캐싱
+- 인증 코드 유효 시간 관리
+
+### 🧠 MBTI 유형 시스템
+- MBTI 결과 저장 API (`POST /api/users/mbti`)
+- `/api/auth/me` 응답에 `mbtiType` 필드 포함
+- 팀 구성 시 성향 참고 가능
+
+### 📲 푸시 알림
+- **iOS APNs (Apple Push Notification service)** 지원
+- 초대, 상태 변경, 리뷰 알림 트리거
+- DeviceToken 모델로 토큰 관리
+- 앱 백그라운드 알림 지원
 
 ### 📊 프로젝트 관리
 - 프로젝트 생성, 조회, 수정, 삭제 (CRUD)
@@ -134,8 +156,11 @@
 - **Rate Limiting**: express-rate-limit
 - **CORS**: cors
 
-### 이메일 및 통신
-- **이메일 서비스**: SendGrid Web API (도메인 인증 완료)
+### 이메일, SMS 및 푸시 알림
+- **이메일 서비스**: Resend (도메인 인증 완료)
+- **SMS 서비스**: Solapi (국내 SMS 발송)
+- **푸시 알림**: apns2 (iOS APNs)
+- **캐시**: node-cache (인증 코드 관리)
 - **템플릿 엔진**: markdown-it, marked
 
 ### 개발 및 테스트
@@ -153,7 +178,9 @@
 - **호스팅**: Render (프로덕션)
 - **데이터베이스**: Supabase PostgreSQL (Shared Pooler)
 - **스토리지**: Supabase Storage (이미지 업로드)
-- **이메일**: SendGrid (도메인 인증 완료)
+- **이메일**: Resend (도메인 인증 완료)
+- **SMS**: Solapi (국내 SMS 발송)
+- **푸시 알림**: APNs (iOS)
 - **버전 관리**: GitHub
 
 ## 🚀 시작하기
@@ -222,9 +249,9 @@ teamitakaBackend/
 ├── src/
 │   ├── config/          # 설정 파일 (4개: database, env, ...)
 │   ├── controllers/     # 라우트 컨트롤러 (22개)
-│   ├── middlewares/     # Express 미들웨어 (8개: 인증, 검증, 업로드)
+│   ├── middlewares/     # Express 미들웨어 (9개: 인증, 검증, 업로드, UUID)
 │   ├── models/          # Sequelize 모델 (32개)
-│   ├── routes/          # API 라우트 (18개)
+│   ├── routes/          # API 라우트 (20개)
 │   ├── services/        # 비즈니스 로직 레이어 (19개)
 │   ├── utils/           # 유틸리티 함수 (7개)
 │   ├── validations/     # 요청 유효성 검증 스키마
@@ -258,6 +285,18 @@ GET    /api/auth/google                # 구글 OAuth 로그인
 POST   /api/auth/phone/verify          # Firebase 전화번호 인증
 ```
 
+#### 📱 SMS 인증 (SMS Verification)
+```
+POST   /api/sms/send                    # SMS 인증 코드 발송
+POST   /api/sms/verify                  # SMS 인증 코드 확인
+GET    /api/sms/status/:sessionId       # 인증 상태 조회
+```
+
+#### 🧠 MBTI (MBTI Type)
+```
+POST   /api/users/mbti                  # MBTI 결과 저장
+```
+
 #### 👤 사용자 (Users)
 ```
 GET    /api/users/:id                  # 사용자 프로필 조회
@@ -274,6 +313,7 @@ POST   /api/projects                   # 새 프로젝트 생성
 POST   /api/projects/from-recruitment/:id  # 모집글에서 프로젝트 킥오프
 PUT    /api/projects/:id               # 프로젝트 수정
 DELETE /api/projects/:id               # 프로젝트 삭제
+POST   /api/projects/:id/favorite      # 프로젝트 즐겨찾기 토글
 ```
 
 **`/api/projects/mine` 쿼리 파라미터:**
@@ -728,10 +768,19 @@ JWT_EXPIRES_IN=7d
 JWT_REFRESH_SECRET=리프레시_시크릿
 JWT_REFRESH_EXPIRES_IN=30d
 
-# 이메일 서비스 (SendGrid Web API)
-EMAIL_SERVICE=sendgrid
+# 이메일 서비스 (Resend)
+RESEND_API_KEY=re_XXXXXXXXXXXX        # Resend API 키
 EMAIL_FROM=noreply@teamitaka.com      # 도메인 인증 필수
-SENDGRID_API_KEY=SendGrid_API_키      # Full Access 권한 필요
+
+# SMS 서비스 (Solapi)
+SOLAPI_API_KEY=Solapi_API_키
+SOLAPI_API_SECRET=Solapi_시크릿
+SOLAPI_SENDER=발신번호                 # 등록된 발신번호
+
+# iOS 푸시 알림 (APNs)
+APNS_KEY_ID=키ID
+APNS_TEAM_ID=팀ID
+APNS_BUNDLE_ID=com.teamitaka.app
 
 # 구글 OAuth
 GOOGLE_CLIENT_ID=구글_클라이언트_ID
@@ -858,8 +907,8 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 항목 | 상태 |
 |------|------|
-| **버전** | 1.6.0 |
-| **마지막 업데이트** | 2025-12-28 |
+| **버전** | 1.7.0 |
+| **마지막 업데이트** | 2026-01-26 |
 | **유지보수** | 활발히 진행 중 |
 | **문서화** | 완료 |
 | **테스트 커버리지** | 진행 중 |
@@ -867,14 +916,14 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 ## 📊 개발 현황 (Development Status)
 
-> 마지막 분석: 2025-12-20 | 전체 완료율: **94%**
+> 마지막 분석: 2026-01-26 | 전체 완료율: **97%**
 
 ### 🎯 전체 개발 진행률
 
 | 구분 | 완료 | 진행중 | 미구현 | 완료율 |
 |------|:----:|:------:|:------:|:------:|
-| API 엔드포인트 | 76개 | 2개 | 4개 | 94% |
-| 라우트 파일 | 18개 | 2개 | 0개 | 90% |
+| API 엔드포인트 | 90개 | 2개 | 2개 | 97% |
+| 라우트 파일 | 20개 | 2개 | 0개 | 91% |
 | 컨트롤러 | 22개 | 0개 | 0개 | 100% |
 | 서비스 | 19개 | 0개 | 0개 | 100% |
 | 모델 | 32개 | 0개 | 0개 | 100% |
@@ -884,10 +933,13 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 | 기능 | 상태 | 엔드포인트 | 비고 |
 |------|:----:|:----------:|------|
 | 🔐 인증 (Auth) | ✅ 완료 | 8개 | JWT, OAuth, Firebase Phone |
-| 📧 이메일/SMS 인증 | ✅ 완료 | 4개 | SendGrid, Rate Limiting |
+| 📱 SMS 인증 | ✅ 완료 | 3개 | Solapi, sessionId 기반 |
+| 📧 이메일 인증 | ✅ 완료 | 2개 | Resend, Rate Limiting |
+| 🧠 MBTI | ✅ 완료 | 1개 | 유형 저장/조회 |
+| 📲 푸시 알림 | ✅ 완료 | - | iOS APNs, 트리거 기반 |
 | 📢 모집공고 | ✅ 완료 | 8개 | CRUD, 스크랩, 해시태그, 조회수 |
 | 📝 지원 관리 | ✅ 완료 | 4개 | 지원, 승인/거절, 포트폴리오 |
-| 📊 프로젝트 | ✅ 완료 | 10개 | CRUD, 킥오프, 팀원 관리 |
+| 📊 프로젝트 | ✅ 완료 | 11개 | CRUD, 킥오프, 팀원 관리, 즐겨찾기 |
 | ✅ 할 일 (Todo) | ✅ 완료 | 4개 | 프로젝트별 할 일 관리 |
 | 📅 타임라인 | ✅ 완료 | 4개 | 프로젝트 타임라인 |
 | 👥 팀원 관리 | ✅ 완료 | 2개 | 역할 조회/수정 |
@@ -922,11 +974,11 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 
 | 레이어 | 파일 수 | 구현 현황 |
 |--------|:-------:|----------|
-| Routes | 18개 | 16개 등록, 2개 미등록 (vote, schedule) |
-| Controllers | 22개 | 전체 구현 완료 |
-| Services | 19개 | 전체 구현 완료 |
-| Models | 32개 | 전체 구현 완료 |
-| Middlewares | 8개 | auth, admin, optional, error, validation, upload, rateLimit 등 |
+| Routes | 20개 | 18개 등록, 2개 미등록 (vote, schedule) |
+| Controllers | 24개 | 전체 구현 완료 |
+| Services | 21개 | 전체 구현 완료 |
+| Models | 33개 | 전체 구현 완료 (DeviceToken 추가) |
+| Middlewares | 9개 | auth, admin, optional, error, validation, upload, rateLimit, uuidValidation 등 |
 
 ### 📋 상태 범례
 
@@ -941,6 +993,31 @@ SUPABASE_SERVICE_KEY=서비스_키          # (선택사항)
 | 🟢 낮음 | 중기 해결 (1주) |
 
 ## 🔄 변경 이력
+
+### v1.7.0 (2026-01-26)
+- 📱 **SMS 인증 시스템 구현**
+  - Solapi 통합으로 SMS 발송
+  - sessionId 기반 비동기 인증 플로우
+  - node-cache 기반 인증 코드 관리
+  - `POST /api/sms/send`, `POST /api/sms/verify` API 추가
+- 🧠 **MBTI 유형 시스템**
+  - MBTI 결과 저장 API 추가 (`POST /api/users/mbti`)
+  - `/api/auth/me` 응답에 `mbtiType` 필드 추가
+- 📧 **이메일 서비스 변경**
+  - SendGrid → Resend로 마이그레이션
+  - TimiTaka 브랜딩 이메일 템플릿
+  - 마스코트 캐릭터 이미지 추가
+- 📲 **iOS 푸시 알림**
+  - APNs (Apple Push Notification service) 지원
+  - 초대/상태변경/리뷰 푸시 트리거
+  - DeviceToken 모델로 토큰 관리
+- ⭐ **프로젝트 즐겨찾기** API 추가 (`POST /api/projects/:id/favorite`)
+- 🔐 **비밀번호 검증 규칙 간소화**
+  - 기존: 대문자, 소문자, 숫자, 특수문자 각각 필수, 8~15자
+  - 변경: 영문 + 숫자 포함, 8자 이상이면 모든 문자 허용
+- 🛡️ **UUID 검증 미들웨어** 추가 (API 라우트 보안 강화)
+- 🐛 **IPv6 연결 이슈 수정** (Render IPv4 강제)
+- 📝 **Swagger 문서와 검증 스키마 동기화**
 
 ### v1.6.0 (2025-12-28)
 - ✨ **회의록 API 전체 구현** (5개 엔드포인트)
