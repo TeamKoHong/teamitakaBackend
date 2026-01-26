@@ -94,3 +94,10 @@ nodemailer*
 
 # Test data JSON files
 scripts/*.json
+
+# Test scripts
+scripts/verify-school-filter.sh
+
+# Test seeders
+src/seeders/20260123-08-fix-project-members-and-evaluation.js
+src/seeders/20260126-*.js
