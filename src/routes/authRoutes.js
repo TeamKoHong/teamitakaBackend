@@ -13,7 +13,5 @@ router.get("/me", authMiddleware, authController.getCurrentUser);
 router.post("/validate-password", authController.validatePassword);
 // ✅ Google 소셜 로그인(ID 토큰)
 router.post("/google/id-token", authController.googleSignInByIdToken);
-// ✅ Firebase 전화번호 인증
-router.post("/phone/verify", authController.verifyPhone);
 
 module.exports = router;
