@@ -113,6 +113,33 @@ module.exports = (sequelize) => {
         allowNull: true,
         comment: 'MBTI 유형 결과 (예: LION, 활동티미)',
       },
+      name: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        comment: '사용자 실명',
+      },
+      birth_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+        comment: '생년월일 (YYYY-MM-DD)',
+      },
+      gender: {
+        type: DataTypes.STRING(10),
+        allowNull: true,
+        comment: '성별 (male/female)',
+      },
+      marketing_agreed: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        comment: '마케팅 수신 동의',
+      },
+      third_party_agreed: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        comment: '제3자 제공 동의',
+      },
     },
     {
       tableName: "users",
