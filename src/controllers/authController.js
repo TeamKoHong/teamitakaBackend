@@ -32,7 +32,7 @@ exports.register = async (req, res) => {
 
     // 비밀번호 유효성 검사 추가
     const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
+    if (!passwordValidation.valid) {
       return res.status(400).json({ error: passwordValidation.message });
     }
 
