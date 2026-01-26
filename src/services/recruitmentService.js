@@ -1,4 +1,4 @@
-const { Recruitment, Project, Hashtag, Application, Scrap, sequelize } = require("../models");
+const { Recruitment, Project, Hashtag, Application, Scrap, User, sequelize } = require("../models");
 const { Op } = require("sequelize");
 
 // 🔥 1. 전체 모집공고 가져오기 (로그인 시 is_scrapped 포함)
@@ -22,11 +22,17 @@ const getAllRecruitmentsWithApplicationCount = async (user_id = null) => {
         "applicationCount",
       ],
     ],
-    include: [{
-      model: Hashtag,
-      attributes: ["name"],
-      through: { attributes: [] }
-    }],
+    include: [
+      {
+        model: Hashtag,
+        attributes: ["name"],
+        through: { attributes: [] }
+      },
+      {
+        model: User,
+        attributes: ["university"]
+      }
+    ],
     order: [
       [sequelize.literal('"applicationCount"'), "DESC"],
       ["created_at", "DESC"]
@@ -43,11 +49,15 @@ const getAllRecruitmentsWithApplicationCount = async (user_id = null) => {
     userScraps = scraps.map(s => s.recruitment_id);
   }
 
-  // is_scrapped 추가하여 반환
-  return recruitments.map(r => ({
-    ...(r.toJSON ? r.toJSON() : r),
-    is_scrapped: user_id ? userScraps.includes(r.recruitment_id) : false
-  }));
+  // is_scrapped, university 추가하여 반환
+  return recruitments.map(r => {
+    const json = r.toJSON ? r.toJSON() : r;
+    return {
+      ...json,
+      university: json.User?.university || null,
+      is_scrapped: user_id ? userScraps.includes(r.recruitment_id) : false
+    };
+  });
 };
 
 // 📋 2. 내가 작성한 모집공고 목록 조회
