@@ -7,79 +7,144 @@ const { generateUniqueUsername } = require("../utils/usernameGenerator");
 const { v4: uuidv4 } = require("uuid"); // ✅ UUID 생성 모듈 추가
 const { jwtSecret } = require("../config/authConfig");
 const { verifyGoogleIdToken } = require("../utils/googleTokenVerifier");
+const { parseResidentNumber, formatPhoneNumber } = require("../utils/registrationUtils");
 
 exports.register = async (req, res) => {
   try {
-    const { email, password, university, department, student_id, isEmailVerified } = req.body;
+    const {
+      // 이메일 (둘 다 허용)
+      email,
+      schoolEmail,
+      // 필수 필드
+      password,
+      // 새로운 필드
+      name,
+      phoneNumber,
+      residentNumber,
+      marketingAgreed,
+      thirdPartyAgreed,
+      // 인증 상태
+      isSmsVerified,
+      isEmailVerified,
+      // 기존 필드 (호환성 유지)
+      university,
+      department,
+      student_id,
+    } = req.body;
 
-    // 필수 값 검증 (username 제거, 프론트엔드 필드 추가)
-    if (!email || !password) {
+    // email 또는 schoolEmail 둘 다 허용
+    const userEmail = email || schoolEmail;
+
+    // 필수 값 검증
+    if (!userEmail || !password) {
       return res.status(400).json({ error: "❌ 이메일과 비밀번호를 입력해주세요." });
     }
 
-    // 이메일 인증 상태 검증
-    if (!isEmailVerified) {
-      return res.status(400).json({ error: "❌ 이메일 인증을 완료해주세요." });
+    // SMS 인증 상태 검증 (SMS 인증 우선)
+    if (!isSmsVerified && !isEmailVerified) {
+      return res.status(400).json({ error: "❌ SMS 인증 또는 이메일 인증을 완료해주세요." });
     }
 
-    console.log(`📝 Registration request for email: ${email}`);
-    console.log(`📊 Additional data - University: ${university}, Department: ${department}, Student ID: ${student_id}`);
-    console.log(`📧 Email verification status: ${isEmailVerified}`);
+    console.log(`📝 Registration request for email: ${userEmail}`);
+    console.log(`📊 Name: ${name}, Phone: ${phoneNumber}`);
+    console.log(`📱 SMS verified: ${isSmsVerified}, Email verified: ${isEmailVerified}`);
+
+    // 주민번호 파싱 (생년월일 + 성별)
+    let birthDate = null;
+    let gender = null;
+    if (residentNumber) {
+      const parsed = parseResidentNumber(residentNumber);
+      birthDate = parsed.birthDate;
+      gender = parsed.gender;
+      console.log(`🎂 Parsed birth_date: ${birthDate}, gender: ${gender}`);
+    }
+
+    // 전화번호 정규화
+    const formattedPhone = formatPhoneNumber(phoneNumber);
+    if (phoneNumber && !formattedPhone) {
+      return res.status(400).json({ error: "❌ 올바른 전화번호 형식이 아닙니다." });
+    }
+    console.log(`📞 Formatted phone: ${formattedPhone}`);
 
     // 자동 username 생성
-    const username = await generateUniqueUsername(email);
-    console.log(`✅ Generated username: ${username} for email: ${email}`);
+    const username = await generateUniqueUsername(userEmail);
+    console.log(`✅ Generated username: ${username} for email: ${userEmail}`);
 
-    // 비밀번호 유효성 검사 추가
+    // 비밀번호 유효성 검사
     const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
+    if (!passwordValidation.valid) {
       return res.status(400).json({ error: passwordValidation.message });
     }
 
     // 중복 이메일 체크
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await User.findOne({ where: { email: userEmail } });
     if (existingUser) {
       return res.status(400).json({ error: "❌ 이미 존재하는 이메일입니다." });
+    }
+
+    // 중복 전화번호 체크 (전화번호가 있는 경우)
+    if (formattedPhone) {
+      const existingPhone = await User.findOne({ where: { phone_number: formattedPhone } });
+      if (existingPhone) {
+        return res.status(400).json({ error: "❌ 이미 등록된 전화번호입니다." });
+      }
     }
 
     // 비밀번호 해싱
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 새 유저 생성 (uuid 추가)
+    // 새 유저 생성
     const newUser = await User.create({
       uuid: uuidv4(),
       username,
-      email,
+      email: userEmail,
       password: hashedPassword,
       role: "MEMBER",
+      // 새로운 필드
+      name: name || null,
+      phone_number: formattedPhone,
+      phone_verified: !!isSmsVerified,
+      phone_verified_at: isSmsVerified ? new Date() : null,
+      birth_date: birthDate,
+      gender: gender,
+      marketing_agreed: !!marketingAgreed,
+      third_party_agreed: !!thirdPartyAgreed,
+      // 기존 필드
+      university: university || null,
+      department: department || null,
+      email_verified_at: isEmailVerified ? new Date() : null,
     });
 
-    // 4️⃣ JWT 토큰 발급 (자동 로그인용)
+    // JWT 토큰 발급 (자동 로그인용)
     const token = jwt.sign(
-      { 
-        userId: newUser.user_id, 
-        email: newUser.email, 
-        role: newUser.role || 'user' 
+      {
+        userId: newUser.user_id,
+        email: newUser.email,
+        role: newUser.role || 'user'
       },
       jwtSecret,
       { expiresIn: "1d" }
     );
 
-    // 5️⃣ 보안 강화를 위해 HttpOnly 쿠키 옵션 추가
+    // 보안 강화를 위해 HttpOnly 쿠키 옵션 추가
     res.cookie("token", token, {
-      httpOnly: true, 
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
     });
 
     return res.status(201).json({
       message: "✅ 회원가입 성공!",
-      token: token, // JWT 토큰 추가
+      token: token,
       user: {
         user_id: newUser.user_id,
         uuid: newUser.uuid,
         username: newUser.username,
         email: newUser.email,
+        name: newUser.name,
+        birth_date: newUser.birth_date,
+        gender: newUser.gender,
+        phone_number: newUser.phone_number,
         createdAt: newUser.createdAt,
       },
       info: {
@@ -87,6 +152,8 @@ exports.register = async (req, res) => {
         university: university || null,
         department: department || null,
         student_id: student_id || null,
+        smsVerified: !!isSmsVerified,
+        emailVerified: !!isEmailVerified,
       },
     });
   } catch (error) {
@@ -228,6 +295,11 @@ exports.getCurrentUser = async (req, res) => {
         'username',
         'email',
         'role',
+        'name',
+        'birth_date',
+        'gender',
+        'phone_number',
+        'phone_verified',
         'university',
         'major',
         'avatar',
@@ -240,6 +312,9 @@ exports.getCurrentUser = async (req, res) => {
         'enrollment_status',
         'team_experience',
         'keywords',
+        'mbti_type',
+        'marketing_agreed',
+        'third_party_agreed',
         'created_at',
         'updated_at'
       ]
@@ -259,6 +334,11 @@ exports.getCurrentUser = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        name: user.name,
+        birthDate: user.birth_date,
+        gender: user.gender,
+        phoneNumber: user.phone_number,
+        phoneVerified: user.phone_verified,
         university: user.university,
         major: user.major,
         avatar: user.avatar,
@@ -272,6 +352,9 @@ exports.getCurrentUser = async (req, res) => {
         enrollmentStatus: user.enrollment_status,
         teamExperience: user.team_experience,
         keywords: user.keywords || [],
+        mbtiType: user.mbti_type,
+        marketingAgreed: user.marketing_agreed,
+        thirdPartyAgreed: user.third_party_agreed,
         createdAt: user.created_at,
         updatedAt: user.updated_at
       }
@@ -286,46 +369,3 @@ exports.getCurrentUser = async (req, res) => {
   }
 };
 
-// POST /api/auth/phone/verify - Firebase 전화번호 인증
-exports.verifyPhone = async (req, res) => {
-  try {
-    const { idToken } = req.body;
-
-    // 1️⃣ 필수 값 검증
-    if (!idToken) {
-      return res.status(400).json({
-        success: false,
-        error: "❌ Firebase ID Token이 필요합니다."
-      });
-    }
-
-    console.log("📱 전화번호 인증 요청 수신");
-
-    // 2️⃣ Phone Auth Service를 통한 인증 처리
-    const { verifyPhoneAndAuthenticate } = require("../services/phoneAuthService");
-    const result = await verifyPhoneAndAuthenticate(idToken);
-
-    // 3️⃣ JWT 토큰을 HttpOnly 쿠키로 설정
-    res.cookie("token", result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-    });
-
-    // 4️⃣ 성공 응답
-    return res.status(200).json({
-      success: true,
-      message: result.isNewUser ? "✅ 회원가입 및 로그인 성공!" : "✅ 로그인 성공!",
-      token: result.token,
-      user: result.user,
-      isNewUser: result.isNewUser
-    });
-  } catch (error) {
-    console.error("🚨 전화번호 인증 오류:", error);
-    return res.status(401).json({
-      success: false,
-      error: "전화번호 인증에 실패했습니다.",
-      details: error.message
-    });
-  }
-};

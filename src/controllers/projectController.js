@@ -1,4 +1,5 @@
 const { Project, Recruitment, User, Todo, Timeline, ProjectMembers, Application, sequelize } = require("../models");
+const projectService = require("../services/projectService");
 
 const createProject = async (req, res) => {
   try {
@@ -95,11 +96,11 @@ const updateProject = async (project_id, updateData) => {
   return project;
 };
 
-// getMyProjects - 내 프로젝트 조회 (status, limit, offset, evaluation_status 지원)
+// getMyProjects - 내 프로젝트 조회 (status, limit, offset, evaluation_status, isFavorite 지원)
 const getMyProjects = async (req, res) => {
   try {
     const user_id = req.user.userId; // authMiddleware에서 설정된 사용자 ID (JWT 페이로드의 userId 필드)
-    const { status, evaluation_status, limit = 10, offset = 0 } = req.query;
+    const { status, evaluation_status, isFavorite, limit = 10, offset = 0 } = req.query;
     const { sequelize } = require("../models");
     const { QueryTypes } = require("sequelize");
 
@@ -141,7 +142,7 @@ const getMyProjects = async (req, res) => {
 
     const projectIds = myProjects.map(p => p.project_id);
 
-    // 2. 프로젝트 기본 정보 + 팀원 수 + 평가 정보 + 멤버 목록 + 최근 피드 시간 조회
+    // 2. 프로젝트 기본 정보 + 팀원 수 + 평가 정보 + 멤버 목록 + 최근 피드 시간 + 즐겨찾기 조회
     const query = `
       WITH member_counts AS (
         SELECT
@@ -180,6 +181,11 @@ const getMyProjects = async (req, res) => {
           MAX("createdAt") as last_feed_at
         FROM project_posts
         GROUP BY project_id
+      ),
+      user_favorites AS (
+        SELECT project_id
+        FROM scraps
+        WHERE user_id = :user_id AND project_id IS NOT NULL
       )
       SELECT
         p.project_id,
@@ -191,12 +197,19 @@ const getMyProjects = async (req, res) => {
         p.created_at,
         p.updated_at,
         p.meeting_time,
+        p.favorite_count,
         (SELECT recruitment_id FROM recruitments WHERE project_id = p.project_id ORDER BY created_at DESC LIMIT 1) as recruitment_id,
         (SELECT COUNT(*) FROM recruitments WHERE project_id = p.project_id) as recruitment_count,
         COALESCE(mc.member_count, 0) as member_count,
         COALESCE(urc.completed_reviews, 0) as completed_reviews,
         COALESCE(pmd.members, '[]'::json) as members,
         lft.last_feed_at,
+        CASE WHEN uf.project_id IS NOT NULL THEN true ELSE false END as is_favorite,
+        CASE
+          WHEN p.end_date IS NOT NULL AND p.status = 'COMPLETED' THEN
+            EXTRACT(DAY FROM NOW() - p.end_date)::INTEGER
+          ELSE NULL
+        END as d_day,
         CASE
           WHEN COALESCE(mc.member_count, 0) <= 1 THEN 'NOT_REQUIRED'
           WHEN COALESCE(urc.completed_reviews, 0) >= (COALESCE(mc.member_count, 0) - 1) THEN 'COMPLETED'
@@ -207,6 +220,7 @@ const getMyProjects = async (req, res) => {
       LEFT JOIN user_review_counts urc ON p.project_id = urc.project_id
       LEFT JOIN project_members_details pmd ON p.project_id = pmd.project_id
       LEFT JOIN last_feed_times lft ON p.project_id = lft.project_id
+      LEFT JOIN user_favorites uf ON p.project_id = uf.project_id
       WHERE p.project_id IN (:projectIds) ${statusFilter}
       ORDER BY p.created_at DESC
     `;
@@ -219,15 +233,23 @@ const getMyProjects = async (req, res) => {
       type: QueryTypes.SELECT
     });
 
-    // 3. evaluation_status 필터링 (선택)
+    // 3. evaluation_status 및 isFavorite 필터링 (선택)
     let filteredProjects = allProjects;
+
+    // evaluation_status 필터
     if (evaluation_status) {
       const validStatuses = ['COMPLETED', 'PENDING', 'NOT_REQUIRED'];
       if (validStatuses.includes(evaluation_status.toUpperCase())) {
-        filteredProjects = allProjects.filter(
+        filteredProjects = filteredProjects.filter(
           p => p.evaluation_status === evaluation_status.toUpperCase()
         );
       }
+    }
+
+    // isFavorite 필터
+    if (isFavorite !== undefined) {
+      const isFav = isFavorite === 'true' || isFavorite === true;
+      filteredProjects = filteredProjects.filter(p => p.is_favorite === isFav);
     }
 
     // 4. 페이지네이션 적용
@@ -245,6 +267,7 @@ const getMyProjects = async (req, res) => {
       status: p.status,
       start_date: p.start_date,
       end_date: p.end_date,
+      d_day: p.d_day !== null ? parseInt(p.d_day) : null,
       created_at: p.created_at,
       updated_at: p.updated_at,
       recruitment_id: p.recruitment_id || null,
@@ -252,6 +275,9 @@ const getMyProjects = async (req, res) => {
       evaluation_status: p.evaluation_status,
       meeting_: p.meeting_time || null,
       members: typeof p.members === 'string' ? JSON.parse(p.members) : (p.members || []),
+      // 즐겨찾기 정보
+      is_favorite: p.is_favorite || false,
+      favorite_count: parseInt(p.favorite_count) || 0,
       // 추가 정보 (디버깅용, 프론트엔드에서 활용 가능)
       member_count: parseInt(p.member_count) || 0,
       completed_reviews: parseInt(p.completed_reviews) || 0,
@@ -450,6 +476,23 @@ const getEvalTargets = async (req, res) => {
   }
 };
 
+// toggleProjectFavorite - 프로젝트 즐겨찾기 토글
+const toggleProjectFavorite = async (req, res) => {
+  try {
+    const user_id = req.user.userId;
+    const { project_id } = req.params;
+
+    const result = await projectService.toggleProjectFavorite(user_id, project_id);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("🔥 toggleProjectFavorite Error:", err.message);
+    if (err.message === "프로젝트를 찾을 수 없습니다.") {
+      return res.status(404).json({ error: err.message });
+    }
+    return res.status(500).json({ error: "즐겨찾기 처리 실패", message: err.message });
+  }
+};
+
 module.exports = {
   createProject,
   getAllProjects,
@@ -459,4 +502,5 @@ module.exports = {
   getMyProjects,
   createProjectFromRecruitment,
   getEvalTargets,
+  toggleProjectFavorite,
 };
