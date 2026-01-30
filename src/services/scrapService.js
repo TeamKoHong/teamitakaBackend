@@ -1,4 +1,4 @@
-const { Scrap, Recruitment, sequelize } = require("../models");
+const { Scrap, Recruitment, User, sequelize } = require("../models");
 const { Op } = require("sequelize");
 
 const getUserScraps = async (user_id) => {
@@ -24,7 +24,11 @@ const getUserScraps = async (user_id) => {
           )`),
           'scrap_count'
         ]
-      ]
+      ],
+      include: [{
+        model: User,
+        attributes: ['university']
+      }]
     }],
     order: [['createdAt', 'DESC']],
   });
@@ -33,10 +37,12 @@ const getUserScraps = async (user_id) => {
   return scraps.map(scrap => {
     const plain = scrap.get({ plain: true });
     const recruitment = plain.Recruitment || {};
+    const { User: recruitmentUser, ...recruitmentData } = recruitment;
     return {
       scrap_id: plain.scrap_id,
       recruitment_id: plain.recruitment_id,
-      ...recruitment,
+      ...recruitmentData,
+      university: recruitmentUser?.university || null,
     };
   });
 };
