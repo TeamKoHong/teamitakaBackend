@@ -28,6 +28,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const verificationRoutes = require("./routes/verificationRoutes");
 const smsRoutes = require("./routes/smsRoutes");
 const findIdRoutes = require("./routes/findIdRoutes");
+const typeTestRoutes = require("./routes/typeTestRoutes");
 
 // ✅ [추가됨] 일정 라우트
 const scheduleRoutes = require("./routes/scheduleRoutes");
@@ -97,6 +98,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/auth", verificationRoutes);
 app.use("/api/auth/sms", smsRoutes);
 app.use("/api/auth/find-id", findIdRoutes);
+app.use("/api/type-test", typeTestRoutes);
 
 // ✅ [추가됨] 일정 API 연결
 // 프론트엔드 Calendar.jsx -> /api/schedule 사용
