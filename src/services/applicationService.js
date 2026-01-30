@@ -255,7 +255,7 @@ const getMyApplications = async (user_id) => {
     include: [
       {
         model: Recruitment,
-        attributes: ["recruitment_id", "title", "description", "status", "photo_url", "project_type"],
+        attributes: ["recruitment_id", "title", "description", "status", "photo_url", "project_type", "recruitment_start", "recruitment_end"],
       },
       {
         model: ApplicationPortfolio,
