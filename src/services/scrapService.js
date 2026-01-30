@@ -2,7 +2,7 @@ const { Scrap, Recruitment, sequelize } = require("../models");
 const { Op } = require("sequelize");
 
 const getUserScraps = async (user_id) => {
-  return await Scrap.findAll({
+  const scraps = await Scrap.findAll({
     where: { user_id },
     include: [{
       model: Recruitment,
@@ -16,6 +16,7 @@ const getUserScraps = async (user_id) => {
         ['recruitment_start', 'start_date'],
         ['recruitment_end', 'deadline'],
         'project_type',
+        'created_at',
         [
           sequelize.literal(`(
             SELECT COUNT(*) FROM scraps
@@ -26,6 +27,17 @@ const getUserScraps = async (user_id) => {
       ]
     }],
     order: [['createdAt', 'DESC']],
+  });
+
+  // 응답 평탄화: Recruitment 데이터를 최상위로 병합
+  return scraps.map(scrap => {
+    const plain = scrap.get({ plain: true });
+    const recruitment = plain.Recruitment || {};
+    return {
+      scrap_id: plain.scrap_id,
+      recruitment_id: plain.recruitment_id,
+      ...recruitment,
+    };
   });
 };
 
