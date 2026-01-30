@@ -13,6 +13,9 @@ const getUserScraps = async (user_id) => {
         'description',
         'status',
         'photo_url',
+        ['recruitment_start', 'start_date'],
+        ['recruitment_end', 'deadline'],
+        'project_type',
         [
           sequelize.literal(`(
             SELECT COUNT(*) FROM scraps
