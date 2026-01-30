@@ -25,11 +25,15 @@ const createRecruitmentSchema = Joi.object({
       'number.positive': '최대 지원자 수는 양수여야 합니다.'
     }),
   recruitment_start: Joi.date()
+    .required()
     .messages({
+      'any.required': '모집 시작일을 입력해주세요.',
       'date.base': '올바른 날짜 형식이 아닙니다.'
     }),
   recruitment_end: Joi.date()
+    .required()
     .messages({
+      'any.required': '모집 마감일을 입력해주세요.',
       'date.base': '올바른 날짜 형식이 아닙니다.'
     }),
   project_type: Joi.string()
