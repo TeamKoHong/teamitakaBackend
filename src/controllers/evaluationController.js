@@ -97,6 +97,9 @@ function mapToFrontendFields(backendData) {
   if (frontendData.reviewee_username) {
     frontendData.target_member_name = frontendData.reviewee_username;
   }
+  if (frontendData.reviewee_task) {
+    frontendData.target_member_task = frontendData.reviewee_task;
+  }
   if (frontendData.created_at) {
     frontendData.evaluated_at = frontendData.created_at;
   }
