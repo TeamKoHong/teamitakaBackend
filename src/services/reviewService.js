@@ -110,6 +110,7 @@ class ReviewService {
           r.review_id,
           r.reviewee_id,
           u.username as reviewee_username,
+          pm.task as reviewee_task,
           r.ability,
           r.effort,
           r.commitment,
@@ -120,6 +121,7 @@ class ReviewService {
           r.created_at
         FROM reviews r
         JOIN users u ON r.reviewee_id = u.user_id
+        LEFT JOIN project_members pm ON pm.project_id = r.project_id AND pm.user_id = r.reviewee_id
         WHERE r.project_id = :project_id AND r.reviewer_id = :reviewer_id
         ORDER BY r.created_at DESC`,
         {
