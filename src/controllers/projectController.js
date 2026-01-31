@@ -6,6 +6,11 @@ const createProject = async (req, res) => {
     // JWT에서 user_id 가져오기 (authMiddleware가 설정)
     const user_id = req.user.userId;
 
+    // 프로젝트 제목 15자 제한
+    if (req.body.title && req.body.title.length > 15) {
+      return res.status(400).json({ error: "프로젝트 제목은 15자 이내여야 합니다." });
+    }
+
     // 프로젝트 생성 (recruitment_id 불필요)
     const newProject = await Project.create({
       ...req.body,
@@ -86,6 +91,11 @@ const getCompletedProjects = async (req, res) => {
 const updateProject = async (project_id, updateData) => {
   const project = await Project.findByPk(project_id);
   if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
+
+  // 프로젝트 제목 15자 제한
+  if (updateData.title && updateData.title.length > 15) {
+    throw new Error("프로젝트 제목은 15자 이내여야 합니다.");
+  }
 
   // status가 "COMPLETED"일 경우, end_date가 없으면 현재 날짜로 설정
   if (updateData.status === "COMPLETED" && !project.end_date) {
@@ -317,6 +327,11 @@ const createProjectFromRecruitment = async (req, res) => {
     if (!title) {
       await transaction.rollback();
       return res.status(400).json({ error: "프로젝트 제목은 필수입니다." });
+    }
+
+    if (title.length > 15) {
+      await transaction.rollback();
+      return res.status(400).json({ error: "프로젝트 제목은 15자 이내여야 합니다." });
     }
 
     if (!memberUserIds || !Array.isArray(memberUserIds) || memberUserIds.length === 0) {
