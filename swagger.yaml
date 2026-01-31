@@ -2633,6 +2633,9 @@ paths:
     post:
       tags: [Project]
       summary: 프로젝트 생성
+      description: |
+        새 프로젝트를 생성합니다.
+        - 프로젝트 제목은 **15자 이내**로 제한됩니다.
       security:
         - bearerAuth: []
       requestBody:
@@ -2641,10 +2644,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [introduction]
+              required: [title]
               properties:
-                introduction:
+                title:
                   type: string
+                  maxLength: 15
+                  description: 프로젝트 제목 (최대 15자)
                 description:
                   type: string
                 start_date:
@@ -2875,7 +2880,10 @@ paths:
     post:
       tags: [Project]
       summary: 모집글에서 프로젝트 생성 (킥오프)
-      description: 모집글을 프로젝트로 전환합니다. 프로젝트 제목, 다짐, 진행기간, 선택된 멤버를 입력받습니다.
+      description: |
+        모집글을 프로젝트로 전환합니다.
+        프로젝트 제목, 다짐, 진행기간, 선택된 멤버를 입력받습니다.
+        - 프로젝트 제목은 **15자 이내**로 제한됩니다.
       security:
         - bearerAuth: []
       parameters:
@@ -2897,8 +2905,9 @@ paths:
               properties:
                 title:
                   type: string
-                  description: 프로젝트 제목 (모집글 제목과 별도)
-                  example: "팀이타카 MVP 개발"
+                  maxLength: 15
+                  description: 프로젝트 제목 (최대 15자)
+                  example: "팀이타카 MVP"
                 resolution:
                   type: string
                   description: 다짐 내용
@@ -6792,8 +6801,71 @@ paths:
                         type: array
                         items:
                           type: object
+                          properties:
+                            review_id:
+                              type: string
+                              format: uuid
+                            target_member_id:
+                              type: string
+                              format: uuid
+                            target_member_name:
+                              type: string
+                              description: 평가 대상자 이름
+                            target_member_task:
+                              type: string
+                              nullable: true
+                              description: 평가 대상자의 담당 업무
+                            participation:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            communication:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            responsibility:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            cooperation:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            ability:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            overall:
+                              type: integer
+                              minimum: 1
+                              maximum: 5
+                            comment:
+                              type: string
+                            evaluated_at:
+                              type: string
+                              format: date-time
                       total:
                         type: integer
+              examples:
+                success:
+                  summary: 평가 조회 성공
+                  value:
+                    success: true
+                    data:
+                      given_evaluations:
+                        - review_id: "550e8400-e29b-41d4-a716-446655440000"
+                          target_member_id: "550e8400-e29b-41d4-a716-446655440001"
+                          target_member_name: "홍길동"
+                          target_member_task: "백엔드 개발"
+                          participation: 5
+                          communication: 4
+                          responsibility: 5
+                          cooperation: 4
+                          ability: 5
+                          overall: 5
+                          comment: "열심히 참여했습니다"
+                          evaluated_at: "2024-01-15T10:30:00Z"
+                      total: 1
         '400':
           description: projectId 파라미터 누락
         '401':
