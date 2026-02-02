@@ -62,12 +62,32 @@ exports.sendSmsVerification = async (req, res) => {
     // 5. 캐시에 저장 (sessionId 기반)
     smsService.saveVerification(sessionId, normalizedPhone, verificationCode);
 
-    // 6. 비동기 SMS 발송 (백그라운드에서 처리)
-    smsService.sendSms(normalizedPhone, verificationCode)
-      .then(() => console.log(`[SMS] 발송 완료: ${normalizedPhone}`))
-      .catch(err => console.error(`[SMS] 발송 실패: ${normalizedPhone}`, err.message));
+    // 6. SMS 발송 (결과를 기다림)
+    try {
+      await smsService.sendSms(normalizedPhone, verificationCode);
+      console.log(`[SMS] 발송 완료: ${normalizedPhone}`);
+    } catch (smsError) {
+      console.error(`[SMS] 발송 실패: ${normalizedPhone}`, smsError.message);
 
-    // 7. 즉시 응답 반환
+      // 서비스 이용 불가 (잔액 부족 등)
+      if (smsError.errorCode === 'SMS_SERVICE_UNAVAILABLE') {
+        return res.status(503).json({
+          success: false,
+          errorCode: 'SMS_SERVICE_UNAVAILABLE',
+          message: '인증 서비스가 일시적으로 이용 불가합니다. 잠시 후 다시 시도해주세요.',
+          contact: 'teamitaka.official@gmail.com'
+        });
+      }
+
+      // 기타 발송 실패
+      return res.status(500).json({
+        success: false,
+        errorCode: 'SMS_SEND_FAILED',
+        message: '인증번호 발송에 실패했습니다. 잠시 후 다시 시도해주세요.'
+      });
+    }
+
+    // 7. 성공 응답 반환
     console.log(`[SMS] 인증 요청 성공: ${normalizedPhone}`);
     res.status(200).json({
       success: true,
@@ -84,8 +104,8 @@ exports.sendSmsVerification = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      error: 'SERVER_ERROR',
-      message: error.message || '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+      errorCode: 'SERVER_ERROR',
+      message: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
     });
   }
 };
