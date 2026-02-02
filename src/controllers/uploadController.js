@@ -1,4 +1,4 @@
-const { supabase } = require('../config/supabase');
+const supabase = require('../config/supabase');
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
@@ -47,6 +47,13 @@ const uploadRecruitmentImage = async (req, res) => {
     }
 
     try {
+      if (!supabase) {
+        return res.status(500).json({
+          success: false,
+          message: 'Supabase가 설정되지 않았습니다.',
+        });
+      }
+
       const file = req.file;
       const fileExt = path.extname(file.originalname);
       const fileName = `${uuidv4()}${fileExt}`;
@@ -125,6 +132,13 @@ const uploadProfileImage = async (req, res) => {
     }
 
     try {
+      if (!supabase) {
+        return res.status(500).json({
+          success: false,
+          message: 'Supabase가 설정되지 않았습니다.',
+        });
+      }
+
       const file = req.file;
       const fileExt = path.extname(file.originalname);
       const fileName = `${uuidv4()}${fileExt}`;
