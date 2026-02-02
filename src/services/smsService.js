@@ -99,6 +99,7 @@ class SmsService {
    * @param {string} phone - 수신자 전화번호
    * @param {string} code - 인증번호
    * @returns {Promise<{messageId: string}>}
+   * @throws {Error} errorCode: SMS_SERVICE_UNAVAILABLE | SMS_SEND_FAILED
    */
   async sendSms(phone, code) {
     try {
@@ -112,7 +113,28 @@ class SmsService {
       return { messageId: result.messageId };
     } catch (error) {
       console.error(`[SMS] 발송 실패: ${phone}`, error.message);
-      throw new Error('SMS 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      console.error(`[SMS] 에러 상세:`, error);
+
+      // 잔액 부족 에러 감지 (Solapi 에러 메시지/코드 패턴)
+      const errorMessage = error.message || '';
+      const errorCode = error.code || error.errorCode || '';
+
+      if (
+        errorMessage.includes('NotEnoughBalance') ||
+        errorMessage.includes('잔액') ||
+        errorMessage.includes('balance') ||
+        errorCode === 'NotEnoughBalance' ||
+        errorCode === 'InsufficientBalance'
+      ) {
+        const smsError = new Error('인증 서비스가 일시적으로 이용 불가합니다.');
+        smsError.errorCode = 'SMS_SERVICE_UNAVAILABLE';
+        throw smsError;
+      }
+
+      // 기타 발송 실패
+      const smsError = new Error('인증번호 발송에 실패했습니다.');
+      smsError.errorCode = 'SMS_SEND_FAILED';
+      throw smsError;
     }
   }
 
