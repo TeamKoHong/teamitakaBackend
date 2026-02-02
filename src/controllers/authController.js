@@ -8,6 +8,7 @@ const { v4: uuidv4 } = require("uuid"); // ✅ UUID 생성 모듈 추가
 const { jwtSecret } = require("../config/authConfig");
 const { verifyGoogleIdToken } = require("../utils/googleTokenVerifier");
 const { parseResidentNumber, formatPhoneNumber } = require("../utils/registrationUtils");
+const supabase = require("../config/supabase");
 
 exports.register = async (req, res) => {
   try {
@@ -26,6 +27,8 @@ exports.register = async (req, res) => {
       // 인증 상태
       isSmsVerified,
       isEmailVerified,
+      // Supabase 학교 이메일 인증 토큰
+      supabaseAccessToken,
       // 기존 필드 (호환성 유지)
       university,
       department,
@@ -40,7 +43,30 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: "❌ 이메일과 비밀번호를 입력해주세요." });
     }
 
-    // SMS 인증 상태 검증 (SMS 인증 우선)
+    // Supabase 학교 이메일 인증 검증 (이메일 인증 시)
+    if (isEmailVerified && supabaseAccessToken) {
+      if (!supabase) {
+        console.log('❌ Supabase client not initialized - cannot verify email');
+        return res.status(500).json({ error: "❌ 서버 설정 오류: 이메일 인증을 처리할 수 없습니다." });
+      }
+
+      const { data: { user: supabaseUser }, error: supabaseError } = await supabase.auth.getUser(supabaseAccessToken);
+
+      if (supabaseError || !supabaseUser?.email_confirmed_at) {
+        console.log(`❌ Supabase 이메일 인증 실패: ${supabaseError?.message || '이메일 미인증'}`);
+        return res.status(401).json({ error: "❌ 학교 이메일 인증이 완료되지 않았습니다." });
+      }
+
+      // 인증된 이메일과 요청 이메일 일치 확인
+      if (supabaseUser.email !== userEmail) {
+        console.log(`❌ 이메일 불일치: Supabase(${supabaseUser.email}) vs Request(${userEmail})`);
+        return res.status(400).json({ error: "❌ 인증된 이메일이 일치하지 않습니다." });
+      }
+
+      console.log(`✅ Supabase 이메일 인증 확인 완료: ${userEmail}`);
+    }
+
+    // SMS 인증 또는 이메일 인증 상태 검증
     if (!isSmsVerified && !isEmailVerified) {
       return res.status(400).json({ error: "❌ SMS 인증 또는 이메일 인증을 완료해주세요." });
     }
