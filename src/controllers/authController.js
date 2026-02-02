@@ -8,6 +8,7 @@ const { v4: uuidv4 } = require("uuid"); // ✅ UUID 생성 모듈 추가
 const { jwtSecret } = require("../config/authConfig");
 const { verifyGoogleIdToken } = require("../utils/googleTokenVerifier");
 const { parseResidentNumber, formatPhoneNumber } = require("../utils/registrationUtils");
+const { isUniversityEmail } = require("../utils/emailValidator");
 const supabase = require("../config/supabase");
 
 exports.register = async (req, res) => {
@@ -41,6 +42,13 @@ exports.register = async (req, res) => {
     // 필수 값 검증
     if (!userEmail || !password) {
       return res.status(400).json({ error: "❌ 이메일과 비밀번호를 입력해주세요." });
+    }
+
+    // 대학교 이메일 도메인 검증
+    if (!isUniversityEmail(userEmail)) {
+      return res.status(400).json({
+        error: "❌ 대학교 이메일만 사용 가능합니다. (.ac.kr 또는 .edu)"
+      });
     }
 
     // Supabase 학교 이메일 인증 검증 (이메일 인증 시)
