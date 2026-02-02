@@ -25,7 +25,8 @@ const applicationRoutes = require("./routes/applicationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-const verificationRoutes = require("./routes/verificationRoutes");
+// [REMOVED] 학교 이메일 인증이 Supabase OTP로 전환되어 제거됨
+// const verificationRoutes = require("./routes/verificationRoutes");
 const smsRoutes = require("./routes/smsRoutes");
 const findIdRoutes = require("./routes/findIdRoutes");
 const typeTestRoutes = require("./routes/typeTestRoutes");
@@ -95,7 +96,8 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/auth", verificationRoutes);
+// [REMOVED] 학교 이메일 인증이 Supabase OTP로 전환되어 제거됨
+// app.use("/api/auth", verificationRoutes);
 app.use("/api/auth/sms", smsRoutes);
 app.use("/api/auth/find-id", findIdRoutes);
 app.use("/api/type-test", typeTestRoutes);

@@ -1,9 +1,4 @@
-const {
-  validateSendVerification,
-  validateVerifyCode,
-  validateVerificationStatus,
-  validateResendVerification
-} = require('../validations/verificationValidation');
+// [REMOVED] 이메일 인증 관련 validation - Supabase OTP로 전환됨
 const {
   validateSendSmsVerification,
   validateVerifySmsCode
@@ -15,64 +10,12 @@ const createValidationError = (details) => {
     field: detail.path.join('.'),
     message: detail.message
   }));
-  
+
   return {
     error: 'VALIDATION_ERROR',
     message: '입력값 검증에 실패했습니다.',
     details: errors
   };
-};
-
-// 인증번호 전송 검증 미들웨어
-const validateSendVerificationInput = (req, res, next) => {
-  const { error, value } = validateSendVerification(req.body);
-  
-  if (error) {
-    return res.status(400).json(createValidationError(error.details));
-  }
-  
-  // 검증된 데이터를 req.body에 할당
-  req.body = value;
-  next();
-};
-
-// 인증번호 확인 검증 미들웨어
-const validateVerifyCodeInput = (req, res, next) => {
-  const { error, value } = validateVerifyCode(req.body);
-  
-  if (error) {
-    return res.status(400).json(createValidationError(error.details));
-  }
-  
-  // 검증된 데이터를 req.body에 할당
-  req.body = value;
-  next();
-};
-
-// 인증 상태 확인 검증 미들웨어
-const validateVerificationStatusInput = (req, res, next) => {
-  const { error, value } = validateVerificationStatus(req.query);
-  
-  if (error) {
-    return res.status(400).json(createValidationError(error.details));
-  }
-  
-  // 검증된 데이터를 req.query에 할당
-  req.query = value;
-  next();
-};
-
-// 인증번호 재전송 검증 미들웨어
-const validateResendVerificationInput = (req, res, next) => {
-  const { error, value } = validateResendVerification(req.body);
-  
-  if (error) {
-    return res.status(400).json(createValidationError(error.details));
-  }
-  
-  // 검증된 데이터를 req.body에 할당
-  req.body = value;
-  next();
 };
 
 // 범용 검증 미들웨어 (스키마를 매개변수로 받음)
@@ -122,10 +65,6 @@ const validateVerifySmsCodeInput = (req, res, next) => {
 };
 
 module.exports = {
-  validateSendVerificationInput,
-  validateVerifyCodeInput,
-  validateVerificationStatusInput,
-  validateResendVerificationInput,
   validateInput,
   validateSendSmsVerificationInput,
   validateVerifySmsCodeInput
