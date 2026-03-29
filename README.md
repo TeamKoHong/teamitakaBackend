@@ -17,6 +17,7 @@
 - [API 문서](#-api-문서)
 - [데이터베이스](#-데이터베이스)
 - [개발 가이드](#-개발-가이드)
+- [보안 운영 가이드](#-보안-운영-가이드)
 - [테스트](#-테스트)
 - [배포](#-배포)
 - [환경 변수](#-환경-변수)
@@ -635,6 +636,17 @@ git push origin feature/기능-이름
 #### 6️⃣ Pull Request 생성
 
 GitHub에서 Pull Request를 생성합니다.
+
+## 🔐 보안 운영 가이드
+
+보안 관련 변경을 진행하거나 배포 전 점검을 할 때는 먼저 아래 문서를 읽어야 합니다.
+
+- [Backend Security Maintenance Guidelines](reports/security-maintenance-guidelines.md)
+- [Security Remediation PDCA](reports/security-remediation-pdca.md)
+- [Supabase RLS Drift Audit](reports/supabase-rls-drift-audit.md)
+- [Credential Rotation Checklist](reports/credential-rotation-checklist.md)
+
+특히 인증, 관리자 권한, 복구 플로우, 업로드, Supabase 정책, 배포 환경 변수를 건드릴 때는 위 문서를 기준으로 작업해야 합니다.
 
 ### 코드 스타일
 

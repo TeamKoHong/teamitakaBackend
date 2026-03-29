@@ -40,8 +40,8 @@ PORT=8080
 
 # Supabase 데이터베이스 설정
 DB_HOST=your-supabase-db-host
-DB_NAME=postgres
-DB_USER=postgres.your-project-ref
+DB_NAME=your-database-name
+DB_USER=your-database-user
 DB_PASSWORD=your-database-password
 DB_PORT=6543
 DB_DIALECT=postgres
@@ -89,8 +89,8 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 | `NODE_ENV` | `production` | 환경 설정 |
 | `PORT` | `8080` | 포트 번호 |
 | `DB_HOST` | `your-supabase-db-host` | 데이터베이스 호스트 |
-| `DB_NAME` | `postgres` | 데이터베이스 이름 |
-| `DB_USER` | `postgres.your-project-ref` | 데이터베이스 사용자 |
+| `DB_NAME` | `your-database-name` | 데이터베이스 이름 |
+| `DB_USER` | `your-database-user` | 데이터베이스 사용자 |
 | `DB_PASSWORD` | `your-database-password` | 데이터베이스 비밀번호 |
 | `DB_PORT` | `6543` | 데이터베이스 포트 |
 | `DB_DIALECT` | `postgres` | 데이터베이스 타입 |
