@@ -1,13 +1,33 @@
 // src/controllers/authController.js
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { User } = require("../models");
+const { Op } = require("sequelize");
+const { User, EmailVerification } = require("../models");
 const { validatePassword } = require("../utils/passwordValidator");
 const { generateUniqueUsername } = require("../utils/usernameGenerator");
 const { v4: uuidv4 } = require("uuid"); // ✅ UUID 생성 모듈 추가
-const { jwtSecret } = require("../config/authConfig");
+const { jwtSecret, jwtIssuer } = require("../config/authConfig");
 const { verifyGoogleIdToken } = require("../utils/googleTokenVerifier");
 const { parseResidentNumber, formatPhoneNumber } = require("../utils/registrationUtils");
+const smsService = require("../services/smsService");
+
+const EMAIL_VERIFICATION_GRACE_MS = 15 * 60 * 1000;
+
+const hasRecentEmailVerification = async (email) => {
+  const recentThreshold = new Date(Date.now() - EMAIL_VERIFICATION_GRACE_MS);
+  const verification = await EmailVerification.findOne({
+    where: {
+      email,
+      purpose: "signup",
+      consumed_at: {
+        [Op.gte]: recentThreshold,
+      },
+    },
+    order: [["consumed_at", "DESC"]],
+  });
+
+  return !!verification;
+};
 
 exports.register = async (req, res) => {
   try {
@@ -23,9 +43,6 @@ exports.register = async (req, res) => {
       residentNumber,
       marketingAgreed,
       thirdPartyAgreed,
-      // 인증 상태
-      isSmsVerified,
-      isEmailVerified,
       // 기존 필드 (호환성 유지)
       university,
       department,
@@ -40,15 +57,6 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: "❌ 이메일과 비밀번호를 입력해주세요." });
     }
 
-    // SMS 인증 상태 검증 (SMS 인증 우선)
-    if (!isSmsVerified && !isEmailVerified) {
-      return res.status(400).json({ error: "❌ SMS 인증 또는 이메일 인증을 완료해주세요." });
-    }
-
-    console.log(`📝 Registration request for email: ${userEmail}`);
-    console.log(`📊 Name: ${name}, Phone: ${phoneNumber}`);
-    console.log(`📱 SMS verified: ${isSmsVerified}, Email verified: ${isEmailVerified}`);
-
     // 주민번호 파싱 (생년월일 + 성별)
     let birthDate = null;
     let gender = null;
@@ -56,20 +64,26 @@ exports.register = async (req, res) => {
       const parsed = parseResidentNumber(residentNumber);
       birthDate = parsed.birthDate;
       gender = parsed.gender;
-      console.log(`🎂 Parsed birth_date: ${birthDate}, gender: ${gender}`);
     }
 
     // 전화번호 정규화
+    const normalizedPhone = phoneNumber ? smsService.normalizePhone(phoneNumber) : null;
     const formattedPhone = formatPhoneNumber(phoneNumber);
     if (phoneNumber && !formattedPhone) {
       return res.status(400).json({ error: "❌ 올바른 전화번호 형식이 아닙니다." });
     }
-    console.log(`📞 Formatted phone: ${formattedPhone}`);
+
+    const serverSmsVerified = normalizedPhone ? smsService.hasVerifiedPhone(normalizedPhone) : false;
+    const serverEmailVerified = await hasRecentEmailVerification(userEmail);
+
+    if (!serverSmsVerified && !serverEmailVerified) {
+      return res.status(400).json({
+        error: "❌ 서버에서 확인된 SMS 인증 또는 이메일 인증을 완료해주세요.",
+      });
+    }
 
     // 자동 username 생성
     const username = await generateUniqueUsername(userEmail);
-    console.log(`✅ Generated username: ${username} for email: ${userEmail}`);
-
     // 비밀번호 유효성 검사
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
@@ -103,8 +117,8 @@ exports.register = async (req, res) => {
       // 새로운 필드
       name: name || null,
       phone_number: formattedPhone,
-      phone_verified: !!isSmsVerified,
-      phone_verified_at: isSmsVerified ? new Date() : null,
+      phone_verified: serverSmsVerified,
+      phone_verified_at: serverSmsVerified ? new Date() : null,
       birth_date: birthDate,
       gender: gender,
       marketing_agreed: !!marketingAgreed,
@@ -112,8 +126,12 @@ exports.register = async (req, res) => {
       // 기존 필드
       university: university || null,
       department: department || null,
-      email_verified_at: isEmailVerified ? new Date() : null,
+      email_verified_at: serverEmailVerified ? new Date() : null,
     });
+
+    if (serverSmsVerified && normalizedPhone) {
+      smsService.consumeVerifiedPhone(normalizedPhone);
+    }
 
     // JWT 토큰 발급 (자동 로그인용)
     const token = jwt.sign(
@@ -123,7 +141,7 @@ exports.register = async (req, res) => {
         role: newUser.role || 'user'
       },
       jwtSecret,
-      { expiresIn: "1d" }
+      { expiresIn: "1d", issuer: jwtIssuer }
     );
 
     // 보안 강화를 위해 HttpOnly 쿠키 옵션 추가
@@ -152,15 +170,14 @@ exports.register = async (req, res) => {
         university: university || null,
         department: department || null,
         student_id: student_id || null,
-        smsVerified: !!isSmsVerified,
-        emailVerified: !!isEmailVerified,
+        smsVerified: serverSmsVerified,
+        emailVerified: serverEmailVerified,
       },
     });
   } catch (error) {
     console.error("🚨 회원가입 오류:", error);
     console.error("🚨 오류 상세:", error.message);
     console.error("🚨 오류 스택:", error.stack);
-    console.error("🚨 요청 데이터:", req.body);
     return res.status(500).json({ error: "서버 오류 발생" });
   }
 };
@@ -177,24 +194,20 @@ exports.login = async (req, res) => {
     // 2️⃣ 사용자 조회
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(401).json({ error: "존재하지 않는 이메일입니다." });
+      return res.status(401).json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." });
     }
 
     // 3️⃣ 비밀번호 확인
-    console.log("요청된 이메일:", email);
-    console.log("요청된 비밀번호:", password);
-    console.log("DB 비밀번호 해시:", user.password);
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("비교 결과:", isMatch); // ← false로 찍히면 해시 문제
     if (!isMatch) {
-      return res.status(401).json({ error: "비밀번호가 일치하지 않습니다." });
+      return res.status(401).json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." });
     }
 
     // 4️⃣ JWT 토큰 발급
     const token = jwt.sign(
       { userId: user.user_id, email: user.email, role: user.role }, // 역할 포함
       jwtSecret,
-      { expiresIn: "1d" }
+      { expiresIn: "1d", issuer: jwtIssuer }
     );
 
     // 5️⃣ 보안 강화를 위해 HttpOnly 쿠키 옵션 추가 가능
@@ -268,7 +281,7 @@ exports.googleSignInByIdToken = async (req, res) => {
     const token = jwt.sign(
       { userId: user.user_id, email: user.email, role: user.role },
       jwtSecret,
-      { expiresIn: process.env.APP_JWT_EXPIRES_IN || "1d" }
+      { expiresIn: process.env.APP_JWT_EXPIRES_IN || "1d", issuer: jwtIssuer }
     );
 
     res.cookie("token", token, {
@@ -368,4 +381,3 @@ exports.getCurrentUser = async (req, res) => {
     });
   }
 };
-

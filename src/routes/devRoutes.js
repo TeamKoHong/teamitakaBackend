@@ -3,8 +3,29 @@ const router = express.Router();
 const devController = require("../controllers/devController");
 const { createTransporter, getFromEmail, sendEmailWithSendGrid } = require("../config/emailConfig");
 const jwt = require("jsonwebtoken");
-const { jwtSecret } = require("../config/authConfig");
+const { jwtSecret, jwtIssuer } = require("../config/authConfig");
 const { User } = require("../models");
+
+router.use((req, res, next) => {
+  const devRoutesEnabled =
+    process.env.ENABLE_DEV_ROUTES === "true" &&
+    process.env.NODE_ENV !== "production";
+  const configuredDevRouteToken = process.env.DEV_ROUTE_TOKEN;
+  const suppliedDevRouteToken =
+    req.headers["x-dev-route-token"] ||
+    req.headers["x-internal-dev-token"] ||
+    req.query?.devRouteToken;
+
+  if (!devRoutesEnabled) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
+  if (!configuredDevRouteToken || suppliedDevRouteToken !== configuredDevRouteToken) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
+  next();
+});
 
 router.delete("/clear-verified-emails", devController.clearVerifiedEmails);
 
@@ -27,7 +48,7 @@ router.post("/test-token", async (req, res) => {
     const token = jwt.sign(
       { userId: user.user_id, email: user.email, role: user.role },
       jwtSecret,
-      { expiresIn: "1d" }
+      { expiresIn: "1d", issuer: jwtIssuer }
     );
 
     res.json({
