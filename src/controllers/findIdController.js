@@ -99,12 +99,9 @@ const updateFindIdVerification = (sessionId, data) => {
  * POST /api/auth/find-id/send-sms
  */
 exports.sendFindIdSms = async (req, res) => {
-  const clientIP = req.ip || req.connection.remoteAddress;
   const { name, carrier, phone } = req.body;
 
   try {
-    console.log(`[FindId] SMS 인증 요청 시작: name=${name}, phone=${phone}, carrier=${carrier}, IP=${clientIP}`);
-
     // 1. 전화번호 정규화
     const normalizedPhone = smsService.normalizePhone(phone);
 
@@ -118,8 +115,6 @@ exports.sendFindIdSms = async (req, res) => {
 
     // 2. E.164 형식으로 변환
     const e164Phone = formatPhoneNumber(normalizedPhone);
-    console.log(`[FindId] E.164 형식: ${e164Phone}`);
-
     if (!e164Phone) {
       return res.status(400).json({
         success: false,
@@ -138,7 +133,6 @@ exports.sendFindIdSms = async (req, res) => {
     });
 
     if (!user) {
-      console.log(`[FindId] 사용자 없음: name=${name}, phone=${e164Phone}`);
       return res.status(404).json({
         success: false,
         error: 'USER_NOT_FOUND',
@@ -146,12 +140,9 @@ exports.sendFindIdSms = async (req, res) => {
       });
     }
 
-    console.log(`[FindId] 사용자 찾음: userId=${user.user_id}`);
-
     // 4. sessionId 및 4자리 인증번호 생성
     const sessionId = smsService.generateSessionId();
     const verificationCode = smsService.generateVerificationCode();
-    console.log(`[FindId] 인증번호 생성: sessionId=${sessionId}, code=${verificationCode}`);
 
     // 5. 캐시에 저장 (find-id 전용 prefix)
     saveFindIdVerification(sessionId, normalizedPhone, verificationCode, user.user_id);
@@ -165,11 +156,9 @@ exports.sendFindIdSms = async (req, res) => {
       from: process.env.SOLAPI_SENDER_NUM,
       text: smsMessage
     })
-      .then((result) => console.log(`[FindId] SMS 발송 성공: ${normalizedPhone}, messageId: ${result.messageId}`))
-      .catch((err) => console.error(`[FindId] SMS 발송 실패: ${normalizedPhone}`, err.message));
+      .catch((err) => console.error("[FindId] SMS 발송 실패", err.message));
 
     // 7. 즉시 응답 반환
-    console.log(`[FindId] SMS 인증 요청 성공: ${normalizedPhone}`);
     return res.status(200).json({
       success: true,
       message: '인증번호가 전송되었습니다.',
@@ -193,17 +182,13 @@ exports.sendFindIdSms = async (req, res) => {
  * POST /api/auth/find-id/verify
  */
 exports.verifyFindIdCode = async (req, res) => {
-  const clientIP = req.ip || req.connection.remoteAddress;
   const { sessionId, code } = req.body;
 
   try {
-    console.log(`[FindId] 인증 확인 요청, sessionId=${sessionId}, IP=${clientIP}`);
-
     // 1. 캐시에서 인증 정보 조회
     const cached = getFindIdVerification(sessionId);
 
     if (!cached) {
-      console.log(`[FindId] 인증번호 만료 또는 없음: sessionId=${sessionId}`);
       return res.status(410).json({
         success: false,
         error: 'CODE_EXPIRED',
@@ -214,7 +199,6 @@ exports.verifyFindIdCode = async (req, res) => {
     // 2. 최대 시도 횟수 확인
     if (cached.attemptCount >= MAX_ATTEMPTS) {
       deleteFindIdVerification(sessionId);
-      console.log(`[FindId] 최대 시도 횟수 초과: sessionId=${sessionId}`);
       return res.status(400).json({
         success: false,
         error: 'MAX_ATTEMPTS_EXCEEDED',
@@ -229,7 +213,6 @@ exports.verifyFindIdCode = async (req, res) => {
     // 4. 인증번호 비교
     if (cached.code !== code) {
       const remainingAttempts = MAX_ATTEMPTS - cached.attemptCount;
-      console.log(`[FindId] 인증번호 불일치: sessionId=${sessionId}, 남은 시도=${remainingAttempts}`);
       return res.status(400).json({
         success: false,
         error: 'INVALID_CODE',
@@ -244,7 +227,6 @@ exports.verifyFindIdCode = async (req, res) => {
 
     if (!user) {
       deleteFindIdVerification(sessionId);
-      console.log(`[FindId] 사용자 정보 없음: userId=${cached.userId}`);
       return res.status(404).json({
         success: false,
         error: 'USER_NOT_FOUND',
@@ -258,8 +240,6 @@ exports.verifyFindIdCode = async (req, res) => {
     // 7. 이메일 마스킹 및 가입일 포맷팅
     const maskedEmail = maskEmail(user.email);
     const joinDate = formatJoinDate(user.createdAt || user.created_at);
-
-    console.log(`[FindId] 인증 성공: email=${maskedEmail}, joinDate=${joinDate}`);
 
     return res.status(200).json({
       success: true,

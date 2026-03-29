@@ -144,6 +144,7 @@ exports.verifySmsCode = async (req, res) => {
 
     // 5. 성공 응답
     console.log(`[SMS] 인증 성공: ${verificationResult.phone}`);
+    smsService.markPhoneVerified(verificationResult.phone);
     res.status(200).json({
       success: true,
       message: '인증이 완료되었습니다.',

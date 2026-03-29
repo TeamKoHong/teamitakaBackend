@@ -1,10 +1,12 @@
 const { SolapiMessageService } = require('solapi');
 const NodeCache = require('node-cache');
-const { randomUUID } = require('crypto');
+const crypto = require('crypto');
+const { randomUUID } = crypto;
 
 class SmsService {
   constructor() {
     this.EXPIRATION_TIME = 3 * 60; // 3분 (초 단위)
+    this.VERIFIED_PHONE_TTL = 10 * 60; // 10분
     this.MAX_ATTEMPTS = 5;
     this.CODE_LENGTH = 4;
 
@@ -36,7 +38,7 @@ class SmsService {
    * @returns {string} 4자리 숫자 문자열
    */
   generateVerificationCode() {
-    return Math.floor(1000 + Math.random() * 9000).toString();
+    return crypto.randomInt(1000, 10000).toString();
   }
 
   /**
@@ -83,6 +85,29 @@ class SmsService {
     };
     this.smsCache.set(cacheKey, data);
     return true;
+  }
+
+  markPhoneVerified(phone) {
+    const normalizedPhone = this.normalizePhone(phone);
+    const cacheKey = `sms-verified:${normalizedPhone}`;
+    this.smsCache.set(
+      cacheKey,
+      {
+        phone: normalizedPhone,
+        verifiedAt: new Date().toISOString(),
+      },
+      this.VERIFIED_PHONE_TTL
+    );
+  }
+
+  hasVerifiedPhone(phone) {
+    const normalizedPhone = this.normalizePhone(phone);
+    return !!this.smsCache.get(`sms-verified:${normalizedPhone}`);
+  }
+
+  consumeVerifiedPhone(phone) {
+    const normalizedPhone = this.normalizePhone(phone);
+    this.smsCache.del(`sms-verified:${normalizedPhone}`);
   }
 
   /**

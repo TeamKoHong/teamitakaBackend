@@ -62,7 +62,7 @@ const dailySmsIPLimit = rateLimit({
 const smsVerifyAttemptLimit = rateLimit({
   windowMs: 60 * 1000, // 1분
   max: 5,
-  keyGenerator: (req) => normalizePhone(req.body.phone),
+  keyGenerator: (req) => req.body.sessionId || req.ip || req.connection.remoteAddress || 'unknown',
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
