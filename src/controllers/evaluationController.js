@@ -265,8 +265,7 @@ exports.getReceivedEvaluations = async (req, res) => {
       reviews = await sequelize.query(
         `SELECT
           r.*,
-          u.username as reviewer_username,
-          u.email as reviewer_email
+          u.username as reviewer_username
         FROM reviews r
         JOIN users u ON r.reviewer_id = u.user_id
         WHERE r.reviewee_id = :userId AND r.project_id = :projectId

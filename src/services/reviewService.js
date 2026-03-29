@@ -36,8 +36,7 @@ class ReviewService {
       const reviews = await sequelize.query(
         `SELECT
           r.*,
-          u.username as reviewer_username,
-          u.email as reviewer_email
+          u.username as reviewer_username
         FROM reviews r
         JOIN users u ON r.reviewer_id = u.user_id
         WHERE r.reviewee_id = :user_id
@@ -62,9 +61,7 @@ class ReviewService {
         `SELECT
           r.*,
           reviewer.username as reviewer_username,
-          reviewer.email as reviewer_email,
-          reviewee.username as reviewee_username,
-          reviewee.email as reviewee_email
+          reviewee.username as reviewee_username
         FROM reviews r
         JOIN users reviewer ON r.reviewer_id = reviewer.user_id
         JOIN users reviewee ON r.reviewee_id = reviewee.user_id
