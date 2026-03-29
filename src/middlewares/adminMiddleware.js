@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { jwtSecret } = require("../config/authConfig");
+const { jwtSecret, jwtIssuer } = require("../config/authConfig");
 
 const adminMiddleware = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
@@ -9,12 +9,13 @@ const adminMiddleware = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, jwtSecret);
+    const decoded = jwt.verify(token, jwtSecret, { issuer: jwtIssuer });
 
-    if (decoded.role !== "ADMIN") {
+    if (decoded.role !== "ADMIN" || !decoded.adminId) {
       return res.status(403).json({ message: "🚫 관리자 권한이 필요합니다." });
     }
 
+    req.admin = decoded;
     req.user = decoded;
     next();
   } catch {

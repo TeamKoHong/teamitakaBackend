@@ -64,11 +64,6 @@ module.exports = (sequelize) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      firebase_phone_uid: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-        comment: 'Firebase Phone Auth UID',
-      },
       phone_number: {
         type: DataTypes.STRING(20),
         allowNull: true,
@@ -107,6 +102,38 @@ module.exports = (sequelize) => {
         allowNull: true,
         defaultValue: '재학 중',
         comment: '재학 상태 (재학 중, 휴학 중, 졸업)',
+      },
+      mbti_type: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        comment: 'MBTI 유형 결과 (예: LION, 활동티미)',
+      },
+      name: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        comment: '사용자 실명',
+      },
+      birth_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+        comment: '생년월일 (YYYY-MM-DD)',
+      },
+      gender: {
+        type: DataTypes.STRING(10),
+        allowNull: true,
+        comment: '성별 (male/female)',
+      },
+      marketing_agreed: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        comment: '마케팅 수신 동의',
+      },
+      third_party_agreed: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        comment: '제3자 제공 동의',
       },
     },
     {

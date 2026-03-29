@@ -4,12 +4,11 @@ const { handleError } = require("../utils/errorHandler");
 const createPost = async (req, res) => {
   try {
     const { project_id } = req.params;
-    
-    // req.admin 사용으로 변경
-    if (!req.admin || !req.admin.user_id) {
-      return res.status(401).json({ error: "인증된 관리자가 필요합니다." });
+
+    const userId = req.user?.userId || req.admin?.user_id;
+    if (!userId) {
+      return res.status(401).json({ error: "인증된 사용자가 필요합니다." });
     }
-    const user_id = req.admin.user_id; // req.user 대신 req.admin 사용
 
     const { title, content } = req.body;
 
@@ -17,7 +16,7 @@ const createPost = async (req, res) => {
       return res.status(400).json({ error: "제목과 내용은 필수 항목입니다." });
     }
 
-    const post = await projectPostService.createPost(user_id, project_id, title, content);
+    const post = await projectPostService.createPost(userId, project_id, title, content);
     res.status(201).json(post);
   } catch (error) {
     handleError(res, error);

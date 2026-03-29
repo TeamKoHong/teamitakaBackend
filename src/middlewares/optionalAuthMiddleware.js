@@ -1,8 +1,10 @@
 const jwt = require("jsonwebtoken");
-const { jwtSecret } = require("../config/authConfig");
+const { jwtSecret, jwtIssuer } = require("../config/authConfig");
 
 const optionalAuthMiddleware = (req, res, next) => {
-  const token = req.header("Authorization");
+  const authHeader = req.header("Authorization");
+  const cookieToken = req.cookies?.token;
+  const token = authHeader || (cookieToken ? `Bearer ${cookieToken}` : null);
 
   if (!token || !token.startsWith('Bearer ')) {
     req.user = null;
@@ -12,7 +14,7 @@ const optionalAuthMiddleware = (req, res, next) => {
   const tokenValue = token.substring(7);
 
   try {
-    const decoded = jwt.verify(tokenValue, jwtSecret);
+    const decoded = jwt.verify(tokenValue, jwtSecret, { issuer: jwtIssuer });
     req.user = {
       ...decoded,
       userId: decoded.userId || decoded.sub,

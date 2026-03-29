@@ -65,11 +65,10 @@ class EmailVerificationService {
   async verifyByCode({ email, code, purpose, ip, ua }) {
     if (!email || !code || !purpose) throw new Error('email, code and purpose are required');
     const code_hash = this.sha256Hex(code);
-    const rec = await this.models.EmailVerification.findOne({ where: { email, purpose } });
+    const rec = await this.models.EmailVerification.findOne({ where: { email, purpose, code_hash } });
     if (!rec) throw new Error('invalid code');
     if (rec.consumed_at) throw new Error('already used');
     if (new Date(rec.expires_at).getTime() < Date.now()) throw new Error('expired');
-    // naive: ensure code matches (requires stored hash). In real impl, include code_hash in where.
     await this.models.EmailVerification.update({ consumed_at: new Date() }, { where: { id: rec.id } });
 
     const user = await this.models.User.findOne({ where: { email } });
@@ -81,5 +80,4 @@ class EmailVerificationService {
 }
 
 module.exports = EmailVerificationService;
-
 

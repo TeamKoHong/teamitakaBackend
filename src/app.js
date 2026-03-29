@@ -26,6 +26,8 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const verificationRoutes = require("./routes/verificationRoutes");
+const smsRoutes = require("./routes/smsRoutes");
+const findIdRoutes = require("./routes/findIdRoutes");
 
 // ✅ [추가됨] 일정 라우트
 const scheduleRoutes = require("./routes/scheduleRoutes");
@@ -36,10 +38,28 @@ const path = require('path');
 const swaggerDocument = yaml.load(path.join(__dirname, '../swagger.yaml'));
 
 const app = express();
+const enableDevRoutes =
+  process.env.ENABLE_DEV_ROUTES === "true" &&
+  process.env.NODE_ENV !== "production";
+
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 // --- CORS 설정 ---
-const corsOrigin = process.env.CORS_ORIGIN || process.env.CORS_ORIGINS || '*';
+const configuredCorsOrigin = process.env.CORS_ORIGIN || process.env.CORS_ORIGINS;
 const allowAnyOrigin = process.env.ALLOW_ANY_ORIGIN === 'true';
+const corsOrigin =
+  configuredCorsOrigin ||
+  (process.env.NODE_ENV === "production" ? null : "*");
+
+if (process.env.NODE_ENV === "production" && allowAnyOrigin) {
+  throw new Error("ALLOW_ANY_ORIGIN must not be enabled in production.");
+}
+
+if (process.env.NODE_ENV === "production" && !corsOrigin) {
+  throw new Error("CORS_ORIGIN or CORS_ORIGINS must be configured in production.");
+}
 
 const parseOrigins = (originString) => {
   if (originString === '*') return originString;
@@ -75,7 +95,10 @@ app.use(morgan("dev"));
 // --- 라우트 등록 ---
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/dev", devRoutes);
+
+if (enableDevRoutes) {
+  app.use("/api/dev", devRoutes);
+}
 
 app.use("/api/user", userRoutes);
 app.use("/api/recruitments", recruitmentRoutes);
@@ -93,6 +116,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/auth", verificationRoutes);
+app.use("/api/auth/sms", smsRoutes);
+app.use("/api/auth/find-id", findIdRoutes);
 
 // ✅ [추가됨] 일정 API 연결
 // 프론트엔드 Calendar.jsx -> /api/schedule 사용

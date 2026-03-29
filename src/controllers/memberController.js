@@ -19,7 +19,6 @@ const getMembers = async (req, res) => {
         pm.task,
         pm.joined_at,
         u.username,
-        u.email,
         u.avatar,
         u.bio
       FROM project_members pm
@@ -34,7 +33,7 @@ const getMembers = async (req, res) => {
 
     console.log("✅ getMembers - Found members:", members.length);
 
-    // 프론트엔드 기대 형식: { data: [{user_id, role, task, User: {username, email, avatar, bio}}] }
+    // 프론트엔드 기대 형식: { data: [{user_id, role, task, User: {username, avatar, bio}}] }
     res.status(200).json({
       data: members.map(m => ({
         user_id: m.user_id,
@@ -42,7 +41,6 @@ const getMembers = async (req, res) => {
         task: m.task,
         User: {
           username: m.username,
-          email: m.email,
           avatar: m.avatar,
           bio: m.bio
         }

@@ -1,12 +1,16 @@
 const nodemailer = require('nodemailer');
 const sgMail = require('@sendgrid/mail');
+const { Resend } = require('resend');
 const fs = require('fs');
 const path = require('path');
 
-// SendGrid API 키 설정
+// SendGrid API 키 설정 (레거시 - 체험판 만료)
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
+
+// Resend 클라이언트 초기화
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // 이메일 서비스 설정
 const emailConfig = {
@@ -54,7 +58,35 @@ const createTransporter = () => {
   return nodemailer.createTransport(config);
 };
 
-// SendGrid를 사용한 이메일 전송 (권장)
+// Resend를 사용한 이메일 전송 (권장)
+const sendEmailWithResend = async (mailOptions) => {
+  try {
+    if (!resend) {
+      throw new Error('RESEND_API_KEY가 설정되지 않았습니다.');
+    }
+
+    const { data, error } = await resend.emails.send({
+      from: mailOptions.from || process.env.EMAIL_FROM || 'TeamItaka <onboarding@resend.dev>',
+      to: [mailOptions.to],
+      subject: mailOptions.subject,
+      html: mailOptions.html,
+      text: mailOptions.text
+    });
+
+    if (error) {
+      console.error('Resend 이메일 전송 실패:', error);
+      throw new Error(error.message);
+    }
+
+    console.log('Resend 이메일 전송 성공:', data);
+    return data;
+  } catch (error) {
+    console.error('Resend 이메일 전송 실패:', error);
+    throw error;
+  }
+};
+
+// SendGrid를 사용한 이메일 전송 (레거시 - 체험판 만료)
 const sendEmailWithSendGrid = async (mailOptions) => {
   try {
     const msg = {
@@ -84,7 +116,7 @@ const sendEmailWithSendGrid = async (mailOptions) => {
         ];
       }
     }
-    
+
     const result = await sgMail.send(msg);
     return result;
   } catch (error) {
@@ -109,5 +141,6 @@ module.exports = {
   getFromEmail,
   getEmailConfig,
   isDomainAuthenticated,
-  sendEmailWithSendGrid
+  sendEmailWithSendGrid,
+  sendEmailWithResend
 };

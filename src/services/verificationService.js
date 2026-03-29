@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { getFromEmail, sendEmailWithSendGrid } = require('../config/emailConfig');
+const { getFromEmail, sendEmailWithResend } = require('../config/emailConfig');
 const { generateVerificationEmail, generateVerificationEmailText } = require('../templates/verificationEmail');
 const { EmailVerification, User } = require('../models');
 const { Op } = require('sequelize');
@@ -115,23 +115,23 @@ class VerificationService {
       const mailOptions = {
         from: fromEmail,
         to: email,
-        subject: 'TEAMITAKA 이메일 인증번호',
+        subject: '[티미타카] 인증번호를 입력해주세요',
         html: generateVerificationEmail(code, email),
         text: generateVerificationEmailText(code)
       };
 
       console.log(`[SERVICE] 이메일 옵션 준비 완료: ${email}`);
 
-      // SendGrid Web API로 이메일 발송 (Render는 SMTP 차단)
-      console.log(`[SERVICE] SendGrid Web API로 이메일 발송 시도: ${email}`);
-      const result = await sendEmailWithSendGrid(mailOptions);
-      console.log(`[SERVICE] SendGrid 이메일 발송 성공: ${email}, Response: ${JSON.stringify(result[0]?.statusCode || 'N/A')}`);
-      return { messageId: result[0]?.headers?.['x-message-id'] || 'sent' };
+      // Resend API로 이메일 발송
+      console.log(`[SERVICE] Resend API로 이메일 발송 시도: ${email}`);
+      const result = await sendEmailWithResend(mailOptions);
+      console.log(`[SERVICE] Resend 이메일 발송 성공: ${email}, Response: ${JSON.stringify(result)}`);
+      return { messageId: result?.id || 'sent' };
     } catch (error) {
       console.error(`[SERVICE] 이메일 발송 중 오류: ${email}`);
       console.error(`[SERVICE] 오류 상세:`, error);
       console.error(`[SERVICE] 오류 스택:`, error.stack);
-      console.error(`[SERVICE] 환경 변수 확인: SENDGRID_API_KEY=${process.env.SENDGRID_API_KEY ? 'SET' : 'NOT_SET'}, EMAIL_USER=${process.env.EMAIL_USER || 'NOT_SET'}`);
+      console.error(`[SERVICE] 환경 변수 확인: RESEND_API_KEY=${process.env.RESEND_API_KEY ? 'SET' : 'NOT_SET'}, EMAIL_FROM=${process.env.EMAIL_FROM || 'NOT_SET'}`);
       throw new Error('이메일 발송에 실패했습니다.');
     }
   }

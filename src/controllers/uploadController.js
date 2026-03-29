@@ -1,4 +1,4 @@
-const { supabase } = require('../config/supabase');
+const { getSupabaseAdmin } = require('../config/supabaseAdmin');
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
@@ -47,13 +47,14 @@ const uploadRecruitmentImage = async (req, res) => {
     }
 
     try {
+      const supabaseAdmin = getSupabaseAdmin();
       const file = req.file;
       const fileExt = path.extname(file.originalname);
       const fileName = `${uuidv4()}${fileExt}`;
       const filePath = `recruitments/${fileName}`;
 
       // Supabase Storage에 업로드
-      const { data, error } = await supabase.storage
+      const { data, error } = await supabaseAdmin.storage
         .from(process.env.SUPABASE_STORAGE_BUCKET)
         .upload(filePath, file.buffer, {
           contentType: file.mimetype,
@@ -71,7 +72,7 @@ const uploadRecruitmentImage = async (req, res) => {
       }
 
       // 공개 URL 생성
-      const { data: publicUrlData } = supabase.storage
+      const { data: publicUrlData } = supabaseAdmin.storage
         .from(process.env.SUPABASE_STORAGE_BUCKET)
         .getPublicUrl(filePath);
 
@@ -125,13 +126,14 @@ const uploadProfileImage = async (req, res) => {
     }
 
     try {
+      const supabaseAdmin = getSupabaseAdmin();
       const file = req.file;
       const fileExt = path.extname(file.originalname);
       const fileName = `${uuidv4()}${fileExt}`;
       const filePath = `profiles/${fileName}`;
 
       // Supabase Storage에 업로드
-      const { data, error } = await supabase.storage
+      const { data, error } = await supabaseAdmin.storage
         .from(process.env.SUPABASE_STORAGE_BUCKET)
         .upload(filePath, file.buffer, {
           contentType: file.mimetype,
@@ -149,7 +151,7 @@ const uploadProfileImage = async (req, res) => {
       }
 
       // 공개 URL 생성
-      const { data: publicUrlData } = supabase.storage
+      const { data: publicUrlData } = supabaseAdmin.storage
         .from(process.env.SUPABASE_STORAGE_BUCKET)
         .getPublicUrl(filePath);
 

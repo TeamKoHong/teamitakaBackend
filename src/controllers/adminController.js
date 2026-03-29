@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { jwtSecret } = require("../config/authConfig"); // adminEmail, adminPassword 제거
+const { jwtSecret, jwtIssuer } = require("../config/authConfig"); // adminEmail, adminPassword 제거
 const axios = require("axios");
 const { VerifiedEmail, Admin } = require("../models"); // Admin 모델 추가
 
@@ -12,17 +12,21 @@ const loginAdmin = async (req, res) => {
     // DB에서 관리자 계정 조회
     const admin = await Admin.findOne({ where: { email } });
     if (!admin || admin.role !== "ADMIN") {
-      return res.status(403).json({ error: "관리자 계정이 아닙니다." });
+      return res.status(401).json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." });
     }
 
     // 비밀번호 비교
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
-      return res.status(401).json({ error: "비밀번호가 올바르지 않습니다." });
+      return res.status(401).json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." });
     }
 
     // JWT 발급
-    const token = jwt.sign({ email, role: "ADMIN" }, jwtSecret, { expiresIn: "12h" });
+    const token = jwt.sign(
+      { adminId: admin.id, email, role: "ADMIN" },
+      jwtSecret,
+      { expiresIn: "12h", issuer: jwtIssuer }
+    );
     res.json({ token, message: "관리자 로그인 성공" });
   } catch (error) {
     console.error("🚨 관리자 로그인 오류:", error.message);

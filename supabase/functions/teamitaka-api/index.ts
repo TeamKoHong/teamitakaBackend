@@ -26,6 +26,14 @@ function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+async function sha256Hex(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 // 이메일 형식 검증
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,7 +51,6 @@ serve(async (req) => {
     const path = url.pathname;
 
     console.log(`[${req.method}] ${path}`);
-    console.log('Headers:', Object.fromEntries(req.headers.entries()));
 
     // Health check endpoint
     if (path === '/api/health') {
@@ -155,7 +162,7 @@ serve(async (req) => {
           email: email,
           purpose: 'signup',
           jti: crypto.randomUUID(),
-          code_hash: verificationCode, // 실제로는 해시화해야 하지만 테스트용
+          code_hash: await sha256Hex(verificationCode),
           expires_at: expiresAt.toISOString(),
           attempt_count: 0,
           created_ip: req.headers.get('x-forwarded-for') || 'unknown',
@@ -179,11 +186,7 @@ serve(async (req) => {
         );
       }
 
-      console.log(`인증 코드 생성 완료: ${verificationCode}`);
-
-      // TODO: 실제 이메일 발송 (SendGrid 연동)
-      // 현재는 콘솔에 출력
-      console.log(`📧 이메일 발송 예정: ${email}, 코드: ${verificationCode}`);
+      console.log(`인증 코드 생성 완료: ${email}`);
 
       return new Response(
         JSON.stringify({ 
@@ -231,7 +234,7 @@ serve(async (req) => {
         .from('email_verifications')
         .select('*')
         .eq('email', email)
-        .eq('code_hash', code)
+        .eq('code_hash', await sha256Hex(code))
         .is('consumed_at', null)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })

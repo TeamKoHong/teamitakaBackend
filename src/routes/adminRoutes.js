@@ -1,12 +1,13 @@
 const express = require("express");
 const adminController = require("../controllers/adminController");
 const adminMiddleware = require("../middlewares/adminMiddleware");
+const { loginRateLimit } = require("../middlewares/authRateLimit");
 const { transitionExpiredProjects } = require("../jobs/projectStatusJob");
 
 const router = express.Router();
 
 // 🔐 관리자 로그인 (JWT 발급)
-router.post("/login", adminController.loginAdmin);
+router.post("/login", loginRateLimit, adminController.loginAdmin);
 
 // 🔍 인증된 유저 목록 조회 (관리자 전용)
 router.get("/certified-users", adminMiddleware, adminController.getCertifiedUsers);
