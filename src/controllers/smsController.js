@@ -121,11 +121,11 @@ exports.verifySmsCode = async (req, res) => {
     }
 
     // 3. 인증번호 형식 검증
-    if (code.length !== 4 || !/^\d{4}$/.test(code)) {
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
       return res.status(400).json({
         success: false,
         error: 'INVALID_CODE_FORMAT',
-        message: '4자리 숫자 인증번호를 입력해주세요.'
+        message: '6자리 숫자 인증번호를 입력해주세요.'
       });
     }
 

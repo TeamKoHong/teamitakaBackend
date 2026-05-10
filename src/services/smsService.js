@@ -8,7 +8,7 @@ class SmsService {
     this.EXPIRATION_TIME = 3 * 60; // 3분 (초 단위)
     this.VERIFIED_PHONE_TTL = 10 * 60; // 10분
     this.MAX_ATTEMPTS = 5;
-    this.CODE_LENGTH = 4;
+    this.CODE_LENGTH = 6;
 
     // 환경변수 검증
     if (!process.env.SOLAPI_API_KEY || !process.env.SOLAPI_API_SECRET) {
@@ -34,11 +34,11 @@ class SmsService {
   }
 
   /**
-   * 4자리 인증번호 생성
-   * @returns {string} 4자리 숫자 문자열
+   * 6자리 인증번호 생성
+   * @returns {string} 6자리 숫자 문자열
    */
   generateVerificationCode() {
-    return crypto.randomInt(1000, 10000).toString();
+    return crypto.randomInt(100000, 1000000).toString();
   }
 
   /**

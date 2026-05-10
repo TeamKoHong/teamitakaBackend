@@ -10,6 +10,8 @@ router.post("/register", registerRateLimit, authController.register);
 router.post("/login", loginRateLimit, authController.login);
 // ✅ 현재 로그인한 사용자 정보 조회 (인증 필요)
 router.get("/me", authMiddleware, authController.getCurrentUser);
+// ✅ 현재 토큰을 검증하고 새 토큰 발급
+router.post("/refresh", authMiddleware, authController.refreshToken);
 // ✅ 비밀번호 검증 API
 router.post("/validate-password", authController.validatePassword);
 // ✅ Google 소셜 로그인(ID 토큰)

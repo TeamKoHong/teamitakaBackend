@@ -120,7 +120,7 @@ module.exports = {
 
     // 첫 번째 모집글에 4명 지원
     for (let i = 0; i < 4 && i < testUsers.length; i++) {
-      const status = i === 0 ? 'ACCEPTED' : i === 1 ? 'PENDING' : i === 2 ? 'REJECTED' : 'PENDING';
+      const status = i === 0 ? 'APPROVED' : i === 1 ? 'PENDING' : i === 2 ? 'REJECTED' : 'PENDING';
       const appliedDate = new Date(now.getTime() - (i + 1) * 2 * 24 * 60 * 60 * 1000); // 2, 4, 6, 8일 전
 
       applications.push({
@@ -154,7 +154,7 @@ module.exports = {
 
     await queryInterface.bulkInsert('applications', applications, {});
     console.log(`✅ ${applications.length}개의 지원서 생성 완료`);
-    console.log(`📊 ACCEPTED: ${applications.filter(a => a.status === 'ACCEPTED').length}개, PENDING: ${applications.filter(a => a.status === 'PENDING').length}개, REJECTED: ${applications.filter(a => a.status === 'REJECTED').length}개`);
+    console.log(`📊 APPROVED: ${applications.filter(a => a.status === 'APPROVED').length}개, PENDING: ${applications.filter(a => a.status === 'PENDING').length}개, REJECTED: ${applications.filter(a => a.status === 'REJECTED').length}개`);
   },
 
   async down(queryInterface, Sequelize) {

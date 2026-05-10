@@ -8,6 +8,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const { validateUUID } = require("../middlewares/uuidValidationMiddleware");
 const projectPostController = require("../controllers/projectPostController");
 const meetingNotesController = require("../controllers/meetingNotesController");
+const notificationController = require("../controllers/notificationController");
 
 // --- 프로젝트 기본 CRUD ---
 router.post("/", authMiddleware, projectController.createProject);
@@ -47,6 +48,9 @@ router.put("/:project_id/members", authMiddleware, validateUUID('project_id'), m
 
 // --- 즐겨찾기 ---
 router.put("/:project_id/favorite", authMiddleware, validateUUID('project_id'), projectController.toggleProjectFavorite);
+
+// --- 프로젝트 알림 compatibility endpoint ---
+router.get("/:project_id/notifications", authMiddleware, validateUUID('project_id'), notificationController.getProjectNotifications);
 
 // --- 평가 및 게시글 ---
 router.get("/:project_id/eval-targets", authMiddleware, validateUUID('project_id'), projectController.getEvalTargets);

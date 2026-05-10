@@ -1,5 +1,6 @@
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
+const { buildDatabaseConfig, hasRequiredDatabaseConfig } = require("./databaseConfig");
 
 // Force IPv4 DNS resolution (Render doesn't support IPv6)
 const dns = require('dns');
@@ -7,18 +8,13 @@ dns.setDefaultResultOrder('ipv4first');
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
-
-// 환경별 데이터베이스 설정
-// 프로덕션: SUPABASE_* 변수 사용 (PostgreSQL)
-// 개발: DB_* 변수 사용 (MySQL 또는 로컬 PostgreSQL)
-const dbHost = isProduction ? process.env.SUPABASE_DB_HOST : process.env.DB_HOST;
-const dbUser = isProduction ? process.env.SUPABASE_DB_USER : process.env.DB_USER;
-const dbPassword = isProduction ? process.env.SUPABASE_DB_PASSWORD : process.env.DB_PASSWORD;
-const dbName = isProduction ? process.env.SUPABASE_DB_NAME : process.env.DB_NAME;
-const dbPort = isProduction
-  ? (process.env.SUPABASE_DB_PORT || 5432)
-  : (process.env.DB_PORT || 3306);
-const dbDialect = isProduction ? "postgres" : (process.env.DB_DIALECT || "mysql");
+const cliAlignedConfig = buildDatabaseConfig(env);
+const dbHost = cliAlignedConfig.host;
+const dbUser = cliAlignedConfig.username;
+const dbPassword = cliAlignedConfig.password;
+const dbName = cliAlignedConfig.database;
+const dbPort = cliAlignedConfig.port;
+const dbDialect = cliAlignedConfig.dialect;
 
 console.log("🔍 Environment variables:");
 console.log("NODE_ENV:", env);
@@ -39,25 +35,12 @@ const dbConfig = {
   port: dbPort,
   dialect: dbDialect,
   logging: console.log, // 디버깅용 로깅 활성화
-  dialectOptions: dbDialect === "postgres" ? {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    },
-    connectTimeout: 30000, // Increased from 10s to 30s for Render cold starts
-    // Force IPv4 to avoid IPv6 connection issues on Render
-    family: 4,
-  } : {
-    ssl: false,
-    connectTimeout: 30000, // Increased from 10s to 30s
-  },
-  define: {
-    underscored: false
-  }
+  dialectOptions: cliAlignedConfig.dialectOptions,
+  define: cliAlignedConfig.define,
 };
 
 // 필수 환경변수 확인 (앱 시작 시에는 에러를 발생시키지 않음)
-const hasRequiredEnvVars = dbConfig.host && dbConfig.user && dbConfig.password && dbConfig.database;
+const hasRequiredEnvVars = hasRequiredDatabaseConfig(cliAlignedConfig);
 
 if (!hasRequiredEnvVars) {
   console.warn("⚠️  Required database environment variables are missing!");

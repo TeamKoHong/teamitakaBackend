@@ -1,11 +1,13 @@
 const projectPostService = require("../services/projectPostService");
 const { handleError } = require("../utils/errorHandler");
 
+const getAuthenticatedUserId = (req) => req.user?.userId || req.admin?.user_id;
+
 const createPost = async (req, res) => {
   try {
     const { project_id } = req.params;
 
-    const userId = req.user?.userId || req.admin?.user_id;
+    const userId = getAuthenticatedUserId(req);
     if (!userId) {
       return res.status(401).json({ error: "인증된 사용자가 필요합니다." });
     }
@@ -26,7 +28,12 @@ const createPost = async (req, res) => {
 const getPostsByProject = async (req, res) => {
   try {
     const { project_id } = req.params;
-    const posts = await projectPostService.getPostsByProject(project_id);
+    const userId = getAuthenticatedUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "인증된 사용자가 필요합니다." });
+    }
+
+    const posts = await projectPostService.getPostsByProject(project_id, userId);
     res.status(200).json(posts);
   } catch (error) {
     handleError(res, error);
@@ -36,7 +43,12 @@ const getPostsByProject = async (req, res) => {
 const getPostById = async (req, res) => {
   try {
     const { post_id } = req.params;
-    const post = await projectPostService.getPostById(post_id);
+    const userId = getAuthenticatedUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "인증된 사용자가 필요합니다." });
+    }
+
+    const post = await projectPostService.getPostById(post_id, userId);
     res.status(200).json(post);
   } catch (error) {
     handleError(res, error);

@@ -1,11 +1,61 @@
 const { Todo, Project, User } = require("../models");
 const { Op } = require("sequelize");
+const { assertProjectMember, isProjectOwner, sameId } = require("../utils/projectAccess");
+
+const assertTodoActor = (project, todo, userId) => {
+  if (isProjectOwner(project, userId) || sameId(todo.user_id, userId)) {
+    return;
+  }
+
+  const error = new Error("본인에게 할당된 Todo 또는 프로젝트 팀장만 변경할 수 있습니다.");
+  error.status = 403;
+  throw error;
+};
+
+const getMyTodos = async (req, res) => {
+  try {
+    const user_id = req.user?.userId;
+    const { status = 'open', limit = 5, offset = 0 } = req.query;
+    const where = { user_id };
+
+    if (status === 'open') {
+      where.status = { [Op.ne]: 'COMPLETED' };
+    } else if (status !== 'all') {
+      where.status = status.toUpperCase();
+    }
+
+    const result = await Todo.findAndCountAll({
+      where,
+      include: [{
+        model: Project,
+        attributes: ['project_id', 'title', 'status'],
+      }],
+      order: [['created_at', 'DESC']],
+      limit: parseInt(limit, 10),
+      offset: parseInt(offset, 10),
+    });
+
+    res.json({
+      success: true,
+      data: result.rows,
+      items: result.rows,
+      total: result.count,
+      limit: parseInt(limit, 10),
+      offset: parseInt(offset, 10),
+    });
+  } catch (error) {
+    console.error("내 투두 목록 조회 에러:", error);
+    res.status(500).json({ success: false, message: "투두 목록 조회 실패" });
+  }
+};
 
 // 본인의 미완료 투두 가져오기
 const getTodos = async (req, res) => {
   try {
     const { project_id } = req.params;
     const user_id = req.user?.userId;
+
+    await assertProjectMember(project_id, user_id);
 
     const todos = await Todo.findAll({
       where: {
@@ -23,7 +73,7 @@ const getTodos = async (req, res) => {
     res.json(todos);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "투두 목록 조회 실패" });
+    res.status(error.status || 500).json({ message: error.message || "투두 목록 조회 실패" });
   }
 };
 
@@ -34,57 +84,90 @@ const addTodo = async (req, res) => {
     const { title } = req.body;
     const user_id = req.user?.userId;
 
+    if (!title || !String(title).trim()) {
+      return res.status(400).json({ message: "Todo 제목은 필수입니다." });
+    }
+
+    await assertProjectMember(project_id, user_id);
+
     const newTodo = await Todo.create({
       project_id,
       user_id,
-      title,
+      title: String(title).trim(),
       status: "PENDING",
     });
     res.status(201).json(newTodo);
   } catch (error) {
     console.error("투두 생성 에러:", error);
-    res.status(400).json({ message: "투두 생성 실패" });
+    res.status(error.status || 400).json({ message: error.message || "투두 생성 실패" });
   }
 };
 
 // 투두 수정 (상태 토글 등)
 const updateTodo = async (req, res) => {
   try {
-    const { todo_id } = req.params;
+    const { project_id, todo_id } = req.params;
     const { status, title } = req.body;
+    const userId = req.user?.userId;
 
-    const todo = await Todo.findByPk(todo_id);
+    const { project } = await assertProjectMember(project_id, userId);
+
+    const todo = await Todo.findOne({
+      where: { todo_id, project_id },
+    });
     if (!todo) {
       return res.status(404).json({ message: "투두를 찾을 수 없습니다." });
+    }
+
+    assertTodoActor(project, todo, userId);
+
+    const updateData = {};
+    if (status !== undefined) updateData.status = status;
+    if (title !== undefined) updateData.title = title;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "수정할 Todo 정보가 없습니다." });
     }
 
     // 완료 상태로 변경 시 완료 정보 기록
     if (status === 'COMPLETED') {
       await todo.update({
-        status,
+        ...updateData,
         title: title || todo.title,
         completed_at: new Date(),
-        completed_by: req.user?.userId
+        completed_by: userId
       });
     } else {
-      await todo.update({ status, title });
+      await todo.update(updateData);
     }
 
     res.json(todo);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "투두 수정 실패" });
+    res.status(error.status || 500).json({ message: error.message || "투두 수정 실패" });
   }
 };
 
 // 투두 삭제
 const deleteTodo = async (req, res) => {
   try {
-    const { todo_id } = req.params;
-    await Todo.destroy({ where: { todo_id } });
+    const { project_id, todo_id } = req.params;
+    const userId = req.user?.userId;
+
+    const { project } = await assertProjectMember(project_id, userId);
+    const todo = await Todo.findOne({
+      where: { todo_id, project_id },
+    });
+    if (!todo) {
+      return res.status(404).json({ message: "투두를 찾을 수 없습니다." });
+    }
+
+    assertTodoActor(project, todo, userId);
+    await todo.destroy();
+
     res.json({ message: "삭제되었습니다." });
   } catch (error) {
-    res.status(500).json({ message: "투두 삭제 실패" });
+    res.status(error.status || 500).json({ message: error.message || "투두 삭제 실패" });
   }
 };
 
@@ -92,7 +175,10 @@ const deleteTodo = async (req, res) => {
 const getActivityLog = async (req, res) => {
   try {
     const { project_id } = req.params;
+    const userId = req.user?.userId;
     const { limit = 5, offset = 0 } = req.query;
+
+    await assertProjectMember(project_id, userId);
 
     const logs = await Todo.findAndCountAll({
       where: {
@@ -117,7 +203,7 @@ const getActivityLog = async (req, res) => {
     });
   } catch (error) {
     console.error("활동 로그 조회 에러:", error);
-    res.status(500).json({ message: "활동 로그 조회 실패" });
+    res.status(error.status || 500).json({ message: error.message || "활동 로그 조회 실패" });
   }
 };
 
@@ -160,6 +246,7 @@ const deleteActivityLog = async (req, res) => {
 };
 
 module.exports = {
+  getMyTodos,
   getTodos,
   addTodo,
   updateTodo,

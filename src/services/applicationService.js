@@ -1,5 +1,12 @@
 const { Application, ApplicationPortfolio, Recruitment, User, Project, sequelize } = require("../models");
 const pushService = require("./pushService");
+const { sameId } = require("../utils/projectAccess");
+
+const makeAccessError = (message, status = 403) => {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+};
 
 const applyToRecruitment = async (user_id, recruitment_id, introduction, portfolio_project_ids = []) => {
   const recruitment = await Recruitment.findByPk(recruitment_id);
@@ -102,7 +109,16 @@ const applyToRecruitment = async (user_id, recruitment_id, introduction, portfol
   }
 };
 
-const getApplicants = async (recruitment_id) => {
+const getApplicants = async (recruitment_id, actor_user_id) => {
+  const recruitment = await Recruitment.findByPk(recruitment_id);
+  if (!recruitment) {
+    throw makeAccessError("모집공고를 찾을 수 없습니다.", 404);
+  }
+
+  if (!sameId(recruitment.user_id, actor_user_id)) {
+    throw makeAccessError("모집글 작성자만 지원자 목록을 조회할 수 있습니다.", 403);
+  }
+
   return await Application.findAll({
     where: { recruitment_id },
     include: [
@@ -133,13 +149,21 @@ const getApplicants = async (recruitment_id) => {
   });
 };
 
-const updateApplicationStatus = async (application_id, status) => {
+const updateApplicationStatus = async (application_id, status, actor_user_id = null) => {
   const application = await Application.findByPk(application_id);
   if (!application) throw new Error("지원 정보를 찾을 수 없습니다.");
 
+  const recruitment = await Recruitment.findByPk(application.recruitment_id, {
+    include: [{ model: Project, as: "Project", attributes: ["project_id", "title"] }],
+  });
+
+  if (actor_user_id && recruitment?.user_id !== actor_user_id) {
+    throw new Error("모집글 작성자만 지원 상태를 변경할 수 있습니다.");
+  }
+
   // 이미 같은 상태인 경우 중복 처리 방지
   if (application.status === status) {
-    if (status === "ACCEPTED") {
+    if (status === "APPROVED") {
       throw new Error("이미 승인된 지원입니다.");
     }
     if (status === "REJECTED") {
@@ -152,13 +176,8 @@ const updateApplicationStatus = async (application_id, status) => {
   application.status = status;
   await application.save();
 
-  // 모집공고 지원자 수 다시 확인
-  const recruitment = await Recruitment.findByPk(application.recruitment_id, {
-    include: [{ model: Project, as: "Project", attributes: ["project_id", "title"] }],
-  });
-
   // 승인 시 지원자에게 푸시 알림 전송
-  if (status === "ACCEPTED") {
+  if (status === "APPROVED") {
     try {
       await pushService.sendToUser(
         application.user_id,

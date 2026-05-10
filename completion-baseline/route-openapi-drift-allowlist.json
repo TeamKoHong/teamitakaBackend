@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-05-08",
+  "allowed": [
+    {
+      "side": "onlyInExpress",
+      "method": "POST",
+      "path": "/dev/test-token",
+      "reason": "Development-only route behind ENABLE_DEV_ROUTES. It should not be part of public OpenAPI."
+    }
+  ]
+}

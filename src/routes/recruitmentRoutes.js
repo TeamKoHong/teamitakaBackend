@@ -17,8 +17,8 @@ router.get("/mine", authMiddleware, recruitmentController.getMyRecruitments);
 // 모집공고별 지원자 목록 조회 (RESTful 설계)
 router.get("/:recruitment_id/applications", authMiddleware, validateUUID('recruitment_id'), applicationController.getApplicants);
 
-// 모집공고 상세 조회
-router.get("/:recruitment_id", authMiddleware, validateUUID('recruitment_id'), recruitmentController.getRecruitmentById);
+// 모집공고 상세 조회 (공개 조회, 로그인 시 스크랩/조회 이력 포함)
+router.get("/:recruitment_id", optionalAuthMiddleware, validateUUID('recruitment_id'), recruitmentController.getRecruitmentById);
 // 모집공고 생성
 router.post("/", authMiddleware, validateInput(createRecruitmentSchema), recruitmentController.createRecruitment);
 router.post("/:recruitment_id/scrap", authMiddleware, validateUUID('recruitment_id'), recruitmentController.toggleScrap);
