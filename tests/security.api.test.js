@@ -116,15 +116,28 @@ describe("Security hardening", () => {
     ).toBe(true);
   });
 
+  test("recruitment detail is public read while mutations remain authenticated", () => {
+    const recruitmentRoutes = require("../src/routes/recruitmentRoutes");
+    const listRoute = findRouteLayer(recruitmentRoutes, "/", "get");
+    const detailRoute = findRouteLayer(recruitmentRoutes, "/:recruitment_id", "get");
+    const updateRoute = findRouteLayer(recruitmentRoutes, "/:recruitment_id", "put");
+    const deleteRoute = findRouteLayer(recruitmentRoutes, "/:recruitment_id", "delete");
+
+    expect(listRoute.route.stack[0].handle.name).toBe("optionalAuthMiddleware");
+    expect(detailRoute.route.stack[0].handle.name).toBe("optionalAuthMiddleware");
+    expect(updateRoute.route.stack[0].handle.name).toBe("authenticateToken");
+    expect(deleteRoute.route.stack[0].handle.name).toBe("authenticateToken");
+  });
+
   test("review queries do not select reviewer or reviewee emails", async () => {
     const { sequelize } = require("../src/models");
     const reviewService = require("../src/services/reviewService");
 
     sequelize.query.mockClear();
-    sequelize.query.mockResolvedValue([]);
+    sequelize.query.mockResolvedValue([{ allowed: 1 }]);
 
-    await reviewService.getReviewsByUser("user-1");
-    await reviewService.getReviewsByProject("project-1");
+    await reviewService.getReviewsByUser("user-1", "user-1");
+    await reviewService.getReviewsByProject("project-1", "user-1");
 
     const sql = sequelize.query.mock.calls.map(([statement]) => statement).join("\n");
     expect(sql).not.toMatch(/reviewer_email/);

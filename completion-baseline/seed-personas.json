@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-05-08",
+  "purpose": "Deterministic persona and data baseline for frontend, backend, Figma, and smoke-test harnesses.",
+  "personas": [
+    {
+      "id": "owner",
+      "role": "project_owner",
+      "schoolVerification": "verified",
+      "university": "고려대학교",
+      "requiredStates": ["canCreateRecruitment", "canApproveApplication", "canEditProject"]
+    },
+    {
+      "id": "applicant",
+      "role": "student",
+      "schoolVerification": "verified",
+      "university": "고려대학교",
+      "requiredStates": ["canApply", "hasPendingApplication", "hasApprovedApplication"]
+    },
+    {
+      "id": "teammate",
+      "role": "project_member",
+      "schoolVerification": "verified",
+      "university": "고려대학교",
+      "requiredStates": ["hasTodo", "hasMeeting", "hasSchedule", "canReviewMember"]
+    },
+    {
+      "id": "otherSchool",
+      "role": "student",
+      "schoolVerification": "verified",
+      "university": "타대학교",
+      "requiredStates": ["schoolFilterExcluded", "cannotAccessSchoolScopedData"]
+    },
+    {
+      "id": "unverified",
+      "role": "student",
+      "schoolVerification": "unverified",
+      "university": null,
+      "requiredStates": ["canLogin", "mustCompleteVerification"]
+    },
+    {
+      "id": "admin",
+      "role": "admin",
+      "schoolVerification": "not_applicable",
+      "university": null,
+      "requiredStates": ["canRunOperationalReadOnlyChecks"]
+    }
+  ],
+  "dataSets": [
+    {
+      "id": "active-recruitment-with-applications",
+      "journey": "REQ-MATCH-001",
+      "requiredRecords": ["recruitment:active", "application:pending", "application:approved", "application:rejected"]
+    },
+    {
+      "id": "project-management-active",
+      "journey": "REQ-PROJECT-001",
+      "requiredRecords": ["project:ongoing", "todo:open", "todo:completed", "activityLog:todoCompleted", "meeting:existing", "schedule:upcoming"]
+    },
+    {
+      "id": "project-management-completed",
+      "journey": "REQ-EVAL-001",
+      "requiredRecords": ["project:completed", "review:pending", "review:submitted", "reviewSummary:received"]
+    },
+    {
+      "id": "notification-baseline",
+      "journey": "REQ-RELEASE-001",
+      "requiredRecords": ["notification:unread", "notification:read"]
+    }
+  ],
+  "smokeCases": [
+    {
+      "id": "SMOKE-AUTH-READ",
+      "mode": "read-only",
+      "persona": "owner",
+      "steps": ["POST /auth/login", "GET /auth/me", "GET /profile/detail"]
+    },
+    {
+      "id": "SMOKE-MATCH-READ",
+      "mode": "read-only",
+      "persona": "applicant",
+      "steps": ["GET /recruitments", "GET /recruitments/{recruitment_id}"]
+    },
+    {
+      "id": "SMOKE-PROJECT-WRITE",
+      "mode": "staging-write",
+      "persona": "teammate",
+      "steps": ["POST /projects/{project_id}/todo", "PUT /projects/{project_id}/activity-log/{todo_id}", "POST /projects/{project_id}/meetings"]
+    },
+    {
+      "id": "SMOKE-EVAL-WRITE",
+      "mode": "staging-write",
+      "persona": "teammate",
+      "steps": ["POST /reviews", "POST /reviews duplicate should fail deterministically"]
+    }
+  ]
+}

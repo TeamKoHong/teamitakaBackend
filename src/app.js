@@ -28,6 +28,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const verificationRoutes = require("./routes/verificationRoutes");
 const smsRoutes = require("./routes/smsRoutes");
 const findIdRoutes = require("./routes/findIdRoutes");
+const todoRoutes = require("./routes/todoRoutes");
 
 // ✅ [추가됨] 일정 라우트
 const scheduleRoutes = require("./routes/scheduleRoutes");
@@ -115,6 +116,7 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/todos", todoRoutes);
 app.use("/api/auth", verificationRoutes);
 app.use("/api/auth/sms", smsRoutes);
 app.use("/api/auth/find-id", findIdRoutes);
@@ -123,6 +125,7 @@ app.use("/api/auth/find-id", findIdRoutes);
 // 프론트엔드 Calendar.jsx -> /api/schedule 사용
 // Todo API는 /api/projects/:project_id/todo 경로로 projectRoutes에서 처리
 app.use("/api/schedule", scheduleRoutes);
+app.use("/api/schedules", scheduleRoutes);
 
 // 기본 라우트
 app.get("/", (req, res) => {

@@ -121,10 +121,27 @@ const getUnreadCount = async (req, res) => {
   }
 };
 
+const getProjectNotifications = async (req, res) => {
+  try {
+    // Notification currently has no project_id column. Keep this endpoint as a
+    // safe compatibility contract for project detail UI until project-scoped
+    // notification storage is introduced.
+    res.status(200).json({
+      success: true,
+      data: [],
+      total: 0,
+      projectId: req.params.project_id,
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 module.exports = {
   getNotifications,
   markAsRead,
   markAllAsRead,
   deleteNotification,
   getUnreadCount,
+  getProjectNotifications,
 };

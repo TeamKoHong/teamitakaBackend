@@ -55,13 +55,13 @@ module.exports = {
       const selectedRecruitments = recruitments.slice(0, Math.min(applicationCount, recruitments.length));
 
       selectedRecruitments.forEach((recruitment, appIndex) => {
-        // 40% PENDING, 40% ACCEPTED, 20% REJECTED
+        // 40% PENDING, 40% APPROVED, 20% REJECTED
         let status;
         const rand = (userIndex * 10 + appIndex) % 10;
         if (rand < 4) {
           status = 'PENDING';
         } else if (rand < 8) {
-          status = 'ACCEPTED';
+          status = 'APPROVED';
         } else {
           status = 'REJECTED';
         }
@@ -85,7 +85,7 @@ module.exports = {
     await queryInterface.bulkInsert('applications', applications, {});
 
     console.log(`✅ ${applications.length}개의 지원서 생성 완료`);
-    console.log(`📊 PENDING: ${applications.filter(a => a.status === 'PENDING').length}개, ACCEPTED: ${applications.filter(a => a.status === 'ACCEPTED').length}개, REJECTED: ${applications.filter(a => a.status === 'REJECTED').length}개`);
+    console.log(`📊 PENDING: ${applications.filter(a => a.status === 'PENDING').length}개, APPROVED: ${applications.filter(a => a.status === 'APPROVED').length}개, REJECTED: ${applications.filter(a => a.status === 'REJECTED').length}개`);
   },
 
   async down(queryInterface, Sequelize) {

@@ -26,12 +26,12 @@ const verifySmsCodeSchema = Joi.object({
       'string.guid': '유효한 sessionId 형식이 아닙니다.'
     }),
   code: Joi.string()
-    .length(4)
-    .pattern(/^\d{4}$/)
+    .length(6)
+    .pattern(/^\d{6}$/)
     .required()
     .messages({
-      'string.length': '인증번호는 4자리여야 합니다.',
-      'string.pattern.base': '인증번호는 4자리 숫자여야 합니다.',
+      'string.length': '인증번호는 6자리여야 합니다.',
+      'string.pattern.base': '인증번호는 6자리 숫자여야 합니다.',
       'any.required': '인증번호를 입력해주세요.',
       'string.empty': '인증번호를 입력해주세요.'
     })

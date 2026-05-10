@@ -85,18 +85,20 @@ const applyToRecruitment = async (req, res) => {
 
 const getApplicants = async (req, res) => {
   try {
-    const { recruitment_id } = req.params;  // URL 경로에서 recruitment_id 파라미터 받기
-    const applicants = await applicationService.getApplicants(recruitment_id);
-    res.status(200).json(applicants);  // 정상 응답 반환
+    const { recruitment_id } = req.params;
+    const actor_user_id = req.user.userId;
+    const applicants = await applicationService.getApplicants(recruitment_id, actor_user_id);
+    res.status(200).json(applicants);
   } catch (error) {
-    handleError(res, error);  // 에러 처리
+    handleError(res, error);
   }
 };
 
 const approveApplication = async (req, res) => {
   try {
     const { application_id } = req.params;
-    const updatedApplication = await applicationService.updateApplicationStatus(application_id, "ACCEPTED");
+    const actor_user_id = req.user.userId;
+    const updatedApplication = await applicationService.updateApplicationStatus(application_id, "APPROVED", actor_user_id);
     res.status(200).json({
       success: true,
       message: "지원이 승인되었습니다.",
@@ -106,7 +108,7 @@ const approveApplication = async (req, res) => {
     if (error.message === "이미 승인된 지원입니다.") {
       return res.status(409).json({
         success: false,
-        error: "ALREADY_ACCEPTED",
+        error: "ALREADY_APPROVED",
         message: error.message
       });
     }
@@ -117,6 +119,13 @@ const approveApplication = async (req, res) => {
         message: error.message
       });
     }
+    if (error.message === "모집글 작성자만 지원 상태를 변경할 수 있습니다.") {
+      return res.status(403).json({
+        success: false,
+        error: "FORBIDDEN",
+        message: error.message
+      });
+    }
     handleError(res, error);
   }
 };
@@ -124,9 +133,24 @@ const approveApplication = async (req, res) => {
 const rejectApplication = async (req, res) => {
   try {
     const { application_id } = req.params;
-    const updatedApplication = await applicationService.updateApplicationStatus(application_id, "REJECTED");
+    const actor_user_id = req.user.userId;
+    const updatedApplication = await applicationService.updateApplicationStatus(application_id, "REJECTED", actor_user_id);
     res.status(200).json({ message: "지원이 거절되었습니다.", updatedApplication });
   } catch (error) {
+    if (error.message === "모집글 작성자만 지원 상태를 변경할 수 있습니다.") {
+      return res.status(403).json({
+        success: false,
+        error: "FORBIDDEN",
+        message: error.message
+      });
+    }
+    if (error.message === "지원 정보를 찾을 수 없습니다.") {
+      return res.status(404).json({
+        success: false,
+        error: "APPLICATION_NOT_FOUND",
+        message: error.message
+      });
+    }
     handleError(res, error);
   }
 };

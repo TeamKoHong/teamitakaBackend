@@ -1,5 +1,6 @@
-const { Project, Recruitment, User, Todo, Timeline, ProjectMembers, Application, sequelize } = require("../models");
+const { Project, Recruitment, User, Todo, Timeline, ProjectMembers, sequelize } = require("../models");
 const projectService = require("../services/projectService");
+const { assertProjectLeaderRecord, assertProjectMemberRecord, sameId } = require("../utils/projectAccess");
 
 const createProject = async (req, res) => {
   try {
@@ -65,10 +66,12 @@ const getProjectById = async (req, res) => {
       return res.status(404).json({ message: "프로젝트를 찾을 수 없습니다." });
     }
 
+    await assertProjectMemberRecord(project, req.user?.userId);
+
     return res.status(200).json(project);
   } catch (err) {
     console.error("🔥 Sequelize Error:", err.message);
-    return res.status(500).json({ message: "서버 오류", error: err.message });
+    return res.status(err.status || 500).json({ message: err.message || "서버 오류", error: err.message });
   }
 };
 
@@ -78,22 +81,26 @@ const getCompletedProjects = async (req, res) => {
     const projects = await Project.findAll({ where: { status: "COMPLETED" } });
     res.json(projects);
   } catch (err) {
+    console.error("🔥 getCompletedProjects Error:", err.message);
     res.status(500).json({ message: "완료된 프로젝트 조회 실패" });
   }
 };
 
 // updateProject
-const updateProject = async (project_id, updateData) => {
-  const project = await Project.findByPk(project_id);
-  if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
+const updateProject = async (req, res) => {
+  try {
+    const { project_id } = req.params;
+    const userId = req.user?.userId;
+    const project = await Project.findByPk(project_id);
 
-  // status가 "COMPLETED"일 경우, end_date가 없으면 현재 날짜로 설정
-  if (updateData.status === "COMPLETED" && !project.end_date) {
-    updateData.end_date = new Date();
+    await assertProjectLeaderRecord(project, userId, "팀장만 프로젝트를 수정할 수 있습니다.");
+
+    const updatedProject = await projectService.updateProject(project_id, { ...req.body });
+    return res.status(200).json(updatedProject);
+  } catch (err) {
+    console.error("🔥 updateProject Error:", err.message);
+    return res.status(err.status || 500).json({ message: err.message || "프로젝트 수정 실패", error: err.message });
   }
-
-  await project.update(updateData);
-  return project;
 };
 
 // getMyProjects - 내 프로젝트 조회 (status, limit, offset, evaluation_status, isFavorite 지원)
@@ -331,6 +338,15 @@ const createProjectFromRecruitment = async (req, res) => {
       return res.status(404).json({ error: "모집공고를 찾을 수 없습니다." });
     }
 
+    if (!sameId(recruitment.user_id, req.user?.userId)) {
+      await transaction.rollback();
+      return res.status(403).json({
+        success: false,
+        error: "FORBIDDEN",
+        message: "모집글 작성자만 프로젝트를 시작할 수 있습니다."
+      });
+    }
+
     // 3. 이미 프로젝트로 전환되었는지 확인
     if (recruitment.project_id) {
       await transaction.rollback();
@@ -433,6 +449,8 @@ const getEvalTargets = async (req, res) => {
     if (!project) {
       return res.status(404).json({ error: "프로젝트를 찾을 수 없습니다." });
     }
+
+    await assertProjectMemberRecord(project, reviewer_id);
 
     // 평가 대상 목록 조회 (자기 자신 제외)
     const query = `

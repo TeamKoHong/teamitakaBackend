@@ -239,6 +239,40 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.refreshToken = async (req, res) => {
+  try {
+    const { userId, email, role } = req.user || {};
+
+    if (!userId || !email) {
+      return res.status(401).json({
+        success: false,
+        error: "INVALID_TOKEN",
+        message: "토큰 정보가 올바르지 않습니다.",
+      });
+    }
+
+    const token = jwt.sign(
+      { userId, email, role: role || "MEMBER" },
+      jwtSecret,
+      { expiresIn: "1d", issuer: jwtIssuer }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
+    return res.status(200).json({
+      success: true,
+      token,
+    });
+  } catch (error) {
+    console.error("🚨 토큰 갱신 오류:", error);
+    return res.status(500).json({ error: "서버 오류 발생" });
+  }
+};
+
 exports.validatePassword = (req, res) => {
   const { password } = req.body;
   if (!password) {

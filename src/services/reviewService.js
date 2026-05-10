@@ -1,9 +1,80 @@
 const { sequelize } = require("../models");
 const { QueryTypes } = require("sequelize");
 
+const sameId = (left, right) => Boolean(left && right && String(left) === String(right));
+
+const makeReviewError = (message, status = 403, code = "FORBIDDEN") => {
+  const error = new Error(message);
+  error.status = status;
+  error.code = code;
+  return error;
+};
+
 class ReviewService {
+  async assertProjectParticipant(project_id, user_id, message = "프로젝트 멤버만 접근할 수 있습니다.") {
+    if (!project_id || !user_id) {
+      throw makeReviewError("프로젝트와 사용자 정보가 필요합니다.", 400, "INVALID_INPUT");
+    }
+
+    const participants = await sequelize.query(
+      `SELECT 1
+       FROM projects p
+       WHERE p.project_id = :project_id AND p.user_id = :user_id
+       UNION
+       SELECT 1
+       FROM project_members pm
+       WHERE pm.project_id = :project_id AND pm.user_id = :user_id
+       LIMIT 1`,
+      {
+        replacements: { project_id, user_id },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!participants || participants.length === 0) {
+      throw makeReviewError(message, 403, "FORBIDDEN");
+    }
+  }
+
   async createReview(data) {
     try {
+      if (sameId(data.reviewer_id, data.reviewee_id)) {
+        throw makeReviewError("본인은 평가할 수 없습니다.", 400, "SELF_REVIEW");
+      }
+
+      await this.assertProjectParticipant(
+        data.project_id,
+        data.reviewer_id,
+        "프로젝트 멤버만 평가할 수 있습니다."
+      );
+      await this.assertProjectParticipant(
+        data.project_id,
+        data.reviewee_id,
+        "같은 프로젝트 멤버만 평가할 수 있습니다."
+      );
+
+      const existingReviews = await sequelize.query(
+        `SELECT review_id FROM reviews
+         WHERE project_id = :project_id
+           AND reviewer_id = :reviewer_id
+           AND reviewee_id = :reviewee_id
+         LIMIT 1`,
+        {
+          replacements: {
+            project_id: data.project_id,
+            reviewer_id: data.reviewer_id,
+            reviewee_id: data.reviewee_id,
+          },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (existingReviews.length > 0) {
+        const error = new Error("이미 평가를 제출했습니다.");
+        error.code = "DUPLICATE_REVIEW";
+        throw error;
+      }
+
       // Raw SQL INSERT
       const result = await sequelize.query(
         `INSERT INTO reviews (
@@ -30,8 +101,12 @@ class ReviewService {
     }
   }
 
-  async getReviewsByUser(user_id) {
+  async getReviewsByUser(user_id, actor_user_id = user_id) {
     try {
+      if (!sameId(user_id, actor_user_id)) {
+        throw makeReviewError("본인의 리뷰만 조회할 수 있습니다.", 403, "FORBIDDEN");
+      }
+
       // Raw SQL SELECT with JOIN
       const reviews = await sequelize.query(
         `SELECT
@@ -54,8 +129,14 @@ class ReviewService {
     }
   }
 
-  async getReviewsByProject(project_id) {
+  async getReviewsByProject(project_id, actor_user_id) {
     try {
+      await this.assertProjectParticipant(
+        project_id,
+        actor_user_id,
+        "프로젝트 멤버만 리뷰를 조회할 수 있습니다."
+      );
+
       // Raw SQL SELECT with multiple JOINs
       const reviews = await sequelize.query(
         `SELECT
@@ -100,13 +181,25 @@ class ReviewService {
     }
   }
 
-  async getReviewsByReviewer(project_id, reviewer_id) {
+  async getReviewsByReviewer(project_id, reviewer_id, actor_user_id) {
     try {
+      await this.assertProjectParticipant(
+        project_id,
+        actor_user_id,
+        "프로젝트 멤버만 리뷰를 조회할 수 있습니다."
+      );
+
+      if (!sameId(reviewer_id, actor_user_id)) {
+        throw makeReviewError("본인의 평가 제출 현황만 조회할 수 있습니다.", 403, "FORBIDDEN");
+      }
+
       const reviews = await sequelize.query(
         `SELECT
           r.review_id,
           r.reviewee_id,
           u.username as reviewee_username,
+          r.role_description,
+          pm.task as reviewee_task,
           r.ability,
           r.effort,
           r.commitment,
@@ -117,6 +210,8 @@ class ReviewService {
           r.created_at
         FROM reviews r
         JOIN users u ON r.reviewee_id = u.user_id
+        LEFT JOIN project_members pm
+          ON pm.project_id = r.project_id AND pm.user_id = r.reviewee_id
         WHERE r.project_id = :project_id AND r.reviewer_id = :reviewer_id
         ORDER BY r.created_at DESC`,
         {
@@ -132,8 +227,14 @@ class ReviewService {
     }
   }
 
-  async getProjectReviewSummary(project_id) {
+  async getProjectReviewSummary(project_id, actor_user_id) {
     try {
+      await this.assertProjectParticipant(
+        project_id,
+        actor_user_id,
+        "프로젝트 멤버만 리뷰 요약을 조회할 수 있습니다."
+      );
+
       const summary = await sequelize.query(
         `SELECT
           COUNT(*) as total_reviews,

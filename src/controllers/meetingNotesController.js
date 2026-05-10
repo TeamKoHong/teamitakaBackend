@@ -8,7 +8,8 @@ const { handleError } = require("../utils/errorHandler");
 const getMeetingNotes = async (req, res) => {
   try {
     const { project_id } = req.params;
-    const meetings = await meetingNotesService.getMeetingNotesByProject(project_id);
+    const user_id = req.user.userId;
+    const meetings = await meetingNotesService.getMeetingNotesByProject(project_id, user_id);
 
     res.status(200).json({
       success: true,
@@ -29,8 +30,9 @@ const getMeetingNotes = async (req, res) => {
  */
 const getMeetingNoteById = async (req, res) => {
   try {
-    const { meeting_id } = req.params;
-    const meeting = await meetingNotesService.getMeetingNoteById(meeting_id);
+    const { project_id, meeting_id } = req.params;
+    const user_id = req.user.userId;
+    const meeting = await meetingNotesService.getMeetingNoteById(project_id, meeting_id, user_id);
 
     if (!meeting) {
       return res.status(404).json({
@@ -88,10 +90,11 @@ const createMeetingNote = async (req, res) => {
  */
 const updateMeetingNote = async (req, res) => {
   try {
-    const { meeting_id } = req.params;
+    const { project_id, meeting_id } = req.params;
+    const actor_user_id = req.user.userId;
     const { title, content, meeting_date } = req.body;
 
-    const meeting = await meetingNotesService.updateMeetingNote(meeting_id, {
+    const meeting = await meetingNotesService.updateMeetingNote(project_id, meeting_id, actor_user_id, {
       title,
       content,
       meeting_date
@@ -119,9 +122,10 @@ const updateMeetingNote = async (req, res) => {
  */
 const deleteMeetingNote = async (req, res) => {
   try {
-    const { meeting_id } = req.params;
+    const { project_id, meeting_id } = req.params;
+    const actor_user_id = req.user.userId;
 
-    await meetingNotesService.deleteMeetingNote(meeting_id);
+    await meetingNotesService.deleteMeetingNote(project_id, meeting_id, actor_user_id);
 
     res.status(200).json({
       success: true,
