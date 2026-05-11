@@ -101,3 +101,8 @@ scripts/verify-school-filter.sh
 # Test seeders
 src/seeders/20260123-08-fix-project-members-and-evaluation.js
 src/seeders/20260126-*.js
+
+# Local QA / E2E report artifacts
+reports/completion/
+reports/e2e-personas/
+reports/qa/

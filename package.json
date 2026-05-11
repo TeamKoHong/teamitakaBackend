@@ -9,6 +9,8 @@
     "dev": "NODE_ENV=development HOST=0.0.0.0 nodemon index.js",
     "dev:supabase": "NODE_ENV=development npx dotenv -e env.supabase -- nodemon index.js",
     "test": "NODE_ENV=test jest --coverage",
+    "test:readonly": "NODE_ENV=test jest --runInBand --coverage=false",
+    "qa:readonly": "npm run test:readonly && node scripts/completion/route-openapi-drift.mjs --allowlist completion-baseline/route-openapi-drift-allowlist.json --strict",
     "lint": "eslint . && prettier --write \"**/*.yml\"",
     "verify": "node scripts/deployment-verification.js",
     "verify:supabase": "API_BASE_URL=${SUPABASE_URL}/functions/v1/teamitaka-api node scripts/deployment-verification.js",

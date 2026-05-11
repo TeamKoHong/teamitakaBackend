@@ -5,7 +5,9 @@
 ## 실행
 
 ```bash
-TEAMITAKA_E2E_PASSWORD='...' npm run qa:render-schema-smoke
+TEAMITAKA_E2E_EMAIL='smoke-account@example.com' \
+TEAMITAKA_E2E_PASSWORD='...' \
+npm run qa:render-schema-smoke
 ```
 
 기본 대상은 `https://teamitakabackend.onrender.com` 입니다. 다른 배포 URL은 다음처럼 지정합니다.
@@ -13,14 +15,16 @@ TEAMITAKA_E2E_PASSWORD='...' npm run qa:render-schema-smoke
 ```bash
 API_BASE_URL='https://example.com' \
 TEAMITAKA_E2E_PASSWORD='...' \
+TEAMITAKA_E2E_EMAIL='smoke-account@example.com' \
 npm run qa:deployed-schema-smoke
 ```
 
 주요 옵션:
 
-- `--email`: seeded E2E 계정 이메일. 기본값은 `e2e_20260510_owner@test.teamitaka.local`.
+- `--email`: seeded E2E 계정 이메일. 기본값은 없으며 `TEAMITAKA_E2E_EMAIL` 또는 `E2E_EMAIL`로 주입한다.
 - `--recruitment-id`: 모집글 상세 계약 확인에 사용할 기존 모집글 ID.
-- `--project-id`: 리뷰 요약 계약 확인에 사용할 기존 프로젝트 ID.
+- `--project-id`: 리뷰 요약 계약 확인에 사용할 기존 프로젝트 ID. 생략하면 로그인 계정의 `/api/projects/mine` 첫 프로젝트를 사용한다.
+- `--timeout-ms`: 요청별 타임아웃. 기본값은 30000ms로 Render cold start를 감안한다.
 - `--output`: JSON 리포트 경로. 기본값은 `reports/qa/deployed-schema-smoke/latest.json`.
 
 ## 실패 기준

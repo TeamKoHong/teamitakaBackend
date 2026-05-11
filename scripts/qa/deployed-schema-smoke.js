@@ -21,8 +21,7 @@ const argv = yargs(hideBin(process.argv))
     type: "string",
     default:
       process.env.E2E_EMAIL ||
-      process.env.TEAMITAKA_E2E_EMAIL ||
-      "e2e_20260510_owner@test.teamitaka.local",
+      process.env.TEAMITAKA_E2E_EMAIL,
     describe: "Seeded E2E account email.",
   })
   .option("password", {
@@ -41,8 +40,9 @@ const argv = yargs(hideBin(process.argv))
     type: "string",
     default:
       process.env.E2E_PROJECT_ID ||
-      "781c4d15-c222-4642-a0d8-5e087426bb1e",
-    describe: "Known project id used by review contract checks.",
+      process.env.TEAMITAKA_E2E_PROJECT_ID ||
+      null,
+    describe: "Known project id used by review contract checks. Defaults to the first project available to the authenticated user.",
   })
   .option("output", {
     type: "string",
@@ -51,7 +51,7 @@ const argv = yargs(hideBin(process.argv))
   })
   .option("timeout-ms", {
     type: "number",
-    default: Number(process.env.QA_SMOKE_TIMEOUT_MS || 10000),
+    default: Number(process.env.QA_SMOKE_TIMEOUT_MS || 30000),
     describe: "Per-request timeout in milliseconds.",
   })
   .strict()
@@ -83,6 +83,7 @@ const report = {
     total: 0,
     passed: 0,
     failed: 0,
+    skipped: 0,
     bySeverity: {},
   },
   checks: [],
@@ -321,21 +322,23 @@ function addCheck(check) {
   const result = {
     severity: "P0",
     passed: false,
+    skipped: false,
     ...check,
   };
 
   report.checks.push(result);
   report.summary.total += 1;
-  report.summary[result.passed ? "passed" : "failed"] += 1;
+  const statusKey = result.skipped ? "skipped" : result.passed ? "passed" : "failed";
+  report.summary[statusKey] += 1;
   report.summary.bySeverity[result.severity] =
-    report.summary.bySeverity[result.severity] || { total: 0, passed: 0, failed: 0 };
+    report.summary.bySeverity[result.severity] || { total: 0, passed: 0, failed: 0, skipped: 0 };
   report.summary.bySeverity[result.severity].total += 1;
-  report.summary.bySeverity[result.severity][result.passed ? "passed" : "failed"] += 1;
+  report.summary.bySeverity[result.severity][statusKey] += 1;
 
-  const marker = result.passed ? "PASS" : "FAIL";
+  const marker = result.skipped ? "SKIP" : result.passed ? "PASS" : "FAIL";
   const status = result.httpStatus ? ` HTTP ${result.httpStatus}` : "";
   console.log(`[${marker}] ${result.severity} ${result.name}${status}`);
-  if (!result.passed && result.reason) {
+  if ((result.skipped || !result.passed) && result.reason) {
     console.log(`       ${result.reason}`);
   }
 }
@@ -411,6 +414,24 @@ function extractToken(body) {
   );
 }
 
+function extractFirstProjectId(body) {
+  const candidates = [
+    body?.items,
+    body?.data?.items,
+    body?.data,
+  ];
+
+  for (const candidate of candidates) {
+    if (!Array.isArray(candidate)) continue;
+    const match = candidate.find((item) => item?.project_id || item?.projectId || item?.id);
+    if (match) {
+      return match.project_id || match.projectId || match.id;
+    }
+  }
+
+  return null;
+}
+
 function writeReport() {
   report.metadata.finishedAt = new Date().toISOString();
   report.metadata.durationMs = new Date(report.metadata.finishedAt).getTime() - startedAt.getTime();
@@ -420,12 +441,12 @@ function writeReport() {
 }
 
 async function main() {
-  if (!password) {
+  if (!email || !password) {
     addCheck({
       name: "E2E credentials are configured",
       severity: "P0",
       passed: false,
-      reason: "Set TEAMITAKA_E2E_PASSWORD or E2E_PASSWORD before running this smoke.",
+      reason: "Set TEAMITAKA_E2E_EMAIL/E2E_EMAIL and TEAMITAKA_E2E_PASSWORD/E2E_PASSWORD before running this smoke.",
     });
     writeReport();
     process.exitCode = 2;
@@ -497,7 +518,7 @@ async function main() {
     schemaName: "recruitmentDetailEnvelope",
   });
 
-  await checkRequest({
+  const projectsMineResponse = await checkRequest({
     name: "project list for current user",
     url: "/api/projects/mine",
     headers: authHeaders,
@@ -543,13 +564,28 @@ async function main() {
     schemaName: "dashboardCollection",
   });
 
-  await checkRequest({
-    name: "project review summary contract",
-    url: `/api/reviews/project/${argv.projectId || argv["project-id"]}/summary`,
-    headers: authHeaders,
-    severity: "P2",
-    schemaName: "reviewSummary",
-  });
+  const projectIdForReviewSummary =
+    argv.projectId ||
+    argv["project-id"] ||
+    extractFirstProjectId(projectsMineResponse?.data);
+
+  if (projectIdForReviewSummary) {
+    await checkRequest({
+      name: "project review summary contract",
+      url: `/api/reviews/project/${projectIdForReviewSummary}/summary`,
+      headers: authHeaders,
+      severity: "P2",
+      schemaName: "reviewSummary",
+    });
+  } else {
+    addCheck({
+      name: "project review summary contract",
+      severity: "P2",
+      skipped: true,
+      passed: false,
+      reason: "Authenticated user has no accessible project; provide E2E_PROJECT_ID to force this optional contract.",
+    });
+  }
 
   writeReport();
 
