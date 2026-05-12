@@ -8,6 +8,36 @@ const Ajv = require("ajv");
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
 
+const defaultCorsOrigins = [
+  "https://www.teamitaka.com",
+  "https://localhost",
+];
+
+function parseCorsOrigins(value) {
+  if (!value) return defaultCorsOrigins;
+  return String(value)
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+function corsSeverity(origin) {
+  try {
+    const hostname = new URL(origin).hostname;
+    return ["localhost", "127.0.0.1", "0.0.0.0"].includes(hostname) ? "P1" : "P0";
+  } catch {
+    return origin.includes("localhost") ? "P1" : "P0";
+  }
+}
+
+function csvHeaderIncludes(headerValue, expectedValue) {
+  const values = String(headerValue || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  return values.includes(expectedValue.toLowerCase());
+}
+
 const argv = yargs(hideBin(process.argv))
   .option("base-url", {
     type: "string",
@@ -54,6 +84,12 @@ const argv = yargs(hideBin(process.argv))
     default: Number(process.env.QA_SMOKE_TIMEOUT_MS || 30000),
     describe: "Per-request timeout in milliseconds.",
   })
+  .option("cors-origin", {
+    type: "array",
+    default: parseCorsOrigins(process.env.TEAMITAKA_QA_CORS_ORIGINS),
+    describe:
+      "Browser/iOS origins that the deployed API must allow. Override with TEAMITAKA_QA_CORS_ORIGINS or repeat --cors-origin.",
+  })
   .strict()
   .help()
   .parseSync();
@@ -63,6 +99,10 @@ const password = argv.password;
 const email = argv.email;
 const outputPath = path.resolve(process.cwd(), argv.output);
 const startedAt = new Date();
+const corsOrigins = (argv.corsOrigin || argv["cors-origin"] || defaultCorsOrigins)
+  .flatMap((origin) => String(origin).split(","))
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 const client = axios.create({
@@ -76,6 +116,7 @@ const report = {
     name: "deployed-schema-smoke",
     baseUrl,
     email,
+    corsOrigins,
     startedAt: startedAt.toISOString(),
     nodeVersion: process.version,
   },
@@ -404,6 +445,60 @@ async function checkRequest({
   }
 }
 
+async function checkCorsOrigin(origin) {
+  const started = Date.now();
+
+  try {
+    const response = await client.options("/api/auth/login", {
+      headers: {
+        Origin: origin,
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type,authorization",
+      },
+    });
+    const allowOrigin = response.headers["access-control-allow-origin"];
+    const allowCredentials = response.headers["access-control-allow-credentials"];
+    const allowMethods = response.headers["access-control-allow-methods"];
+    const allowHeaders = response.headers["access-control-allow-headers"];
+    const allowed =
+      allowOrigin === origin &&
+      allowCredentials === "true" &&
+      csvHeaderIncludes(allowMethods, "POST") &&
+      csvHeaderIncludes(allowHeaders, "Content-Type") &&
+      csvHeaderIncludes(allowHeaders, "Authorization");
+
+    addCheck({
+      name: `CORS preflight allows ${origin}`,
+      severity: corsSeverity(origin),
+      method: "OPTIONS",
+      url: "/api/auth/login",
+      httpStatus: response.status,
+      elapsedMs: Date.now() - started,
+      passed: response.status >= 200 && response.status < 300 && allowed,
+      reason: allowed
+        ? undefined
+        : `Expected exact origin ${origin}, credentials=true, POST, Content-Type and Authorization; received origin=${allowOrigin || "(missing)"}, credentials=${allowCredentials || "(missing)"}, methods=${allowMethods || "(missing)"}, headers=${allowHeaders || "(missing)"}`,
+      headers: {
+        "access-control-allow-origin": allowOrigin || null,
+        "access-control-allow-credentials": allowCredentials || null,
+        "access-control-allow-methods": allowMethods || null,
+        "access-control-allow-headers": allowHeaders || null,
+      },
+    });
+  } catch (error) {
+    addCheck({
+      name: `CORS preflight allows ${origin}`,
+      severity: corsSeverity(origin),
+      method: "OPTIONS",
+      url: "/api/auth/login",
+      elapsedMs: Date.now() - started,
+      passed: false,
+      reason: error.message,
+      errorCode: error.code,
+    });
+  }
+}
+
 function extractToken(body) {
   return (
     body?.token ||
@@ -441,6 +536,10 @@ function writeReport() {
 }
 
 async function main() {
+  for (const origin of corsOrigins) {
+    await checkCorsOrigin(origin);
+  }
+
   if (!email || !password) {
     addCheck({
       name: "E2E credentials are configured",
