@@ -104,6 +104,7 @@ const summarizeBody = (body) => {
 };
 
 const userIdOf = (user) => user?.user_id || user?.userId;
+const personaByKey = (seed, personaKey) => seed.personas.find((candidate) => candidate.key === personaKey);
 
 const record = (name, passed, details = {}) => {
   report.checks.push({ name, passed, details });
@@ -362,6 +363,51 @@ const runSmoke = async (seed) => {
     url: `/api/reviews/project/${projectId}/summary`,
     headers: authHeaders("owner"),
   }, 200);
+
+  report.stateSnapshot = {
+    namespace,
+    personas: Object.fromEntries(
+      ["owner", "applicant_a", "applicant_b", "member_a", "member_b"].map((personaKey) => {
+        const persona = personaByKey(seed, personaKey) || {};
+        const user = userByPersona[personaKey] || {};
+        return [personaKey, {
+          email: persona.email,
+          username: user.username || persona.username,
+          userId: userIdOf(user),
+        }];
+      }),
+    ),
+    ids: {
+      ...seed.recruitments,
+      ...seed.projects,
+      mutationProjectId: projectId,
+      approvedApplicantUserId: approveTarget.user_id,
+      rejectedApplicantUserId: rejectTarget.user_id,
+      scheduleId,
+      meetingId,
+      reviewId: review.review_id,
+    },
+    uiMatrix: [
+      { persona: "owner", route: "/main", label: "owner-main" },
+      { persona: "owner", route: "/project-management?tab=recruiting", label: "owner-recruiting" },
+      { persona: "owner", route: "/recruitment/{reviewRecruitmentId}", label: "owner-review-recruitment" },
+      { persona: "owner", route: "/project-management?tab=progress", label: "owner-progress" },
+      { persona: "owner", route: "/project/{mutationProjectId}", label: "owner-mutation-project-detail" },
+      { persona: "owner", route: "/project/{mutationProjectId}/proceedings", label: "owner-mutation-project-meetings" },
+      { persona: "owner", route: "/project/{mutationProjectId}/calender", label: "owner-mutation-project-calendar" },
+      { persona: "owner", route: "/evaluation/management", label: "owner-evaluation-management" },
+      { persona: "applicant_a", route: "/team-matching", label: "applicant-a-team-matching" },
+      { persona: "applicant_a", route: "/recruitment/{openRecruitmentId}", label: "applicant-a-open-recruitment" },
+      { persona: "applicant_a", route: "/bookmark?tab=application", label: "applicant-a-application-history" },
+      { persona: "member_a", route: "/main", label: "member-a-main" },
+      { persona: "member_a", route: "/project-management?tab=progress", label: "member-a-progress" },
+      { persona: "member_a", route: "/project/{activeProjectId}", label: "member-a-active-project-detail" },
+      { persona: "member_a", route: "/project/{activeProjectId}/proceedings", label: "member-a-active-project-meetings" },
+      { persona: "member_a", route: "/project/{activeProjectId}/calender", label: "member-a-active-project-calendar" },
+      { persona: "member_a", route: "/project-management?tab=completed", label: "member-a-completed-projects" },
+      { persona: "member_a", route: "/evaluation/project/{completedProjectId}", label: "member-a-received-evaluation" },
+    ],
+  };
 };
 
 (async () => {
