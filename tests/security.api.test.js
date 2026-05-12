@@ -1,3 +1,5 @@
+const request = require("supertest");
+
 jest.mock("src/config/db", () => ({
   sequelize: {
     authenticate: jest.fn().mockResolvedValue(),
@@ -50,6 +52,29 @@ describe("Security hardening", () => {
     );
 
     expect(hasDevMount).toBe(false);
+  });
+
+  test("production CORS keeps configured web origin and allows native app origin", async () => {
+    process.env.NODE_ENV = "production";
+    process.env.CORS_ORIGIN = "https://www.teamitaka.com";
+    delete process.env.DISABLE_NATIVE_APP_CORS;
+    jest.resetModules();
+
+    const app = require("../src/app");
+
+    const webResponse = await request(app)
+      .options("/api/auth/login")
+      .set("Origin", "https://www.teamitaka.com")
+      .set("Access-Control-Request-Method", "POST")
+      .set("Access-Control-Request-Headers", "content-type");
+    expect(webResponse.headers["access-control-allow-origin"]).toBe("https://www.teamitaka.com");
+
+    const nativeResponse = await request(app)
+      .options("/api/auth/login")
+      .set("Origin", "https://localhost")
+      .set("Access-Control-Request-Method", "POST")
+      .set("Access-Control-Request-Headers", "content-type");
+    expect(nativeResponse.headers["access-control-allow-origin"]).toBe("https://localhost");
   });
 
   test("dev routes require a secondary dev route token even outside production", () => {

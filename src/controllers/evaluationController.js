@@ -226,6 +226,7 @@ exports.getGivenEvaluations = async (req, res) => {
 
     const reviews = await reviewService.getReviewsByReviewer(
       projectId,
+      reviewerId,
       reviewerId
     );
 
@@ -241,7 +242,7 @@ exports.getGivenEvaluations = async (req, res) => {
     });
   } catch (error) {
     console.error("🚨 getGivenEvaluations Error:", error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: "평가 조회 중 오류가 발생했습니다",
       error: error.message,

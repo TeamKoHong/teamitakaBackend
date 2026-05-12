@@ -87,6 +87,14 @@ node scripts/completion/route-openapi-drift.mjs \
 
 현재 allowlist는 개발 전용 route만 허용한다. 제품 route drift를 allowlist에 넣으려면 Notion Decision ID와 제거 예정일이 있어야 한다.
 
+Read-only overnight-friendly gate:
+
+```bash
+npm run qa:readonly
+```
+
+이 명령은 Jest를 coverage 없이 실행하고 strict route/OpenAPI drift를 검사한다. migration, seed, production verification, deployed smoke는 실행하지 않는다.
+
 ## Permission Harness Gate
 
 권한 리팩토링은 “라우트에 `authMiddleware`가 있다”만으로 완료 처리하지 않는다. 각 P0 도메인은 최소 1개 이상의 negative oracle을 가져야 한다.

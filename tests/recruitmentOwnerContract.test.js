@@ -189,4 +189,158 @@ describe("Recruitment owner contract", () => {
     expect(Project.create).not.toHaveBeenCalled();
     expect(transaction.rollback).toHaveBeenCalled();
   });
+
+  test("createProjectFromRecruitment only adds approved applicants as project members", async () => {
+    const recruitment = createRecruitmentRecord();
+    const transaction = {
+      commit: jest.fn().mockResolvedValue(),
+      rollback: jest.fn().mockResolvedValue(),
+    };
+    const Project = {
+      findByPk: jest.fn(),
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn().mockResolvedValue({
+        project_id: "project-1",
+        title: "프로젝트 시작",
+        resolution: null,
+        project_type: "side",
+        user_id: "owner-user",
+        start_date: null,
+        end_date: null,
+        status: "ACTIVE",
+        createdAt: new Date("2026-05-12T00:00:00.000Z"),
+      }),
+    };
+    const Application = {
+      findAll: jest.fn().mockResolvedValue([
+        { user_id: "approved-user" },
+        { user_id: "second-approved-user" },
+      ]),
+    };
+    const ProjectMembers = {
+      create: jest.fn().mockImplementation(async (payload) => payload),
+      findOne: jest.fn(),
+    };
+
+    jest.doMock("../src/models", () => ({
+      Project,
+      Recruitment: {
+        findByPk: jest.fn().mockResolvedValue(recruitment),
+      },
+      User: {},
+      Todo: {},
+      Timeline: {},
+      ProjectMembers,
+      Application,
+      sequelize: {
+        transaction: jest.fn().mockResolvedValue(transaction),
+        query: jest.fn(),
+      },
+    }));
+    jest.doMock("../src/services/projectService", () => ({
+      updateProject: jest.fn(),
+    }));
+
+    const { createProjectFromRecruitment } = require("../src/controllers/projectController");
+    const req = {
+      params: { recruitment_id: recruitment.recruitment_id },
+      body: {
+        title: "프로젝트 시작",
+        memberUserIds: ["owner-user", "approved-user", "approved-user", "second-approved-user"],
+      },
+      user: { userId: "owner-user" },
+    };
+    const res = createResponse();
+
+    await createProjectFromRecruitment(req, res);
+
+    expect(res.statusCode).toBe(201);
+    expect(Application.findAll).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        recruitment_id: recruitment.recruitment_id,
+        user_id: ["approved-user", "second-approved-user"],
+        status: "APPROVED",
+      }),
+      attributes: ["user_id"],
+      transaction,
+    }));
+    expect(ProjectMembers.create).toHaveBeenCalledTimes(3);
+    expect(ProjectMembers.create).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      user_id: "owner-user",
+      role: "LEADER",
+    }), { transaction });
+    expect(ProjectMembers.create).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      user_id: "approved-user",
+      role: "MEMBER",
+    }), { transaction });
+    expect(ProjectMembers.create).toHaveBeenNthCalledWith(3, expect.objectContaining({
+      user_id: "second-approved-user",
+      role: "MEMBER",
+    }), { transaction });
+    expect(transaction.commit).toHaveBeenCalled();
+  });
+
+  test("createProjectFromRecruitment rejects unapproved member ids before project creation", async () => {
+    const recruitment = createRecruitmentRecord();
+    const transaction = {
+      commit: jest.fn().mockResolvedValue(),
+      rollback: jest.fn().mockResolvedValue(),
+    };
+    const Project = {
+      findByPk: jest.fn(),
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+    };
+    const Application = {
+      findAll: jest.fn().mockResolvedValue([{ user_id: "approved-user" }]),
+    };
+
+    jest.doMock("../src/models", () => ({
+      Project,
+      Recruitment: {
+        findByPk: jest.fn().mockResolvedValue(recruitment),
+      },
+      User: {},
+      Todo: {},
+      Timeline: {},
+      ProjectMembers: {
+        create: jest.fn(),
+        findOne: jest.fn(),
+      },
+      Application,
+      sequelize: {
+        transaction: jest.fn().mockResolvedValue(transaction),
+        query: jest.fn(),
+      },
+    }));
+    jest.doMock("../src/services/projectService", () => ({
+      updateProject: jest.fn(),
+    }));
+
+    const { createProjectFromRecruitment } = require("../src/controllers/projectController");
+    const req = {
+      params: { recruitment_id: recruitment.recruitment_id },
+      body: {
+        title: "프로젝트 시작",
+        memberUserIds: ["approved-user", "pending-user"],
+      },
+      user: { userId: "owner-user" },
+    };
+    const res = createResponse();
+
+    await createProjectFromRecruitment(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "INVALID_PROJECT_MEMBERS",
+      message: "승인된 지원자만 프로젝트 멤버로 추가할 수 있습니다.",
+      invalidMemberUserIds: ["pending-user"],
+    });
+    expect(Project.create).not.toHaveBeenCalled();
+    expect(transaction.rollback).toHaveBeenCalled();
+    expect(transaction.commit).not.toHaveBeenCalled();
+  });
 });

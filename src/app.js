@@ -54,6 +54,21 @@ const corsOrigin =
   configuredCorsOrigin ||
   (process.env.NODE_ENV === "production" ? null : "*");
 
+const splitOrigins = (originString) => (
+  String(originString || "")
+    .split(",")
+    .map(o => o.trim())
+    .filter(Boolean)
+);
+
+// Capacitor iOS/Android loads the bundled app from https://localhost when
+// iosScheme/androidScheme are set to https. Keep this explicit and
+// configurable instead of opening all origins in production.
+const nativeAppCorsOrigins =
+  process.env.DISABLE_NATIVE_APP_CORS === "true"
+    ? []
+    : splitOrigins(process.env.CORS_NATIVE_ORIGINS || "https://localhost");
+
 if (process.env.NODE_ENV === "production" && allowAnyOrigin) {
   throw new Error("ALLOW_ANY_ORIGIN must not be enabled in production.");
 }
@@ -64,7 +79,10 @@ if (process.env.NODE_ENV === "production" && !corsOrigin) {
 
 const parseOrigins = (originString) => {
   if (originString === '*') return originString;
-  const origins = originString.split(',').map(o => o.trim());
+  const origins = Array.from(new Set([
+    ...splitOrigins(originString),
+    ...nativeAppCorsOrigins,
+  ]));
   return origins.length === 1 ? origins[0] : origins;
 };
 
