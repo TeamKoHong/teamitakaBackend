@@ -1,6 +1,20 @@
 const { Application, ApplicationPortfolio, Recruitment, User, Project, sequelize } = require("../models");
+const { Op } = require("sequelize");
 const pushService = require("./pushService");
 const { sameId } = require("../utils/projectAccess");
+
+const ACTIVE_APPLICATION_STATUSES = ["PENDING", "APPROVED"];
+
+const countActiveApplications = (recruitment_id, transaction) => {
+  const options = {
+    where: {
+      recruitment_id,
+      status: { [Op.in]: ACTIVE_APPLICATION_STATUSES },
+    },
+  };
+  if (transaction) options.transaction = transaction;
+  return Application.count(options);
+};
 
 const makeAccessError = (message, status = 403) => {
   const error = new Error(message);
@@ -65,7 +79,7 @@ const applyToRecruitment = async (user_id, recruitment_id, introduction, portfol
     }
 
     // 지원자 수 증가
-    const applicationCount = await Application.count({ where: { recruitment_id }, transaction });
+    const applicationCount = await countActiveApplications(recruitment_id, transaction);
 
     // 모집 정원이 다 찼다면 상태 변경
     if (applicationCount >= recruitment.max_applicants) {
@@ -192,7 +206,7 @@ const updateApplicationStatus = async (application_id, status, actor_user_id = n
       // 푸시 실패는 승인 실패로 이어지지 않음
     }
   }
-  const applicationCount = await Application.count({ where: { recruitment_id: application.recruitment_id } });
+  const applicationCount = await countActiveApplications(application.recruitment_id);
 
   // 승인된 인원이 max_applicants보다 작다면 모집 상태를 다시 ACTIVE로 변경
   if (status === "REJECTED" && recruitment.status === "CLOSED") {
@@ -247,10 +261,7 @@ const cancelApplication = async (application_id, user_id) => {
 
     // 모집공고가 CLOSED 상태였다면, 다시 ACTIVE로 변경 (정원 여유 생김)
     if (recruitment && recruitment.status === "CLOSED") {
-      const remainingCount = await Application.count({
-        where: { recruitment_id: recruitment.recruitment_id },
-        transaction,
-      });
+      const remainingCount = await countActiveApplications(recruitment.recruitment_id, transaction);
 
       if (remainingCount < recruitment.max_applicants) {
         await recruitment.update({ status: "ACTIVE" }, { transaction });

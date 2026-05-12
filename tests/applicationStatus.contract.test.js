@@ -228,4 +228,64 @@ describe("Application status contract", () => {
     ).rejects.toThrow("모집글 작성자만 지원 상태를 변경할 수 있습니다.");
     expect(application.save).not.toHaveBeenCalled();
   });
+
+  test("application service reopens closed recruitment when rejection frees active capacity", async () => {
+    jest.dontMock("../src/services/applicationService");
+    jest.dontMock("../src/utils/errorHandler");
+
+    const save = jest.fn().mockResolvedValue();
+    const application = {
+      application_id: "11111111-1111-4111-8111-111111111111",
+      recruitment_id: "22222222-2222-4222-8222-222222222222",
+      user_id: "33333333-3333-4333-8333-333333333333",
+      status: "PENDING",
+      save,
+    };
+    const recruitment = {
+      status: "CLOSED",
+      max_applicants: 2,
+      user_id: "55555555-5555-4555-8555-555555555555",
+      title: "팀미타카",
+      Project: null,
+      update: jest.fn().mockResolvedValue(),
+    };
+    const count = jest.fn().mockResolvedValue(1);
+
+    jest.doMock("../src/models", () => ({
+      Application: {
+        findByPk: jest.fn().mockResolvedValue(application),
+        count,
+      },
+      Recruitment: {
+        findByPk: jest.fn().mockResolvedValue(recruitment),
+      },
+      Project: {},
+      ApplicationPortfolio: {},
+      User: {},
+      sequelize: {},
+    }));
+    jest.doMock("../src/services/pushService", () => ({
+      PUSH_TYPES: {
+        TEAM_MATCH_ACCEPTED: "team_match_accepted",
+      },
+      sendToUser: jest.fn(),
+    }));
+
+    const { updateApplicationStatus } = require("../src/services/applicationService");
+
+    const result = await updateApplicationStatus(
+      application.application_id,
+      "REJECTED",
+      recruitment.user_id
+    );
+
+    expect(result.status).toBe("REJECTED");
+    expect(count).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        recruitment_id: application.recruitment_id,
+        status: expect.any(Object),
+      }),
+    }));
+    expect(recruitment.update).toHaveBeenCalledWith({ status: "ACTIVE" });
+  });
 });

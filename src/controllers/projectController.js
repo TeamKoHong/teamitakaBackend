@@ -1,4 +1,4 @@
-const { Project, Recruitment, User, Todo, Timeline, ProjectMembers, sequelize } = require("../models");
+const { Project, Recruitment, User, Todo, Timeline, ProjectMembers, Application, sequelize } = require("../models");
 const projectService = require("../services/projectService");
 const { assertProjectLeaderRecord, assertProjectMemberRecord, sameId } = require("../utils/projectAccess");
 
@@ -356,6 +356,39 @@ const createProjectFromRecruitment = async (req, res) => {
       });
     }
 
+    const selectedMemberUserIds = [
+      ...new Set(
+        memberUserIds
+          .filter(Boolean)
+          .map((userId) => String(userId))
+          .filter((userId) => !sameId(userId, recruitment.user_id))
+      ),
+    ];
+
+    if (selectedMemberUserIds.length > 0) {
+      const approvedApplications = await Application.findAll({
+        where: {
+          recruitment_id,
+          user_id: selectedMemberUserIds,
+          status: "APPROVED",
+        },
+        attributes: ["user_id"],
+        transaction,
+      });
+      const approvedUserIds = new Set(approvedApplications.map((application) => String(application.user_id)));
+      const invalidMemberUserIds = selectedMemberUserIds.filter((userId) => !approvedUserIds.has(userId));
+
+      if (invalidMemberUserIds.length > 0) {
+        await transaction.rollback();
+        return res.status(400).json({
+          success: false,
+          error: "INVALID_PROJECT_MEMBERS",
+          message: "승인된 지원자만 프로젝트 멤버로 추가할 수 있습니다.",
+          invalidMemberUserIds,
+        });
+      }
+    }
+
     // 4. 새 프로젝트 생성
     const newProject = await Project.create({
       title: title,
@@ -382,10 +415,7 @@ const createProjectFromRecruitment = async (req, res) => {
     members.push(leaderMember);
 
     // 5-2. 선택된 멤버들을 프로젝트에 추가
-    for (const userId of memberUserIds) {
-      // 리더와 중복되는 경우 스킵
-      if (userId === recruitment.user_id) continue;
-
+    for (const userId of selectedMemberUserIds) {
       const member = await ProjectMembers.create({
         project_id: newProject.project_id,
         user_id: userId,
