@@ -38,6 +38,14 @@ function csvHeaderIncludes(headerValue, expectedValue) {
   return values.includes(expectedValue.toLowerCase());
 }
 
+function parseBackoffMs(value) {
+  const raw = value || process.env.QA_SMOKE_WARMUP_BACKOFF_MS || "0,2000,5000,10000,20000";
+  return String(raw)
+    .split(",")
+    .map((entry) => Number(entry.trim()))
+    .filter((entry) => Number.isFinite(entry) && entry >= 0);
+}
+
 const argv = yargs(hideBin(process.argv))
   .option("base-url", {
     type: "string",
@@ -63,8 +71,9 @@ const argv = yargs(hideBin(process.argv))
     type: "string",
     default:
       process.env.E2E_RECRUITMENT_ID ||
-      "84f60804-6f26-4bc3-b05b-08d09ad97343",
-    describe: "Known recruitment id used by detail contract checks.",
+      process.env.TEAMITAKA_E2E_RECRUITMENT_ID ||
+      null,
+    describe: "Known recruitment id used by detail contract checks. Defaults to the first id returned by the recruitment list.",
   })
   .option("project-id", {
     type: "string",
@@ -83,6 +92,31 @@ const argv = yargs(hideBin(process.argv))
     type: "number",
     default: Number(process.env.QA_SMOKE_TIMEOUT_MS || 30000),
     describe: "Per-request timeout in milliseconds.",
+  })
+  .option("warmup-budget-ms", {
+    type: "number",
+    default: Number(process.env.QA_SMOKE_WARMUP_BUDGET_MS || 120000),
+    describe: "Total warm-up budget before contract assertions start.",
+  })
+  .option("warmup-timeout-ms", {
+    type: "number",
+    default: Number(process.env.QA_SMOKE_WARMUP_TIMEOUT_MS || 15000),
+    describe: "Per-attempt warm-up health timeout in milliseconds.",
+  })
+  .option("warmup-backoff-ms", {
+    type: "string",
+    default: process.env.QA_SMOKE_WARMUP_BACKOFF_MS || "0,2000,5000,10000,20000",
+    describe: "Comma-separated warm-up backoff schedule in milliseconds.",
+  })
+  .option("cors-timeout-ms", {
+    type: "number",
+    default: Number(process.env.QA_SMOKE_CORS_TIMEOUT_MS || 10000),
+    describe: "Warm CORS preflight timeout in milliseconds.",
+  })
+  .option("cors-retry-delay-ms", {
+    type: "number",
+    default: Number(process.env.QA_SMOKE_CORS_RETRY_DELAY_MS || 1000),
+    describe: "Delay before a single CORS transport retry.",
   })
   .option("cors-origin", {
     type: "array",
@@ -110,6 +144,11 @@ const client = axios.create({
   timeout: argv.timeoutMs || argv["timeout-ms"],
   validateStatus: () => true,
 });
+const warmupBudgetMs = argv.warmupBudgetMs || argv["warmup-budget-ms"];
+const warmupTimeoutMs = argv.warmupTimeoutMs || argv["warmup-timeout-ms"];
+const warmupBackoffMs = parseBackoffMs(argv.warmupBackoffMs || argv["warmup-backoff-ms"]);
+const corsTimeoutMs = argv.corsTimeoutMs || argv["cors-timeout-ms"];
+const corsRetryDelayMs = argv.corsRetryDelayMs || argv["cors-retry-delay-ms"];
 
 const report = {
   metadata: {
@@ -119,6 +158,15 @@ const report = {
     corsOrigins,
     startedAt: startedAt.toISOString(),
     nodeVersion: process.version,
+    warmup: {
+      budgetMs: warmupBudgetMs,
+      timeoutMs: warmupTimeoutMs,
+      backoffMs: warmupBackoffMs,
+    },
+    cors: {
+      timeoutMs: corsTimeoutMs,
+      retryDelayMs: corsRetryDelayMs,
+    },
   },
   summary: {
     total: 0,
@@ -384,6 +432,31 @@ function addCheck(check) {
   }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransportTimeout(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return error?.code === "ECONNABORTED" || message.includes("timeout");
+}
+
+function isRetryableTransportError(error) {
+  return isTransportTimeout(error) || ["ECONNRESET", "ETIMEDOUT", "EAI_AGAIN", "ENOTFOUND"].includes(error?.code);
+}
+
+function summarizeAttempt(attempt) {
+  return {
+    method: attempt.method,
+    url: attempt.url,
+    startedAt: attempt.startedAt,
+    elapsedMs: attempt.elapsedMs,
+    httpStatus: attempt.httpStatus,
+    errorCode: attempt.errorCode,
+    reason: attempt.reason,
+  };
+}
+
 async function checkRequest({
   name,
   severity = "P0",
@@ -445,58 +518,225 @@ async function checkRequest({
   }
 }
 
-async function checkCorsOrigin(origin) {
+async function requestHealthAttempt(timeoutMs) {
+  const startedAt = new Date().toISOString();
   const started = Date.now();
 
   try {
-    const response = await client.options("/api/auth/login", {
-      headers: {
-        Origin: origin,
-        "Access-Control-Request-Method": "POST",
-        "Access-Control-Request-Headers": "content-type,authorization",
-      },
-    });
-    const allowOrigin = response.headers["access-control-allow-origin"];
-    const allowCredentials = response.headers["access-control-allow-credentials"];
-    const allowMethods = response.headers["access-control-allow-methods"];
-    const allowHeaders = response.headers["access-control-allow-headers"];
-    const allowed =
-      allowOrigin === origin &&
-      allowCredentials === "true" &&
-      csvHeaderIncludes(allowMethods, "POST") &&
-      csvHeaderIncludes(allowHeaders, "Content-Type") &&
-      csvHeaderIncludes(allowHeaders, "Authorization");
-
-    addCheck({
-      name: `CORS preflight allows ${origin}`,
-      severity: corsSeverity(origin),
-      method: "OPTIONS",
-      url: "/api/auth/login",
-      httpStatus: response.status,
+    const response = await client.get("/api/health", { timeout: timeoutMs });
+    return {
+      method: "GET",
+      url: "/api/health",
+      startedAt,
       elapsedMs: Date.now() - started,
-      passed: response.status >= 200 && response.status < 300 && allowed,
-      reason: allowed
+      httpStatus: response.status,
+      passed: response.status >= 200 && response.status < 300,
+      bodySummary: bodySummary(response.data),
+      reason: response.status >= 200 && response.status < 300
         ? undefined
-        : `Expected exact origin ${origin}, credentials=true, POST, Content-Type and Authorization; received origin=${allowOrigin || "(missing)"}, credentials=${allowCredentials || "(missing)"}, methods=${allowMethods || "(missing)"}, headers=${allowHeaders || "(missing)"}`,
-      headers: {
-        "access-control-allow-origin": allowOrigin || null,
-        "access-control-allow-credentials": allowCredentials || null,
-        "access-control-allow-methods": allowMethods || null,
-        "access-control-allow-headers": allowHeaders || null,
-      },
-    });
+        : `Expected HTTP 2xx, received HTTP ${response.status}`,
+    };
   } catch (error) {
-    addCheck({
-      name: `CORS preflight allows ${origin}`,
-      severity: corsSeverity(origin),
-      method: "OPTIONS",
-      url: "/api/auth/login",
+    return {
+      method: "GET",
+      url: "/api/health",
+      startedAt,
       elapsedMs: Date.now() - started,
       passed: false,
       reason: error.message,
       errorCode: error.code,
-    });
+    };
   }
+}
+
+async function warmDeployedApi() {
+  const started = Date.now();
+  const attempts = [];
+  let backoffIndex = 0;
+
+  while (Date.now() - started <= warmupBudgetMs) {
+    const backoff = attempts.length === 0
+      ? 0
+      : warmupBackoffMs[Math.min(backoffIndex, warmupBackoffMs.length - 1)] || 0;
+    backoffIndex += 1;
+
+    if (backoff > 0) {
+      await sleep(backoff);
+    }
+
+    const attempt = await requestHealthAttempt(warmupTimeoutMs);
+    attempts.push(attempt);
+
+    if (attempt.passed) {
+      const totalElapsedMs = Date.now() - started;
+      const coldStartRecovered = attempts.length > 1 || attempts.some((item) => item.errorCode || (item.httpStatus && item.httpStatus >= 500));
+      addCheck({
+        name: "deployed API warm-up",
+        severity: "P0",
+        method: "GET",
+        url: "/api/health",
+        httpStatus: attempt.httpStatus,
+        elapsedMs: totalElapsedMs,
+        passed: true,
+        classification: coldStartRecovered ? "cold_start_recovered" : "already_warm",
+        attempts: attempts.map(summarizeAttempt),
+        bodySummary: attempt.bodySummary,
+      });
+      return {
+        passed: true,
+        classification: coldStartRecovered ? "cold_start_recovered" : "already_warm",
+        attempts,
+        totalElapsedMs,
+      };
+    }
+  }
+
+  const totalElapsedMs = Date.now() - started;
+  addCheck({
+    name: "deployed API warm-up",
+    severity: "P0",
+    method: "GET",
+    url: "/api/health",
+    elapsedMs: totalElapsedMs,
+    passed: false,
+    classification: "service_unavailable",
+    reason: `No successful /api/health response within ${warmupBudgetMs}ms warm-up budget.`,
+    attempts: attempts.map(summarizeAttempt),
+  });
+  return {
+    passed: false,
+    classification: "service_unavailable",
+    attempts,
+    totalElapsedMs,
+  };
+}
+
+function evaluateCorsResponse(origin, response) {
+  const allowOrigin = response.headers["access-control-allow-origin"];
+  const allowCredentials = response.headers["access-control-allow-credentials"];
+  const allowMethods = response.headers["access-control-allow-methods"];
+  const allowHeaders = response.headers["access-control-allow-headers"];
+  const verdicts = {
+    originMatches: allowOrigin === origin,
+    credentialsAllowed: allowCredentials === "true",
+    methodAllowed: csvHeaderIncludes(allowMethods, "POST"),
+    contentTypeAllowed: csvHeaderIncludes(allowHeaders, "Content-Type"),
+    authorizationAllowed: csvHeaderIncludes(allowHeaders, "Authorization"),
+  };
+  const allowed = Object.values(verdicts).every(Boolean);
+
+  return {
+    allowed,
+    verdicts,
+    headers: {
+      "access-control-allow-origin": allowOrigin || null,
+      "access-control-allow-credentials": allowCredentials || null,
+      "access-control-allow-methods": allowMethods || null,
+      "access-control-allow-headers": allowHeaders || null,
+    },
+    reason: allowed
+      ? undefined
+      : `Expected exact origin ${origin}, credentials=true, POST, Content-Type and Authorization; received origin=${allowOrigin || "(missing)"}, credentials=${allowCredentials || "(missing)"}, methods=${allowMethods || "(missing)"}, headers=${allowHeaders || "(missing)"}`,
+  };
+}
+
+async function requestCorsAttempt(origin) {
+  const startedAt = new Date().toISOString();
+  const started = Date.now();
+  const requestHeaders = {
+    Origin: origin,
+    "Access-Control-Request-Method": "POST",
+    "Access-Control-Request-Headers": "content-type,authorization",
+  };
+
+  try {
+    const response = await client.options("/api/auth/login", {
+      timeout: corsTimeoutMs,
+      headers: requestHeaders,
+    });
+    const evaluation = evaluateCorsResponse(origin, response);
+    return {
+      method: "OPTIONS",
+      url: "/api/auth/login",
+      origin,
+      startedAt,
+      elapsedMs: Date.now() - started,
+      httpStatus: response.status,
+      requestHeaders,
+      ...evaluation,
+      passed: response.status >= 200 && response.status < 300 && evaluation.allowed,
+    };
+  } catch (error) {
+    return {
+      method: "OPTIONS",
+      url: "/api/auth/login",
+      origin,
+      startedAt,
+      elapsedMs: Date.now() - started,
+      requestHeaders,
+      passed: false,
+      reason: error.message,
+      errorCode: error.code,
+      retryable: isRetryableTransportError(error),
+    };
+  }
+}
+
+async function checkCorsOrigin(origin, warmupState) {
+  if (!warmupState?.passed) {
+    addCheck({
+      name: `CORS preflight allows ${origin}`,
+      severity: corsSeverity(origin),
+      method: "OPTIONS",
+      url: "/api/auth/login",
+      skipped: true,
+      passed: false,
+      classification: "service_unavailable",
+      reason: "Skipped because deployed API warm-up did not succeed.",
+      warmup: {
+        classification: warmupState?.classification || "service_unavailable",
+        elapsedMs: warmupState?.totalElapsedMs || null,
+      },
+    });
+    return;
+  }
+
+  const attempts = [await requestCorsAttempt(origin)];
+  if (!attempts[0].passed && attempts[0].retryable) {
+    await sleep(corsRetryDelayMs);
+    attempts.push(await requestCorsAttempt(origin));
+  }
+
+  const lastAttempt = attempts[attempts.length - 1];
+  const timedOutAfterWarm = !lastAttempt.passed && lastAttempt.errorCode;
+  const classification = lastAttempt.passed
+    ? attempts.length > 1 || warmupState.classification === "cold_start_recovered"
+      ? "cold_start_recovered"
+      : "cors_ok"
+    : timedOutAfterWarm
+      ? "options_timeout_after_warm"
+      : "cors_misconfiguration";
+
+  addCheck({
+    name: `CORS preflight allows ${origin}`,
+    severity: corsSeverity(origin),
+    method: "OPTIONS",
+    url: "/api/auth/login",
+    httpStatus: lastAttempt.httpStatus,
+    elapsedMs: attempts.reduce((sum, attempt) => sum + attempt.elapsedMs, 0),
+    passed: lastAttempt.passed,
+    classification,
+    reason: lastAttempt.reason,
+    origin,
+    requestHeaders: lastAttempt.requestHeaders,
+    headers: lastAttempt.headers,
+    verdicts: lastAttempt.verdicts,
+    attempts: attempts.map(summarizeAttempt),
+    warmup: {
+      classification: warmupState.classification,
+      elapsedMs: warmupState.totalElapsedMs,
+    },
+  });
 }
 
 function extractToken(body) {
@@ -536,8 +776,9 @@ function writeReport() {
 }
 
 async function main() {
+  const warmupState = await warmDeployedApi();
   for (const origin of corsOrigins) {
-    await checkCorsOrigin(origin);
+    await checkCorsOrigin(origin, warmupState);
   }
 
   if (!email || !password) {
@@ -605,17 +846,36 @@ async function main() {
     schemaName: "profileDetail",
   });
 
-  await checkRequest({
+  const recruitmentListResponse = await checkRequest({
     name: "recruitment list OpenAPI envelope",
     url: "/api/recruitments?page=1&pageSize=1",
     schemaName: "recruitmentListEnvelope",
   });
 
-  await checkRequest({
-    name: "public recruitment detail OpenAPI envelope",
-    url: `/api/recruitments/${argv.recruitmentId || argv["recruitment-id"]}`,
-    schemaName: "recruitmentDetailEnvelope",
-  });
+  const recruitmentListItems = recruitmentListResponse?.data?.data?.items || [];
+  const recruitmentId = (
+    argv.recruitmentId ||
+    argv["recruitment-id"] ||
+    recruitmentListItems[0]?.recruitment_id ||
+    recruitmentListItems[0]?.id ||
+    null
+  );
+
+  if (!recruitmentId) {
+    addCheck({
+      name: "public recruitment detail OpenAPI envelope",
+      severity: "P0",
+      passed: false,
+      reason: "No recruitment id was provided and the recruitment list did not return an item.",
+      bodySummary: bodySummary(recruitmentListResponse?.data),
+    });
+  } else {
+    await checkRequest({
+      name: "public recruitment detail OpenAPI envelope",
+      url: `/api/recruitments/${recruitmentId}`,
+      schemaName: "recruitmentDetailEnvelope",
+    });
+  }
 
   const projectsMineResponse = await checkRequest({
     name: "project list for current user",
